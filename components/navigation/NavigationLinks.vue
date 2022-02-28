@@ -28,13 +28,8 @@
 }
 .navlink {
   @each $size in map.keys(layout.$breakpoints) {
-<<<<<<< HEAD
     @include layout.media-query($size) {
       @if $size != "small" {
-=======
-    @include layout.media-query_($size) {
-      @if not $size == 'small' {
->>>>>>> aa606428c7fbb82e3f5b2ae93bd771ac6311b302
         @include theme.typography-label($size);
       } @else {
         @include theme.typography-headline($size);
