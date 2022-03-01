@@ -20,31 +20,40 @@
 </template>
 
 <script lang="ts" setup>
+const emit = defineEmits(["click"]);
 
-const emit = defineEmits(['click'])
-
-onBeforeMount(() => {
-  device.value = getComputedStyle(document.documentElement).getPropertyValue('--device-size')
-})
+const opened = ref(false);
+const device = ref("large");
 
 const close = (event: Event) => {
-  opened.value = false
-  emit('click', event)
-  console.log('closed:', event)
-}
+  opened.value = false;
+  emit("click", event);
+  console.log("closed:", event);
+};
 
 const open = (event: Event) => {
-  opened.value = true
-  emit('click', event)
-  console.log('opened:', event)
-}
+  opened.value = true;
+  emit("click", event);
+  console.log("opened:", event);
+};
 
-const opened = ref(false)
-const device = ref('large')
+const handleResize = () => {
+  device.value = getComputedStyle(document.documentElement).getPropertyValue(
+    "--device-size"
+  );
+};
+
+onBeforeMount(() => {
+  window.addEventListener("resize", handleResize);
+});
+
+onBeforeUnmount(() => {
+  window.addEventListener("resize", handleResize);
+});
 </script>
 
 <style lang="scss" scoped>
-@use 'sass:map';
+@use "sass:map";
 
 .navbar-header {
   display: flex;
