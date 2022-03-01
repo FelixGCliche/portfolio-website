@@ -1,15 +1,28 @@
 <template>
   <nav class="navbar-container">
     <div class="navbar-header">
-      <IconButton v-if="device == 'small'" dir="rtl" label="menu" @click="open">
+      <IconButton
+        v-if="device == 'small'"
+        @click="open"
+        dir="rtl"
+        label="menu"
+      >
         <MenuIcon :size="24" />
       </IconButton>
       <NavigationLinks v-else />
     </div>
     <Transition name="slide-in">
-      <div class="navbar-content" v-if="opened" @click.prevent="close">
+      <div
+        class="navbar-content"
+        v-if="opened"
+        @click.prevent="close"
+      >
         <div class="navbar-header">
-          <IconButton dir="rtl" label="menu" @click.prevent="close">
+          <IconButton
+            dir="rtl"
+            label="menu"
+            @click.prevent="close"
+          >
             <ClearIcon :size="24" />
           </IconButton>
         </div>
@@ -20,11 +33,12 @@
 </template>
 
 <script lang="ts" setup>
-
 const emit = defineEmits(['click'])
 
 onBeforeMount(() => {
-  device.value = getComputedStyle(document.documentElement).getPropertyValue('--device-size')
+  device.value = getComputedStyle(
+    document.documentElement
+  ).getPropertyValue('--device-size')
 })
 
 const close = (event: Event) => {
@@ -52,7 +66,7 @@ const device = ref('large')
   align-items: center;
   padding: 16px;
 
-  @include layout.media-query("large") {
+  @include layout.media-query('large') {
     padding: 16px 156px;
   }
 }
@@ -69,7 +83,8 @@ const device = ref('large')
 
 .slide-in-enter-active,
 .slide-in-leave-active {
-  transition: opacity 100ms ease-out, transform 200ms ease-out;
+  transition: opacity 100ms ease-out,
+    transform 200ms ease-out;
 }
 .slide-in-enter,
 .slide-in-leave-to {

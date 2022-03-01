@@ -1,0 +1,18 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "extends": [
+    "prettier",
+    "@nuxtjs/eslint-config-typescript",
+    "plugin:nuxt/recommended"
+  ],
+  "plugins": ["prettier"],
+  // add your custom rules here
+  "rules": {
+    "prettier/prettier": 1
+  }
+}
