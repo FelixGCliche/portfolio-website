@@ -12,7 +12,9 @@
     "check:format": "oxfmt --check",
     "fix:lint": "oxlint --fix",
     "fix:format": "oxfmt",
-    "precommit": "lefthook run pre-commit"
+    "precommit": "lefthook run pre-commit",
+    "deploy": "bun run build && wrangler deploy",
+    "preview": "bun run build && wrangler dev"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.13",
@@ -31,6 +33,7 @@
     "solid-devtools": "^0.34.3",
     "typescript": "^5.9.2",
     "vite": "^7.1.10",
-    "vite-plugin-solid": "^2.11.9"
+    "vite-plugin-solid": "^2.11.9",
+    "wrangler": "^4.94.0"
   }
 }
