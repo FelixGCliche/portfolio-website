@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "516bd2154eb843a8240e43d5b285229129853114ad7075a5e141e1c08e408c84"
+    },
+    "solidjs": {
+      "source": "suryavirkapur/skills",
+      "sourceType": "github",
+      "skillPath": "skills/solidjs/SKILL.md",
+      "computedHash": "c8d4b1f3573b6422266da881c4c1a6b46d7ffb6b8d24de4541592a1788e3de01"
+    },
+    "tanstack-router": {
+      "source": "tanstack-skills/tanstack-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/tanstack-router/skills/tanstack-router/SKILL.md",
+      "computedHash": "6aba9066ca12bf6bb6eebec9c58f5d4e33b6b06e2b11bf263f5b7a5c18edc389"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
+    },
+    "wrangler": {
+      "source": "cloudflare/skills",
+      "sourceType": "github",
+      "skillPath": "skills/wrangler/SKILL.md",
+      "computedHash": "d2094f7a5a76414fc0cd365fd8ddba3258c2135a1d468b78213c0fa02c309b9b"
+    }
+  }
+}
