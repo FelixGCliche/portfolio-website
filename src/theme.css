@@ -1,0 +1,177 @@
+@import 'tailwindcss';
+
+/* PP Eiko */
+@font-face {
+  font-family: 'PP Eiko';
+  src: url('./assets/fonts/PPEiko-Thin.woff2') format('woff2');
+  font-weight: 300;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+@font-face {
+  font-family: 'PP Eiko';
+  src: url('./assets/fonts/PPEiko-LightItalic.woff2') format('woff2');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+@font-face {
+  font-family: 'PP Eiko';
+  src: url('./assets/fonts/PPEiko-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+@font-face {
+  font-family: 'PP Eiko';
+  src: url('./assets/fonts/PPEiko-Heavy.woff2') format('woff2');
+  font-weight: 800;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+@font-face {
+  font-family: 'PP Eiko';
+  src: url('./assets/fonts/PPEiko-BlackItalic.woff2') format('woff2');
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+
+/* PP Neue Montreal */
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('./assets/fonts/PPNeueMontreal-Hairline.woff2') format('woff2');
+  font-weight: 100;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('./assets/fonts/PPNeueMontreal-HairlineItalic.woff2') format('woff2');
+  font-weight: 100;
+  font-style: italic;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('./assets/fonts/PPNeueMontreal-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('./assets/fonts/PPNeueMontreal-LightItalic.woff2') format('woff2');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('./assets/fonts/PPNeueMontreal-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('./assets/fonts/PPNeueMontreal-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('./assets/fonts/PPNeueMontreal-Semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('./assets/fonts/PPNeueMontreal-SemiboldItalic.woff2') format('woff2');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('./assets/fonts/PPNeueMontreal-Extrabold.woff2') format('woff2');
+  font-weight: 800;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('./assets/fonts/PPNeueMontreal-ExtraboldItalic.woff2') format('woff2');
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+
+/* PP Neue Montreal Text */
+@font-face {
+  font-family: 'PP Neue Montreal Text';
+  src: url('./assets/fonts/PPNeueMontrealText-Book.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+@font-face {
+  font-family: 'PP Neue Montreal Text';
+  src: url('./assets/fonts/PPNeueMontrealText-BookItalic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  font-synthesis: none;
+  size-adjust: 100%;
+}
+
+@theme {
+  --color-polar-0: oklch(0.3244 0.0229 264.18);
+  --color-polar-1: oklch(0.3792 0.029 266.47);
+  --color-polar-2: oklch(0.4157 0.0324 264.13);
+  --color-polar-3: oklch(0.4523 0.0352 264.13);
+
+  --color-snow-4: oklch(0.8993 0.0164 262.75);
+  --color-snow-5: oklch(0.933 0.0104 261.79);
+  --color-snow-6: oklch(0.9513 0.0074 260.73);
+
+  --color-frost-7: oklch(0.7629 0.0477 194.49);
+  --color-frost-8: oklch(0.7746 0.0622 217.47);
+  --color-frost-9: oklch(0.6965 0.0591 248.69);
+  --color-frost-10: oklch(0.5944 0.0772 254.03);
+
+  --color-aurora-11: oklch(0.6061 0.1206 15.34);
+  --color-aurora-12: oklch(0.6929 0.0963 38.24);
+  --color-aurora-13: oklch(0.8549 0.0892 84.09);
+  --color-aurora-14: oklch(0.7683 0.0749 131.06);
+  --color-aurora-15: oklch(0.6921 0.0625 332.66);
+
+  --font-eiko: 'PP Eiko', serif;
+  --font-montreal: 'PP Neue Montreal', serif;
+  --font-montreal-text: 'PP Neue Montreal Text', serif;
+}

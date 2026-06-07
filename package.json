@@ -22,7 +22,7 @@
     "@tanstack/solid-router-devtools": "^1.131.35",
     "redaxios": "^0.5.1",
     "solid-js": "^1.9.9",
-    "tailwindcss": "^4.1.13",
+    "tailwindcss": "^4.3.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
