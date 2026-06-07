@@ -1,5 +1,4 @@
-@import 'tailwindcss';
-
+@import 'theme';
 /*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
@@ -14,7 +13,7 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--color-polar-3, currentcolor);
   }
 }
 
@@ -22,8 +21,8 @@ html {
   color-scheme: light dark;
 }
 * {
-  @apply border-gray-200 dark:border-gray-800;
+  @apply border-snow-6 dark:border-polar-3;
 }
 body {
-  @apply bg-gray-50 text-gray-950 dark:bg-gray-900 dark:text-gray-200;
+  @apply bg-snow-4 text-polar-0 dark:bg-polar-0 dark:text-snow-6;
 }
