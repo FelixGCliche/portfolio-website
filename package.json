@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",
+    "@types/node": "^25.9.2",
     "oxfmt": "^0.51.0",
     "oxlint": "^1.66.0",
     "solid-devtools": "^0.34.3",

@@ -1,10 +1,11 @@
 import { Outlet, createRootRoute } from '@tanstack/solid-router'
 import { TanStackRouterDevtools } from '@tanstack/solid-router-devtools'
-import { SuspenseError } from '../components/error/SuspenseError'
-import { NotFoundError } from '../components/error/NotFoundError'
+import { SuspenseError, NotFoundError } from '@components/error'
+import { Header } from '@features/navigation'
 
 const RootComponent = () => (
   <>
+    <Header />
     <Outlet />
     <TanStackRouterDevtools position="bottom-right" />
   </>

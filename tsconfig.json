@@ -16,7 +16,16 @@
 
     // Type Checking & Safety
     "strict": true,
-    "types": ["vite/client"]
+    "types": ["vite/client", "node"],
+
+    // Path Aliases
+    "baseUrl": ".",
+    "paths": {
+      "@assets/*": ["./src/assets/*"],
+      "@components/*": ["./src/components/*"],
+      "@features/*": ["./src/features/*"],
+      "@routes/*": ["./src/routes/*"]
+    }
   },
   "exclude": ["node_modules/*", ".tanstack/*"]
 }
