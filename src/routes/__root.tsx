@@ -1,24 +1,17 @@
-import { Link, Outlet, createRootRoute } from '@tanstack/solid-router'
+import { Outlet, createRootRoute } from '@tanstack/solid-router'
 import { TanStackRouterDevtools } from '@tanstack/solid-router-devtools'
+import { SuspenseError } from '../components/error/SuspenseError'
+import { NotFoundError } from '../components/error/NotFoundError'
+
+const RootComponent = () => (
+  <>
+    <Outlet />
+    <TanStackRouterDevtools position="bottom-right" />
+  </>
+)
 
 export const Route = createRootRoute({
   component: RootComponent,
-  notFoundComponent: () => {
-    return (
-      <div>
-        <p>This is the notFoundComponent configured on root route</p>
-        <Link to="/">Start Over</Link>
-      </div>
-    )
-  },
+  errorComponent: SuspenseError,
+  notFoundComponent: NotFoundError,
 })
-
-function RootComponent() {
-  return (
-    <>
-      <Outlet />
-      {/* Start rendering router matches */}
-      <TanStackRouterDevtools position="bottom-right" />
-    </>
-  )
-}
