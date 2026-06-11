@@ -19,7 +19,6 @@
     "types": ["vite/client", "node"],
 
     // Path Aliases
-    "baseUrl": ".",
     "paths": {
       "@assets/*": ["./src/assets/*"],
       "@components/*": ["./src/components/*"],
