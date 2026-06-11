@@ -10,6 +10,9 @@ postinstall = "lefthook install"
 [tools."github:evilmartians/lefthook".platforms.linux-x64]
 asset_pattern = "lefthook_*_Linux_x86_64.gz"
 bin = "lefthook"
+[tools."github:evilmartians/lefthook".platforms.macos-arm64]
+asset_pattern = "lefthook_*_MacOS_arm64.gz"
+bin = "lefthook"
 [tools."github:evilmartians/lefthook".platforms.windows_x86_64]
 asset_pattern = "lefthook_*_Windows_x86_64.gz"
 bin = "lefthook.exe"
