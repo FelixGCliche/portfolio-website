@@ -14,13 +14,17 @@
   "devDependencies": {
     "@solidjs/diagnostics": "^2.0.0-rc.4",
     "@solidjs/vite-plugin": "^3.0.0-next.35",
+    "@tailwindcss/vite": "^4.3.3",
     "eslint-plugin-solid": "~0.17.0",
     "oxlint": "~1.79.0",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.9.2",
     "vite": "^8.1.5"
   },
   "dependencies": {
     "@solidjs/web": "^2.0.0-rc.4",
-    "solid-js": "^2.0.0-rc.4"
+    "@tanstack/solid-router": "^1.170.30",
+    "solid-js": "^2.0.0-rc.4",
+    "zod": "^4.5.4"
   }
 }
