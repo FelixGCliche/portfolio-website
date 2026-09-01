@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336"
+    },
+    "router-core": {
+      "source": "tanstack/router",
+      "sourceType": "github",
+      "skillPath": "packages/router-core/skills/router-core/SKILL.md",
+      "computedHash": "5d43fe59f75ec55b6939ccfdbbba2b34898477259e65b68ec9302fec2c5ed470"
+    },
+    "solid-router": {
+      "source": "tanstack/router",
+      "sourceType": "github",
+      "skillPath": "packages/solid-router/skills/solid-router/SKILL.md",
+      "computedHash": "901b8a799b8d8528e12a430458fdf682a574c3890651c666a32825f49e2847d5"
+    },
+    "solidjs-v2": {
+      "source": "khmm12/solidjs-v2-skills",
+      "sourceType": "github",
+      "skillPath": "skills/solidjs-v2/SKILL.md",
+      "computedHash": "c8688c851b423e0c8df19fec75ccf8723b9e8f6f3def21b07a7858eca4f01365"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
+    }
+  }
+}
