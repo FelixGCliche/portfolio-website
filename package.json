@@ -9,11 +9,12 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "lint": "oxlint -c oxlint.config.mts src",
-    "typecheck": "tsc --noEmit",
-    "format": "oxfmt .",
-    "format:check": "oxfmt --check .",
-    "check": "bun run typecheck && bun run format:check && bun run lint",
+    "check": "tsc --noEmit && oxlint && oxfmt",
+    "check:type": "tsc --noEmit",
+    "check:lint": "oxlint",
+    "check:format": "oxfmt --check",
+    "fix:lint": "oxlint --fix",
+    "fix:format": "oxfmt",
     "prepare": "lefthook install"
   },
   "dependencies": {
