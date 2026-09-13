@@ -48,6 +48,7 @@ Name your signals/memos/effects (the `{ name: "..." }` option) — attribution r
 - Always include a scope — never omit it
 - Keep commit messages short and concise (a single subject line; avoid bodies unless truly necessary)
 - Never add a description/body to a PR — title only
+- Never add a `Co-Authored-By` trailer (or any AI-attribution trailer) to a commit
 
 ## Testing
 
