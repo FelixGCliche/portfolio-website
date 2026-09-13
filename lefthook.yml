@@ -1,0 +1,9 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: typecheck
+      run: bun run check:type
+    - name: format
+      run: bun run check:format
+    - name: lint
+      run: bun run check:lint
