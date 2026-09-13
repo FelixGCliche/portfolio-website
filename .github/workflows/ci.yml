@@ -11,18 +11,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
-      - run: bun run typecheck
+      - run: bun run check:type
 
   format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
-      - run: bun run format:check
+      - run: bun run check:format
 
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
-      - run: bun run lint
+      - run: bun run check:lint
