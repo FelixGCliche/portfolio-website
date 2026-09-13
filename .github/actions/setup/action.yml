@@ -9,6 +9,14 @@ runs:
         install: true
         cache: true
 
+    - name: Cache bun dependencies
+      uses: actions/cache@v6
+      with:
+        path: ~/.bun/install/cache
+        key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock', '**/package.json') }}
+        restore-keys: |
+          ${{ runner.os }}-bun-
+
     - name: Install dependencies
       shell: bash
       run: bun install --frozen-lockfile
