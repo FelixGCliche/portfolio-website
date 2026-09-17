@@ -1,4 +1,5 @@
 import solid from '@solidjs/vite-plugin'
+import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
@@ -7,6 +8,7 @@ export default defineConfig({
   // (or a built-in shell). `vite build` prerenders the shell into
   // dist/client/index.html and emits a purely static dist/client.
   plugins: [
+    tailwindcss(),
     solid({ start: true, diagnostics: true }), // add `ssr: true` for streaming SSR
   ],
   server: {

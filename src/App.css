@@ -1,60 +1,34 @@
+@import 'tailwindcss';
+@import 'theme';
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border, currentcolor);
+  }
+}
+
+html,
 body {
-  margin: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  height: 100%;
 }
 
-.header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-  text-align: center;
+html {
+  color-scheme: light;
 }
-
-.logo {
-  animation: logo-spin infinite 20s linear;
-  height: 40vmin;
-  pointer-events: none;
+html.dark {
+  color-scheme: dark;
 }
-
-.increment {
-  font-size: 1rem;
-  padding: 0.5rem 1.5rem;
-  cursor: pointer;
-}
-
-.link {
-  margin-top: 1rem;
-  color: #93c5fd;
-  font-weight: 600;
-  text-decoration-color: #38bdf8;
-  text-decoration-thickness: 0.1em;
-  text-underline-offset: 0.2em;
-  transition: color 150ms ease;
-}
-
-.link:hover {
-  color: #dbeafe;
-}
-
-.link:focus-visible {
-  outline: 3px solid #38bdf8;
-  outline-offset: 4px;
-  border-radius: 0.2rem;
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+body {
+  @apply bg-background text-foreground font-grotesk-mono antialiased;
 }
