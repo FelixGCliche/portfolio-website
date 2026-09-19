@@ -21,10 +21,7 @@ export const SidebarContent = (props: ComponentProps<'div'>) => {
   const rest = omit(props, 'class', 'children')
 
   return (
-    <div
-      {...rest}
-      class={['flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 py-3', props.class]}
-    >
+    <div {...rest} class={['flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto py-3', props.class]}>
       {props.children}
     </div>
   )
@@ -50,7 +47,7 @@ export const SidebarMenu = (props: ComponentProps<'ul'>) => {
   const rest = omit(props, 'class', 'children')
 
   return (
-    <ul {...rest} class={['flex w-full min-w-0 flex-col gap-0.5', props.class]}>
+    <ul {...rest} class={['flex w-full min-w-0 flex-col', props.class]}>
       {props.children}
     </ul>
   )
@@ -79,7 +76,7 @@ export const SidebarMenuButton = (props: SidebarMenuButtonProps) => {
       {...rest}
       data-active={props.active ? 'true' : 'false'}
       class={[
-        'text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring data-[active=true]:border-primary data-[active=true]:bg-muted data-[active=true]:text-foreground flex w-full min-w-0 items-center gap-2 border-l-2 border-transparent px-2 py-2 text-left text-sm focus-visible:ring-2 focus-visible:outline-none lg:py-1.5',
+        'text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring data-[active=true]:border-primary data-[active=true]:bg-muted data-[active=true]:text-foreground flex w-full min-w-0 items-center gap-2 border-l-2 border-transparent px-4 py-2 text-left text-sm focus-visible:ring-2 focus-visible:outline-none lg:py-1.5',
         props.class,
       ]}
     >

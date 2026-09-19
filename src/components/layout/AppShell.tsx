@@ -9,7 +9,7 @@ import { Titlebar } from './Titlebar'
 export const AppShell = (props: ParentProps) => (
   <SidebarProvider>
     <div class="bg-background text-foreground pt-safe pr-safe pb-safe pl-safe h-dvh overflow-hidden">
-      <div class="mx-auto flex h-full min-h-0 flex-col md:p-1.5 2xl:max-w-[1600px]">
+      <div class="mx-auto flex h-full min-h-0 flex-col">
         <Titlebar />
         <div class="border-border relative flex min-h-0 min-w-0 flex-1 overflow-hidden border">
           <AppSidebar />
