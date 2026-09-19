@@ -96,7 +96,7 @@ export const AppSidebar = () => {
                           {session.meta}
                         </span>
                       </span>
-                      <span class="text-muted-foreground/70 text-xs text-pretty">
+                      <span class="text-muted-foreground/80 text-xs text-pretty">
                         {session.desc}
                       </span>
                     </span>
