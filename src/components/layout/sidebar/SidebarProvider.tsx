@@ -1,7 +1,7 @@
 import { createContext, createMemo, createSignal, onSettled, useContext } from 'solid-js'
 import type { Accessor, ParentProps, Setter } from 'solid-js'
 
-import { createMediaQuery } from '../../../lib/createMediaQuery'
+import { useIsMobile } from '../../../lib/useIsMobile'
 
 const SIDEBAR_WIDTH = '16.75rem'
 
@@ -27,7 +27,7 @@ export const SidebarProvider = (props: ParentProps) => {
   const [open, setOpen] = createSignal(true, { name: 'sidebarOpen' })
   const [openMobile, setOpenMobile] = createSignal(false, { name: 'sidebarOpenMobile' })
 
-  const isMobile = createMediaQuery(MOBILE_QUERY, (matches) => {
+  const isMobile = useIsMobile(MOBILE_QUERY, (matches) => {
     if (!matches) setOpenMobile(false)
   })
 

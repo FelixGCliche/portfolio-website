@@ -1,7 +1,7 @@
 import { createSignal, onSettled } from 'solid-js'
 import type { Accessor } from 'solid-js'
 
-export const createMediaQuery = (
+export const useIsMobile = (
   query: string,
   onChange?: (matches: boolean) => void
 ): Accessor<boolean> => {
