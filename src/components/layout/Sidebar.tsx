@@ -1,5 +1,6 @@
 // eslint-disable-next-line solid/imports -- solid-js 2.x has no intrinsic-element prop types; the renderer package owns them
 import type { ComponentProps } from '@solidjs/web'
+import { createLink } from '@tanstack/solid-router'
 import {
   createContext,
   createEffect,
@@ -227,6 +228,9 @@ export const SidebarMenuItem = (props: ComponentProps<'li'>) => {
   )
 }
 
+const menuRowClass =
+  'text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring data-[active=true]:border-primary data-[active=true]:bg-muted data-[active=true]:text-foreground flex w-full min-w-0 items-center gap-2 border-l-2 border-transparent px-4 py-2 text-left text-sm focus-visible:ring-2 focus-visible:outline-none lg:py-1.5'
+
 export type SidebarMenuButtonProps = ComponentProps<'button'> & {
   active?: boolean
 }
@@ -239,15 +243,28 @@ export const SidebarMenuButton = (props: SidebarMenuButtonProps) => {
       type="button"
       {...rest}
       data-active={props.active ? 'true' : 'false'}
-      class={[
-        'text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring data-[active=true]:border-primary data-[active=true]:bg-muted data-[active=true]:text-foreground flex w-full min-w-0 items-center gap-2 border-l-2 border-transparent px-4 py-2 text-left text-sm focus-visible:ring-2 focus-visible:outline-none lg:py-1.5',
-        props.class,
-      ]}
+      class={[menuRowClass, props.class]}
     >
       {props.children}
     </button>
   )
 }
+
+const SidebarMenuAnchor = (props: ComponentProps<'a'> & { 'data-status'?: string }) => {
+  const rest = omit(props, 'class', 'children')
+
+  return (
+    <a
+      {...rest}
+      data-active={props['data-status'] === 'active' ? 'true' : 'false'}
+      class={[menuRowClass, props.class]}
+    >
+      {props.children}
+    </a>
+  )
+}
+
+export const SidebarMenuLink = createLink(SidebarMenuAnchor)
 
 export type SidebarTriggerProps = ComponentProps<'button'>
 

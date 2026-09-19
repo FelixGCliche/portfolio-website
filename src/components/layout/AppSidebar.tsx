@@ -1,4 +1,4 @@
-import { createSignal, For, Show } from 'solid-js'
+import { For, Show } from 'solid-js'
 
 import {
   Sidebar,
@@ -6,13 +6,13 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuLink,
   useSidebar,
 } from './Sidebar'
 
 type Session = {
-  key: string
+  key: '/about' | '/work' | '/skills' | '/resume' | '/contact'
   meta: string
   desc: string
 }
@@ -30,10 +30,8 @@ const linkClass =
 
 export const AppSidebar = () => {
   const sidebar = useSidebar()
-  const [activeSession, setActiveSession] = createSignal('/about', { name: 'activeSession' })
 
-  const selectSession = (key: string) => {
-    setActiveSession(key)
+  const closeDrawer = () => {
     if (sidebar.isMobile()) sidebar.setOpenMobile(false)
   }
 
@@ -83,10 +81,10 @@ export const AppSidebar = () => {
             <For each={sessions}>
               {(session) => (
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    active={activeSession() === session.key}
-                    aria-current={activeSession() === session.key ? 'page' : undefined}
-                    onClick={() => selectSession(session.key)}
+                  <SidebarMenuLink
+                    to={session.key}
+                    activeOptions={{ exact: true }}
+                    onClick={closeDrawer}
                     class="py-2.5"
                   >
                     <span class="flex min-w-0 flex-1 flex-col gap-1">
@@ -100,7 +98,7 @@ export const AppSidebar = () => {
                         {session.desc}
                       </span>
                     </span>
-                  </SidebarMenuButton>
+                  </SidebarMenuLink>
                 </SidebarMenuItem>
               )}
             </For>
