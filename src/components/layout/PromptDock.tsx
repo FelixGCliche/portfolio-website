@@ -26,19 +26,20 @@ export const PromptDock = () => {
         </label>
         <input
           id="promptInput"
+          name="command"
           type="text"
           placeholder="type a command, e.g. /about"
           autocomplete="off"
           spellcheck={false}
           autocapitalize="off"
-          class="text-foreground placeholder:text-muted-foreground/70 min-w-0 flex-1 bg-transparent text-base outline-none md:text-sm"
+          class="text-foreground placeholder:text-muted-foreground/80 min-w-0 flex-1 bg-transparent text-base outline-none md:text-sm"
         />
         <button
           type="submit"
           aria-label="Send command"
-          class="border-border text-muted-foreground hover:text-primary hover:border-primary focus-visible:ring-ring size-11 flex-none border focus-visible:ring-2 focus-visible:outline-none md:h-6 md:w-7"
+          class="border-border text-muted-foreground hover:text-primary hover:border-primary focus-visible:ring-ring size-11 flex-none border focus-visible:ring-2 focus-visible:outline-none lg:h-6 lg:w-7"
         >
-          ↵
+          <span aria-hidden="true">↵</span>
         </button>
       </div>
       <ul class="text-muted-foreground m-0 hidden list-none flex-wrap gap-x-5 gap-y-1 p-0 pt-2.5 text-[11px] md:flex">

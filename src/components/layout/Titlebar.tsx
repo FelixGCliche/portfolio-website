@@ -22,18 +22,18 @@ export const Titlebar = () => (
     <div class="border-border flex flex-none items-stretch border-l">
       <button
         type="button"
-        aria-label="Switch language"
         class="text-muted-foreground hover:text-primary hover:bg-muted focus-visible:ring-ring inline-flex min-w-11 items-center justify-center px-3 text-[11.5px] focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset lg:min-w-0"
       >
+        <span class="sr-only">Switch language</span>
         <span class="xl:hidden">EN</span>
         <span class="hidden whitespace-nowrap xl:inline">EN · FR</span>
       </button>
 
       <button
         type="button"
-        aria-label="Open command palette"
         class="text-muted-foreground hover:text-primary hover:bg-muted focus-visible:ring-ring inline-flex min-w-11 items-center justify-center px-3 text-[11.5px] focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset lg:min-w-0"
       >
+        <span class="sr-only">Open command palette</span>
         <svg
           aria-hidden="true"
           viewBox="0 0 24 24"
