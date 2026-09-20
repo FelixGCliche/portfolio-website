@@ -66,6 +66,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-success: var(--success);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -75,7 +76,6 @@
   --font-grotesk-mono: 'PP Right Grotesk Mono', monospace;
 }
 
-/* Nord (default) */
 :root,
 [data-theme='nord'] {
   --radius: 0.625rem;
@@ -99,6 +99,7 @@
   --border: oklch(0.3244 0.0229 264.18 / 12%);
   --input: oklch(0.3244 0.0229 264.18 / 15%);
   --ring: oklch(0.6965 0.0591 248.69);
+  --success: oklch(0.7683 0.0749 131.06);
 }
 
 .dark,
@@ -122,4 +123,5 @@
   --border: oklch(0.9513 0.0074 260.73 / 12%);
   --input: oklch(0.9513 0.0074 260.73 / 18%);
   --ring: oklch(0.6965 0.0591 248.69);
+  --success: oklch(0.7683 0.0749 131.06);
 }

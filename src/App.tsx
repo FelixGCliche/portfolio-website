@@ -2,10 +2,6 @@ import { For } from 'solid-js'
 
 import './App.css'
 
-// The app root: a plain content component — the document shell lives in
-// src/Document.tsx. This file is the whole demo; replace its contents to
-// start your app.
-
 const colorTokens = [
   { name: 'background', bg: 'bg-background', fg: 'text-foreground' },
   { name: 'foreground', bg: 'bg-foreground', fg: 'text-background' },
