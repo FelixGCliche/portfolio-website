@@ -8,7 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from './sidebar'
+} from './Sidebar'
 
 const stubItems = [
   { label: 'about (stub)', active: true },

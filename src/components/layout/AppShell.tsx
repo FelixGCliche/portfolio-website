@@ -2,7 +2,7 @@ import type { ParentProps } from 'solid-js'
 
 import { AppSidebar } from './AppSidebar'
 import { PromptDock } from './PromptDock'
-import { SidebarInset, SidebarProvider } from './sidebar'
+import { SidebarInset, SidebarProvider } from './Sidebar'
 import { StatusBar } from './StatusBar'
 import { Titlebar } from './Titlebar'
 
