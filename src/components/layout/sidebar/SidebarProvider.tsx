@@ -1,11 +1,16 @@
-import { createContext, createMemo, createSignal, onSettled, useContext } from 'solid-js'
+import {
+  createContext,
+  createEffect,
+  createMemo,
+  createSignal,
+  onSettled,
+  useContext,
+} from 'solid-js'
 import type { Accessor, ParentProps, Setter } from 'solid-js'
 
 import { useIsMobile } from '../../../lib/useIsMobile'
 
 const SIDEBAR_WIDTH = '16.75rem'
-
-const MOBILE_QUERY = '(max-width: 1023px)'
 
 export type SidebarState = 'expanded' | 'collapsed'
 
@@ -27,8 +32,10 @@ export const SidebarProvider = (props: ParentProps) => {
   const [open, setOpen] = createSignal(true, { name: 'sidebarOpen' })
   const [openMobile, setOpenMobile] = createSignal(false, { name: 'sidebarOpenMobile' })
 
-  const isMobile = useIsMobile(MOBILE_QUERY, (matches) => {
-    if (!matches) setOpenMobile(false)
+  const isMobile = useIsMobile()
+
+  createEffect(isMobile, (mobile) => {
+    if (!mobile) setOpenMobile(false)
   })
 
   const state = createMemo<SidebarState>(() => (open() ? 'expanded' : 'collapsed'), {
