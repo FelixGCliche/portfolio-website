@@ -13,9 +13,18 @@
     "moduleResolution": "bundler",
     "noEmit": true,
 
+    // Path Aliases
+    "paths": {
+      "@assets/*": ["./src/assets/*"],
+      "@components/*": ["./src/components/*"],
+      "@features/*": ["./src/features/*"],
+      "@routes/*": ["./src/routes/*"]
+    },
+
     // Type Checking & Safety
     "strict": true,
     "skipLibCheck": true,
     "types": ["vite/client"]
-  }
+  },
+  "exclude": ["node_modules/*", ".tanstack/*"]
 }
