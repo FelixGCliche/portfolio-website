@@ -9,7 +9,7 @@ import {
   SidebarMenuItem,
   SidebarMenuLink,
   useSidebar,
-} from './Sidebar'
+} from '@components'
 
 type Session = {
   key: '/about' | '/work' | '/skills' | '/resume' | '/contact'

@@ -8,6 +8,6 @@ export default defineConfig({
   printWidth: 100,
   tabWidth: 2,
   useTabs: false,
-  sortImports: true,
+  sortImports: { internalPattern: ['@assets/', '@components', '@features/', '@hooks', '@routes/'] },
   sortTailwindcss: true,
 })

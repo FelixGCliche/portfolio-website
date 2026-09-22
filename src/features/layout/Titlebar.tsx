@@ -1,4 +1,4 @@
-import { SidebarTrigger } from './Sidebar'
+import { SidebarTrigger } from '@components'
 
 export const Titlebar = () => (
   <header class="bg-card border-border flex h-14 flex-none items-stretch border-b lg:h-10">

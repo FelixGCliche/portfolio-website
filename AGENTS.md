@@ -44,6 +44,26 @@ Name your signals/memos/effects (the `{ name: "..." }` option) — attribution r
 - Use the best model for the task - premium models for complex tasks (like coding) and mid-tier models for simpler tasks, like documentation
 - After completing features (large or small), always run commands like lint, type check and next build to check code quality using the `bun` command
 
+## Project structure
+
+Feature-based layout under `src/`. Folder names describe the feature or domain, never a technical layer (the one exception is `hooks/`, below).
+
+- `assets/` — images, downloadable files, fonts, etc.
+- `components/` — reusable component primitives like buttons, popovers, sheets; flat, one file per primitive plus a single `index.ts` barrel
+- `features/` — specific business logic and complex components; every distinct feature/domain gets its own subfolder
+- `hooks/` — shared, generic hooks; flat, one file per hook plus a single `index.ts` barrel. A deliberate exception to the no-technical-layer rule: shared hooks belong to no single feature. Feature-specific hooks stay inside their feature
+- `routes/` — file-based routing shells
+
+Plumbing files stay at the `src/` root: `App.tsx`, `Document.tsx`, `router.tsx`, `routeTree.gen.ts` (generated), `App.css`, `theme.css`.
+
+### Import rules
+
+- Cross-folder imports use the path aliases: `@assets`, `@components`, `@features`, `@hooks`, `@routes`
+- `components/` is flat (one file per primitive) with a single `index.ts` barrel, imported as `@components` (e.g. `import { SidebarTrigger } from '@components'`); it holds no hooks files
+- `hooks/` is flat (one file per hook) with a single `index.ts` barrel, imported as `@hooks` (e.g. `import { useIsMobile } from '@hooks'`)
+- Each `features/<name>` folder has its own barrel `index.ts` as its public API; consumers import the folder alias, never a file inside it
+- Within a folder, use relative imports to siblings (`./Sheet`), never the barrel
+
 ## Code Style
 
 - Use `const` arrow functions instead of the `function` keyword for all function declarations

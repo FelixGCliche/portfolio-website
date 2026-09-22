@@ -1,12 +1,13 @@
 import type { ParentProps } from 'solid-js'
 
-import { AppSidebar } from './AppSidebar'
-import { PromptDock } from './PromptDock'
-import { SidebarInset, SidebarProvider } from './Sidebar'
+import { SidebarInset, SidebarProvider } from '@components'
+import { PromptDock } from '@features/composer'
+import { AppSidebar } from '@features/session-sidebar'
+
 import { StatusBar } from './StatusBar'
 import { Titlebar } from './Titlebar'
 
-export const AppShell = (props: ParentProps) => (
+export const AppLayout = (props: ParentProps) => (
   <SidebarProvider>
     <div class="bg-background text-foreground pt-safe pr-safe pb-safe pl-safe relative h-dvh touch-manipulation overflow-hidden">
       <a
