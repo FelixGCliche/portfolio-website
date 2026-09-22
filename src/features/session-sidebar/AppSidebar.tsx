@@ -26,7 +26,7 @@ const sessions: Session[] = [
 ]
 
 const linkClass =
-  'text-primary focus-visible:ring-ring inline-flex min-h-11 items-center hover:underline focus-visible:ring-2 focus-visible:outline-none lg:min-h-0'
+  'text-primary focus-visible:ring-ring inline-flex min-h-11 items-center hover:underline focus-visible:ring-2 focus-visible:outline-none md:min-h-0'
 
 export const AppSidebar = () => {
   const sidebar = useSidebar()

@@ -14,7 +14,7 @@ export const PromptDock = () => {
 
   return (
     <form
-      class="border-border flex-none border-t px-3 pt-3 pb-3 sm:px-6 lg:px-10"
+      class="border-border flex-none border-t px-3 pt-3 pb-3 sm:px-6 md:px-10"
       onSubmit={handleSubmit}
     >
       <div class="border-border bg-background focus-within:border-primary focus-within:ring-primary flex items-center gap-3 border px-3 py-3 focus-within:ring-1">
@@ -37,7 +37,7 @@ export const PromptDock = () => {
         <button
           type="submit"
           aria-label="Send command"
-          class="border-border text-muted-foreground hover:text-primary hover:border-primary focus-visible:ring-ring size-11 flex-none border focus-visible:ring-2 focus-visible:outline-none lg:h-6 lg:w-7"
+          class="border-border text-muted-foreground hover:text-primary hover:border-primary focus-visible:ring-ring size-11 flex-none border focus-visible:ring-2 focus-visible:outline-none md:h-6 md:w-7"
         >
           <span aria-hidden="true">↵</span>
         </button>

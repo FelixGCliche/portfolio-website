@@ -105,7 +105,7 @@ export const Sidebar = (props: SidebarProps) => {
         </Sheet>
       </Match>
       <Match when={!sidebar.isMobile()}>
-        <div class="group hidden h-full lg:block" data-state={sidebar.state()}>
+        <div class="group hidden h-full md:block" data-state={sidebar.state()}>
           <div class="h-full w-(--sidebar-width) transition-[width] duration-200 ease-linear group-data-[state=collapsed]:w-0 motion-reduce:transition-none" />
           <aside
             id="sidebar"
@@ -184,7 +184,7 @@ export const SidebarMenuItem = (props: ComponentProps<'li'>) => {
 }
 
 const menuRowClass =
-  'text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring data-[active=true]:border-primary data-[active=true]:bg-muted data-[active=true]:text-foreground flex w-full min-w-0 items-center gap-2 border-l-2 border-transparent px-4 py-2 text-left text-sm focus-visible:ring-2 focus-visible:outline-none lg:py-1.5'
+  'text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring data-[active=true]:border-primary data-[active=true]:bg-muted data-[active=true]:text-foreground flex w-full min-w-0 items-center gap-2 border-l-2 border-transparent px-4 py-2 text-left text-sm focus-visible:ring-2 focus-visible:outline-none md:py-1.5'
 
 export type SidebarMenuButtonProps = ComponentProps<'button'> & {
   active?: boolean
@@ -238,7 +238,7 @@ export const SidebarTrigger = (props: SidebarTriggerProps) => {
       aria-expanded={expanded() ? 'true' : 'false'}
       onClick={() => sidebar.toggleSidebar()}
       class={[
-        'text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex size-11 flex-none items-center justify-center focus-visible:ring-2 focus-visible:outline-none lg:size-8',
+        'text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex size-11 flex-none items-center justify-center focus-visible:ring-2 focus-visible:outline-none md:size-8',
         props.class,
       ]}
     >
@@ -249,7 +249,7 @@ export const SidebarTrigger = (props: SidebarTriggerProps) => {
         stroke="currentColor"
         stroke-width="1.5"
         stroke-linecap="square"
-        class="size-5 lg:size-4"
+        class="size-5 md:size-4"
       >
         <path d="M3.5 5.5h17M3.5 12h17M3.5 18.5h17" />
       </svg>
