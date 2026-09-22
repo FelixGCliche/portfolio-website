@@ -9,6 +9,9 @@ export default defineConfig({
     tanstackRouter({ target: 'solid', autoCodeSplitting: true }),
     solid({ start: true, diagnostics: true }), // add `ssr: true` for streaming SSR
   ],
+  resolve: {
+    tsconfigPaths: true,
+  },
   server: {
     port: 3000,
   },

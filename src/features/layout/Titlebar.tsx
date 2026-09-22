@@ -1,16 +1,16 @@
-import { SidebarTrigger } from './Sidebar'
+import { SidebarTrigger } from '@components'
 
 export const Titlebar = () => (
-  <header class="bg-card border-border flex h-14 flex-none items-stretch border-b lg:h-10">
+  <header class="bg-card border-border flex h-14 flex-none items-stretch border-b md:h-10">
     <div class="border-border flex flex-none items-center border-r">
       <SidebarTrigger />
     </div>
 
-    <div class="text-primary border-border flex flex-none items-center px-3 text-[13px] font-bold lg:border-r">
+    <div class="text-primary border-border flex flex-none items-center px-3 text-[13px] font-bold md:border-r">
       [fgc]
     </div>
 
-    <div class="flex min-w-0 flex-1 items-center gap-2.5 px-2 lg:px-3.5">
+    <div class="flex min-w-0 flex-1 items-center gap-2.5 px-2 md:px-3.5">
       <span class="text-muted-foreground md:text-foreground truncate text-[11.5px] tracking-[0.06em]">
         felix@portfolio
       </span>
@@ -22,7 +22,7 @@ export const Titlebar = () => (
     <div class="border-border flex flex-none items-stretch border-l">
       <button
         type="button"
-        class="text-muted-foreground hover:text-primary hover:bg-muted focus-visible:ring-ring inline-flex min-w-11 items-center justify-center px-3 text-[11.5px] focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset lg:min-w-0"
+        class="text-muted-foreground hover:text-primary hover:bg-muted focus-visible:ring-ring inline-flex min-w-11 items-center justify-center px-3 text-[11.5px] focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:min-w-0"
       >
         <span class="sr-only">Switch language</span>
         <span class="xl:hidden">EN</span>
@@ -31,7 +31,7 @@ export const Titlebar = () => (
 
       <button
         type="button"
-        class="text-muted-foreground hover:text-primary hover:bg-muted focus-visible:ring-ring inline-flex min-w-11 items-center justify-center px-3 text-[11.5px] focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset lg:min-w-0"
+        class="text-muted-foreground hover:text-primary hover:bg-muted focus-visible:ring-ring inline-flex min-w-11 items-center justify-center px-3 text-[11.5px] focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:min-w-0"
       >
         <span class="sr-only">Open command palette</span>
         <svg

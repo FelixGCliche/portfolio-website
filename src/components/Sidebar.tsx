@@ -14,56 +14,11 @@ import {
 } from 'solid-js'
 import type { Accessor, ParentProps, Setter } from 'solid-js'
 
-import { useIsMobile } from '../../lib/useIsMobile'
+import { useIsMobile } from '@hooks'
 
-const SIDEBAR_WIDTH = '16.75rem'
+import { Sheet } from './Sheet'
 
-export type SheetProps = ParentProps<{
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  label: string
-  id?: string
-  class?: ComponentProps<'div'>['class']
-}>
-
-export const Sheet = (props: SheetProps) => {
-  let dialog!: HTMLDialogElement
-
-  createEffect(
-    () => props.open,
-    (open) => {
-      if (open) {
-        if (!dialog.open) dialog.showModal()
-      } else if (dialog.open) {
-        dialog.close()
-      }
-    }
-  )
-
-  const handleClose = () => props.onOpenChange(false)
-
-  const handleClick = (event: MouseEvent) => {
-    if (event.target === dialog) props.onOpenChange(false)
-  }
-
-  return (
-    <dialog
-      ref={(el) => {
-        dialog = el
-      }}
-      id={props.id}
-      aria-label={props.label}
-      onClose={handleClose}
-      onClick={handleClick}
-      class={[
-        'bg-background text-foreground border-border backdrop:bg-background/60 m-0 mr-auto h-dvh max-h-none w-[min(84%,20rem)] max-w-none -translate-x-full overscroll-contain border-r p-0 opacity-0 transition-[opacity,translate,overlay,display] transition-discrete duration-200 ease-out open:translate-x-0 open:opacity-100 motion-reduce:transition-none starting:open:-translate-x-full starting:open:opacity-0',
-        props.class,
-      ]}
-    >
-      <div class="pt-safe pb-safe flex h-full min-h-0 flex-col">{props.children}</div>
-    </dialog>
-  )
-}
+const SIDEBAR_WIDTH = '18rem'
 
 export type SidebarState = 'expanded' | 'collapsed'
 
@@ -150,7 +105,7 @@ export const Sidebar = (props: SidebarProps) => {
         </Sheet>
       </Match>
       <Match when={!sidebar.isMobile()}>
-        <div class="group hidden h-full lg:block" data-state={sidebar.state()}>
+        <div class="group hidden h-full md:block" data-state={sidebar.state()}>
           <div class="h-full w-(--sidebar-width) transition-[width] duration-200 ease-linear group-data-[state=collapsed]:w-0 motion-reduce:transition-none" />
           <aside
             id="sidebar"
@@ -229,7 +184,7 @@ export const SidebarMenuItem = (props: ComponentProps<'li'>) => {
 }
 
 const menuRowClass =
-  'text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring data-[active=true]:border-primary data-[active=true]:bg-muted data-[active=true]:text-foreground flex w-full min-w-0 items-center gap-2 border-l-2 border-transparent px-4 py-2 text-left text-sm focus-visible:ring-2 focus-visible:outline-none lg:py-1.5'
+  'text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring data-[active=true]:border-primary data-[active=true]:bg-muted data-[active=true]:text-foreground flex w-full min-w-0 items-center gap-2 border-l-2 border-transparent px-4 py-2 text-left text-sm focus-visible:ring-2 focus-visible:outline-none md:py-1.5'
 
 export type SidebarMenuButtonProps = ComponentProps<'button'> & {
   active?: boolean
@@ -283,7 +238,7 @@ export const SidebarTrigger = (props: SidebarTriggerProps) => {
       aria-expanded={expanded() ? 'true' : 'false'}
       onClick={() => sidebar.toggleSidebar()}
       class={[
-        'text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex size-11 flex-none items-center justify-center focus-visible:ring-2 focus-visible:outline-none lg:size-8',
+        'text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring inline-flex size-11 flex-none items-center justify-center focus-visible:ring-2 focus-visible:outline-none md:size-8',
         props.class,
       ]}
     >
@@ -294,7 +249,7 @@ export const SidebarTrigger = (props: SidebarTriggerProps) => {
         stroke="currentColor"
         stroke-width="1.5"
         stroke-linecap="square"
-        class="size-5 lg:size-4"
+        class="size-5 md:size-4"
       >
         <path d="M3.5 5.5h17M3.5 12h17M3.5 18.5h17" />
       </svg>

@@ -9,7 +9,7 @@ export const StatusBar = () => (
         <span aria-hidden="true">●</span> available
       </span>
       <span class="border-border hidden border-l px-2.5 py-1 whitespace-nowrap md:block">en</span>
-      <span class="border-border hidden border-l px-2.5 py-1 whitespace-nowrap lg:block">
+      <span class="border-border hidden border-l px-2.5 py-1 whitespace-nowrap md:block">
         utf-8
       </span>
       <span class="border-border hidden border-l px-2.5 py-1 whitespace-nowrap xl:block">100%</span>

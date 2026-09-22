@@ -13,9 +13,21 @@
     "moduleResolution": "bundler",
     "noEmit": true,
 
+    // Path Aliases
+    "paths": {
+      "@assets/*": ["./src/assets/*"],
+      "@components": ["./src/components"],
+      "@components/*": ["./src/components/*"],
+      "@features/*": ["./src/features/*"],
+      "@hooks": ["./src/hooks"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@routes/*": ["./src/routes/*"]
+    },
+
     // Type Checking & Safety
     "strict": true,
     "skipLibCheck": true,
     "types": ["vite/client"]
-  }
+  },
+  "exclude": ["node_modules/*", ".tanstack/*"]
 }
