@@ -76,6 +76,16 @@
   --font-grotesk-mono: 'PP Right Grotesk Mono', monospace;
 }
 
+@theme {
+  --animate-caret-blink: caret-blink 1s step-end infinite;
+
+  @keyframes caret-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+}
+
 :root,
 [data-theme='nord'] {
   --radius: 0.625rem;
