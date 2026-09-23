@@ -3,12 +3,13 @@ import { createMemo, createSignal, For, Show } from 'solid-js'
 
 import { findSession, matchSessions } from '@features/sessions'
 import type { Session } from '@features/sessions'
+import { useModKeyLabel } from '@hooks'
 
+import { useComposer } from './ComposerProvider'
 import { Suggestions, SUGGESTIONS_ID, suggestionOptionId } from './Suggestions'
 import { useCommandHistory } from './useCommandHistory'
 
 const KEY_HINTS = [
-  { key: '⌘K', label: 'palette' },
   { key: '↑↓', label: 'history' },
   { key: 'tab', label: 'completes' },
   { key: 'esc', label: 'clears' },
@@ -17,12 +18,12 @@ const KEY_HINTS = [
 export const Composer = () => {
   const navigate = useNavigate()
   const history = useCommandHistory()
-  const [value, setValue] = createSignal('', { name: 'promptValue' })
+  const { value, setValue, focus, registerInput } = useComposer()
+  const paletteShortcut = useModKeyLabel('K')
   const [error, setError] = createSignal('', { name: 'promptError' })
   const [focused, setFocused] = createSignal(false, { name: 'promptFocused' })
   const [dismissed, setDismissed] = createSignal(false, { name: 'suggestionsDismissed' })
   const [active, setActive] = createSignal(0, { name: 'suggestionActive' })
-  let input: HTMLInputElement | undefined
 
   const matches = createMemo(() => (value().startsWith('/') ? matchSessions(value()) : []), {
     name: 'suggestionMatches',
@@ -126,7 +127,7 @@ export const Composer = () => {
             active={activeIndex()}
             onSelect={(key) => {
               accept(key)
-              input?.focus()
+              focus()
             }}
           />
         </Show>
@@ -137,7 +138,7 @@ export const Composer = () => {
           Command
         </label>
         <input
-          ref={(el) => (input = el)}
+          ref={registerInput}
           id="promptInput"
           name="command"
           type="text"
@@ -181,6 +182,9 @@ export const Composer = () => {
         {error()}
       </p>
       <ul class="text-muted-foreground m-0 hidden list-none flex-wrap gap-x-5 gap-y-1 p-0 pt-2.5 text-[11px] md:flex">
+        <li class="whitespace-nowrap">
+          <kbd class="text-foreground">{paletteShortcut()}</kbd> palette
+        </li>
         <For each={KEY_HINTS}>
           {(hint) => (
             <li class="whitespace-nowrap">

@@ -1,10 +1,14 @@
 import { Show } from 'solid-js'
 
 import { SidebarTrigger } from '@components'
+import { useCommandPalette } from '@features/command-palette'
 import { usePreferences } from '@features/preferences'
+import { useModKeyLabel } from '@hooks'
 
 export const Titlebar = () => {
   const preferences = usePreferences()
+  const palette = useCommandPalette()
+  const paletteShortcut = useModKeyLabel('K')
 
   return (
     <header class="bg-card border-border flex h-14 flex-none items-stretch border-b md:h-10">
@@ -72,6 +76,11 @@ export const Titlebar = () => {
 
         <button
           type="button"
+          onClick={() => palette.setOpen(true)}
+          aria-haspopup="dialog"
+          aria-controls="commandPalette"
+          aria-expanded={palette.open() ? 'true' : 'false'}
+          aria-keyshortcuts="Control+K Meta+K"
           class="text-muted-foreground hover:text-primary hover:bg-muted focus-visible:ring-ring inline-flex min-w-11 items-center justify-center px-3 text-[11.5px] focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:min-w-0"
         >
           <span class="sr-only">Open command palette</span>
@@ -87,7 +96,9 @@ export const Titlebar = () => {
             <circle cx="11" cy="11" r="6.5" />
             <path d="m16 16 4.5 4.5" />
           </svg>
-          <span class="hidden md:inline">⌘K</span>
+          <span aria-hidden="true" class="hidden whitespace-nowrap md:inline">
+            {paletteShortcut()}
+          </span>
         </button>
       </div>
     </header>
