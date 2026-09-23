@@ -1,10 +1,12 @@
 import { formatForDisplay } from '@tanstack/hotkeys'
 import { useNavigate } from '@tanstack/solid-router'
-import { createSignal, For } from 'solid-js'
+import { createMemo, createSignal, For, Show } from 'solid-js'
 
-import { findSession } from '@features/sessions'
+import { findSession, matchSessions } from '@features/sessions'
+import type { Session } from '@features/sessions'
 import { useHotkey } from '@hooks'
 
+import { Suggestions, SUGGESTIONS_ID, suggestionOptionId } from './Suggestions'
 import { useCommandHistory } from './useCommandHistory'
 
 const KEY_HINTS = [
@@ -21,9 +23,41 @@ export const Composer = () => {
   const history = useCommandHistory()
   const [value, setValue] = createSignal('', { name: 'promptValue' })
   const [error, setError] = createSignal('', { name: 'promptError' })
+  const [focused, setFocused] = createSignal(false, { name: 'promptFocused' })
+  const [dismissed, setDismissed] = createSignal(false, { name: 'suggestionsDismissed' })
+  const [active, setActive] = createSignal(0, { name: 'suggestionActive' })
   const [input, setInput] = createSignal<HTMLInputElement | undefined>(undefined, {
     name: 'promptInputEl',
   })
+
+  const matches = createMemo(() => (value().startsWith('/') ? matchSessions(value()) : []), {
+    name: 'suggestionMatches',
+  })
+  const open = createMemo(() => focused() && !dismissed() && matches().length > 0, {
+    name: 'suggestionsOpen',
+  })
+  const activeIndex = createMemo(() => Math.max(0, Math.min(active(), matches().length - 1)), {
+    name: 'suggestionActiveIndex',
+  })
+  const activeMatch = createMemo(() => (open() ? matches()[activeIndex()] : undefined), {
+    name: 'suggestionActiveMatch',
+  })
+
+  const activeOptionId = () => {
+    const match = activeMatch()
+    return match ? suggestionOptionId(match.key) : undefined
+  }
+
+  const accept = (key: Session['key']) => {
+    setValue(key)
+    setActive(0)
+    setError('')
+  }
+
+  const recall = (entry: string) => {
+    setValue(entry)
+    setDismissed(true)
+  }
 
   const handleSubmit = (input: string) => {
     const command = input.trim()
@@ -41,19 +75,70 @@ export const Composer = () => {
 
   const hotkeyOptions = { target: input, preventDefault: false, ignoreInputs: false }
 
+  const cycle = (step: number) => {
+    const count = matches().length
+    setActive((activeIndex() + step + count) % count)
+  }
+
   const walkHistory = (event: KeyboardEvent, entry: string | undefined) => {
     if (entry === undefined) return
     event.preventDefault()
-    setValue(entry)
+    recall(entry)
   }
 
-  useHotkey('ArrowUp', (event) => walkHistory(event, history.prev(value())), hotkeyOptions)
+  useHotkey(
+    'ArrowUp',
+    (event) => {
+      if (open()) {
+        event.preventDefault()
+        cycle(-1)
+      } else walkHistory(event, history.prev(value()))
+    },
+    hotkeyOptions
+  )
 
-  useHotkey('ArrowDown', (event) => walkHistory(event, history.next()), hotkeyOptions)
+  useHotkey(
+    'ArrowDown',
+    (event) => {
+      if (open()) {
+        event.preventDefault()
+        cycle(1)
+      } else walkHistory(event, history.next())
+    },
+    hotkeyOptions
+  )
+
+  useHotkey(
+    'Tab',
+    (event) => {
+      const match = activeMatch()
+      if (!match || value() === match.key) return
+      event.preventDefault()
+      accept(match.key)
+    },
+    hotkeyOptions
+  )
+
+  useHotkey(
+    'Enter',
+    (event) => {
+      const match = activeMatch()
+      if (!match) return
+      event.preventDefault()
+      accept(match.key)
+      handleSubmit(match.key)
+    },
+    hotkeyOptions
+  )
 
   useHotkey(
     'Escape',
     (event) => {
+      if (open()) {
+        event.preventDefault()
+        setDismissed(true)
+        return
+      }
       history.reset()
       if (!value() && !error()) return
       event.preventDefault()
@@ -71,7 +156,17 @@ export const Composer = () => {
         handleSubmit(value())
       }}
     >
-      <div class="border-border bg-background focus-within:border-primary focus-within:ring-primary flex items-center gap-3 border px-3 py-3 focus-within:ring-1">
+      <div class="border-border bg-background focus-within:border-primary focus-within:ring-primary relative flex items-center gap-3 border px-3 py-3 focus-within:ring-1">
+        <Show when={open()}>
+          <Suggestions
+            items={matches()}
+            active={activeIndex()}
+            onSelect={(key) => {
+              accept(key)
+              input()?.focus()
+            }}
+          />
+        </Show>
         <span class="text-success flex-none" aria-hidden="true">
           ›
         </span>
@@ -90,10 +185,19 @@ export const Composer = () => {
           value={value()}
           aria-invalid={error() ? 'true' : undefined}
           aria-describedby="promptError"
+          role="combobox"
+          aria-expanded={open() ? 'true' : 'false'}
+          aria-controls={SUGGESTIONS_ID}
+          aria-autocomplete="list"
+          aria-activedescendant={activeOptionId()}
           onInput={(event) => {
             setValue(event.currentTarget.value)
             setError('')
+            setActive(0)
+            setDismissed(false)
           }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           class="text-foreground placeholder:text-muted-foreground/80 min-w-0 flex-1 bg-transparent text-base outline-none md:text-sm"
         />
         <button
