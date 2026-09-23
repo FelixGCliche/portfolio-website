@@ -1,5 +1,9 @@
+import type { FileRoutesByTo } from '../../routeTree.gen'
+
+export type SessionKey = Exclude<keyof FileRoutesByTo, '/'>
+
 export type Session = {
-  key: '/about' | '/work' | '/skills' | '/resume' | '/contact'
+  key: SessionKey
   meta: string
   desc: string
 }
