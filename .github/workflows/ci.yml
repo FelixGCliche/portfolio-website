@@ -18,3 +18,5 @@ jobs:
             run: bun run check:format
           - name: Lint
             run: bun run check:lint
+          - name: Test
+            run: bun run test

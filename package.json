@@ -13,6 +13,7 @@
     "check:type": "tsc --noEmit",
     "check:lint": "oxlint",
     "check:format": "oxfmt --check",
+    "test": "bun test --conditions browser --conditions development",
     "fix:lint": "oxlint --fix",
     "fix:format": "oxfmt",
     "prepare": "lefthook install"
@@ -24,11 +25,14 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@happy-dom/global-registrator": "^20.14.5",
     "@solidjs/diagnostics": "^2.0.0-rc.4",
     "@solidjs/vite-plugin": "^3.0.0-next.35",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/router-plugin": "^1.168.40",
+    "@types/bun": "^1.4.2",
     "eslint-plugin-solid": "~0.17.0",
+    "happy-dom": "^20.14.5",
     "oxfmt": "^0.66.0",
     "oxlint": "~1.79.0",
     "tailwindcss": "^4.3.3",
