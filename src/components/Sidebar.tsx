@@ -8,13 +8,12 @@ import {
   createSignal,
   Match,
   omit,
-  onSettled,
   Switch,
   useContext,
 } from 'solid-js'
 import type { Accessor, ParentProps, Setter } from 'solid-js'
 
-import { useIsMobile } from '@hooks'
+import { useHotkey, useIsMobile } from '@hooks'
 
 import { Sheet } from './Sheet'
 
@@ -55,17 +54,7 @@ export const SidebarProvider = (props: ParentProps) => {
     else setOpen((value) => !value)
   }
 
-  onSettled(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === 'b' && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault()
-        toggleSidebar()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  })
+  useHotkey('mod+b', toggleSidebar)
 
   const value: SidebarContextValue = {
     state,
