@@ -54,7 +54,8 @@ export const SidebarProvider = (props: ParentProps) => {
     else setOpen((value) => !value)
   }
 
-  useHotkey('mod+b', toggleSidebar)
+  // Both Cmd+B and Ctrl+B on every platform (not `mod+b`, which picks one), tolerating extra modifiers
+  useHotkey(['meta+b', 'ctrl+b'], toggleSidebar, { exact: false })
 
   const value: SidebarContextValue = {
     state,
