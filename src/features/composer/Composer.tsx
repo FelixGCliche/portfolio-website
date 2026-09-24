@@ -1,13 +1,16 @@
+import { formatForDisplay } from '@tanstack/hotkeys'
 import { For } from 'solid-js'
 
 const KEY_HINTS = [
-  { key: '⌘K', label: 'palette' },
   { key: '↑↓', label: 'history' },
   { key: 'tab', label: 'completes' },
   { key: 'esc', label: 'clears' },
 ]
 
 export const Composer = () => {
+  // Client-only app: the platform is known at render time
+  const paletteLabel = formatForDisplay('Mod+K')
+
   const handleSubmit = (event: SubmitEvent) => {
     event.preventDefault()
   }
@@ -43,6 +46,9 @@ export const Composer = () => {
         </button>
       </div>
       <ul class="text-muted-foreground m-0 hidden list-none flex-wrap gap-x-5 gap-y-1 p-0 pt-2.5 text-[11px] md:flex">
+        <li class="whitespace-nowrap">
+          <kbd class="text-foreground">{paletteLabel}</kbd> palette
+        </li>
         <For each={KEY_HINTS}>
           {(hint) => (
             <li class="whitespace-nowrap">

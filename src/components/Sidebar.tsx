@@ -13,7 +13,7 @@ import {
 } from 'solid-js'
 import type { Accessor, ParentProps, Setter } from 'solid-js'
 
-import { useHotkey, useIsMobile } from '@hooks'
+import { useHotkeys, useIsMobile } from '@hooks'
 
 import { Sheet } from './Sheet'
 
@@ -54,8 +54,12 @@ export const SidebarProvider = (props: ParentProps) => {
     else setOpen((value) => !value)
   }
 
-  // Both Cmd+B and Ctrl+B on every platform (not `mod+b`, which picks one), tolerating extra modifiers
-  useHotkey(['meta+b', 'ctrl+b'], toggleSidebar, { exact: false })
+  // Both Cmd+B and Ctrl+B on every platform (not `Mod+B`, which picks one). Modifiers match
+  // exactly, so a single keydown satisfies at most one of the two.
+  useHotkeys([
+    { hotkey: 'Meta+B', callback: toggleSidebar },
+    { hotkey: 'Control+B', callback: toggleSidebar },
+  ])
 
   const value: SidebarContextValue = {
     state,
