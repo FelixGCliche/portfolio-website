@@ -3,7 +3,7 @@ import { createMemo, createSignal, For, Show } from 'solid-js'
 
 import { findSession, matchSessions } from '@features/sessions'
 import type { Session } from '@features/sessions'
-import { useModKeyLabel } from '@hooks'
+import { useHotkey, useModKeyLabel } from '@hooks'
 
 import { BlockCaret } from './BlockCaret'
 import { useComposer } from './ComposerProvider'
@@ -72,49 +72,80 @@ export const Composer = () => {
     setError('')
   }
 
-  const handleKeyDown = (event: KeyboardEvent & { currentTarget: HTMLInputElement }) => {
-    if (event.isComposing) return
-    const match = activeMatch()
-    if (match) {
-      const count = matches().length
-      if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+  const hotkeyOptions = { target: input, preventDefault: false }
+
+  const cycle = (step: number) => {
+    const count = matches().length
+    setActive((activeIndex() + step + count) % count)
+  }
+
+  const walkHistory = (event: KeyboardEvent, entry: string | undefined) => {
+    if (entry === undefined) return
+    event.preventDefault()
+    recall(entry)
+  }
+
+  useHotkey(
+    'arrowup',
+    (event) => {
+      if (open()) {
         event.preventDefault()
-        const step = event.key === 'ArrowUp' ? -1 : 1
-        setActive((activeIndex() + step + count) % count)
-        return
-      }
-      if (event.key === 'Tab' && !event.shiftKey && value() !== match.key) {
+        cycle(-1)
+      } else walkHistory(event, history.prev(value()))
+    },
+    hotkeyOptions
+  )
+
+  useHotkey(
+    'arrowdown',
+    (event) => {
+      if (open()) {
         event.preventDefault()
-        accept(match.key)
-        return
-      }
-      if (event.key === 'Enter') {
-        event.preventDefault()
-        accept(match.key)
-        handleSubmit(match.key)
-        return
-      }
-      if (event.key === 'Escape') {
+        cycle(1)
+      } else walkHistory(event, history.next())
+    },
+    hotkeyOptions
+  )
+
+  useHotkey(
+    'tab',
+    (event) => {
+      const match = activeMatch()
+      if (!match || value() === match.key) return
+      event.preventDefault()
+      accept(match.key)
+    },
+    hotkeyOptions
+  )
+
+  useHotkey(
+    'enter',
+    (event) => {
+      const match = activeMatch()
+      if (!match) return
+      event.preventDefault()
+      accept(match.key)
+      handleSubmit(match.key)
+    },
+    hotkeyOptions
+  )
+
+  useHotkey(
+    'escape',
+    (event) => {
+      if (open()) {
         event.preventDefault()
         setDismissed(true)
         return
       }
-    }
-    if (event.key === 'ArrowUp') {
-      event.preventDefault()
-      const entry = history.prev(event.currentTarget.value)
-      if (entry !== undefined) recall(entry)
-    } else if (event.key === 'ArrowDown') {
-      event.preventDefault()
-      const entry = history.next()
-      if (entry !== undefined) recall(entry)
-    } else if (event.key === 'Escape') {
-      event.preventDefault()
       history.reset()
+      if (!value() && !error()) return
+      event.preventDefault()
       setValue('')
       setError('')
-    }
-  }
+    },
+    hotkeyOptions
+  )
 
   return (
     <form
@@ -170,7 +201,6 @@ export const Composer = () => {
             }}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            onKeyDown={handleKeyDown}
             class="text-foreground placeholder:text-muted-foreground/80 w-full min-w-0 bg-transparent text-base outline-none md:text-sm"
           />
           <BlockCaret input={input()} />
