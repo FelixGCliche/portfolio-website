@@ -1,1 +1,1 @@
-export * from './PromptDock'
+export * from './Composer'
