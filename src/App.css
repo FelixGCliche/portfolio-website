@@ -26,6 +26,12 @@
   padding-right: env(safe-area-inset-right, 0px);
 }
 
+@media not (forced-colors: active) {
+  [data-caret='block'] {
+    caret-color: transparent;
+  }
+}
+
 html,
 body {
   height: 100%;

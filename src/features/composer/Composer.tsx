@@ -6,6 +6,7 @@ import { findSession, matchSessions } from '@features/sessions'
 import type { Session } from '@features/sessions'
 import { useHotkey } from '@hooks'
 
+import { BlockCaret } from './BlockCaret'
 import { useComposer } from './ComposerProvider'
 import { Suggestions, SUGGESTIONS_ID, suggestionOptionId } from './Suggestions'
 import { useCommandHistory } from './useCommandHistory'
@@ -174,36 +175,39 @@ export const Composer = () => {
         <label for="promptInput" class="sr-only">
           Command
         </label>
-        <input
-          ref={(el) => {
-            registerInput(el)
-            setInput(el)
-          }}
-          id="promptInput"
-          name="command"
-          type="text"
-          placeholder="type a command, e.g. /about"
-          autocomplete="off"
-          spellcheck={false}
-          autocapitalize="off"
-          value={value()}
-          aria-invalid={error() ? 'true' : undefined}
-          aria-describedby="promptError"
-          role="combobox"
-          aria-expanded={open() ? 'true' : 'false'}
-          aria-controls={SUGGESTIONS_ID}
-          aria-autocomplete="list"
-          aria-activedescendant={activeOptionId()}
-          onInput={(event) => {
-            setValue(event.currentTarget.value)
-            setError('')
-            setActive(0)
-            setDismissed(false)
-          }}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          class="text-foreground placeholder:text-muted-foreground/80 min-w-0 flex-1 bg-transparent text-base outline-none md:text-sm"
-        />
+        <div class="relative min-w-0 flex-1 text-base md:text-sm">
+          <input
+            ref={(el) => {
+              registerInput(el)
+              setInput(el)
+            }}
+            id="promptInput"
+            name="command"
+            type="text"
+            placeholder="type a command, e.g. /about"
+            autocomplete="off"
+            spellcheck={false}
+            autocapitalize="off"
+            value={value()}
+            aria-invalid={error() ? 'true' : undefined}
+            aria-describedby="promptError"
+            role="combobox"
+            aria-expanded={open() ? 'true' : 'false'}
+            aria-controls={SUGGESTIONS_ID}
+            aria-autocomplete="list"
+            aria-activedescendant={activeOptionId()}
+            onInput={(event) => {
+              setValue(event.currentTarget.value)
+              setError('')
+              setActive(0)
+              setDismissed(false)
+            }}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            class="text-foreground placeholder:text-muted-foreground/80 w-full min-w-0 bg-transparent text-base outline-none md:text-sm"
+          />
+          <BlockCaret input={input()} />
+        </div>
         <button
           type="submit"
           aria-label="Send command"
