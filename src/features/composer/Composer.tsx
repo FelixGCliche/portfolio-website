@@ -6,6 +6,7 @@ import { findSession, matchSessions } from '@features/sessions'
 import type { Session } from '@features/sessions'
 import { useHotkey } from '@hooks'
 
+import { useComposer } from './ComposerProvider'
 import { Suggestions, SUGGESTIONS_ID, suggestionOptionId } from './Suggestions'
 import { useCommandHistory } from './useCommandHistory'
 
@@ -21,7 +22,7 @@ export const Composer = () => {
 
   const navigate = useNavigate()
   const history = useCommandHistory()
-  const [value, setValue] = createSignal('', { name: 'promptValue' })
+  const { value, setValue, focus, registerInput } = useComposer()
   const [error, setError] = createSignal('', { name: 'promptError' })
   const [focused, setFocused] = createSignal(false, { name: 'promptFocused' })
   const [dismissed, setDismissed] = createSignal(false, { name: 'suggestionsDismissed' })
@@ -163,7 +164,7 @@ export const Composer = () => {
             active={activeIndex()}
             onSelect={(key) => {
               accept(key)
-              input()?.focus()
+              focus()
             }}
           />
         </Show>
@@ -174,7 +175,10 @@ export const Composer = () => {
           Command
         </label>
         <input
-          ref={setInput}
+          ref={(el) => {
+            registerInput(el)
+            setInput(el)
+          }}
           id="promptInput"
           name="command"
           type="text"
