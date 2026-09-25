@@ -8,13 +8,12 @@ import {
   createSignal,
   Match,
   omit,
-  onSettled,
   Switch,
   useContext,
 } from 'solid-js'
 import type { Accessor, ParentProps, Setter } from 'solid-js'
 
-import { useIsMobile } from '@hooks'
+import { useHotkeys, useIsMobile } from '@hooks'
 
 import { Sheet } from './Sheet'
 
@@ -55,17 +54,12 @@ export const SidebarProvider = (props: ParentProps) => {
     else setOpen((value) => !value)
   }
 
-  onSettled(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === 'b' && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault()
-        toggleSidebar()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  })
+  // Both Cmd+B and Ctrl+B on every platform (not `Mod+B`, which picks one). Modifiers match
+  // exactly, so a single keydown satisfies at most one of the two.
+  useHotkeys([
+    { hotkey: 'Meta+B', callback: toggleSidebar },
+    { hotkey: 'Control+B', callback: toggleSidebar },
+  ])
 
   const value: SidebarContextValue = {
     state,
