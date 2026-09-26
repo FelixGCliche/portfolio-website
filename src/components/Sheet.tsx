@@ -41,7 +41,7 @@ export const Sheet = (props: SheetProps) => {
       onClose={handleClose}
       onClick={handleClick}
       class={[
-        'bg-background text-foreground border-border backdrop:bg-background/60 m-0 mr-auto h-dvh max-h-none w-[min(84%,20rem)] max-w-none -translate-x-full overscroll-contain border-r p-0 opacity-0 transition-[opacity,translate,overlay,display] transition-discrete duration-200 ease-out open:translate-x-0 open:opacity-100 motion-reduce:transition-none starting:open:-translate-x-full starting:open:opacity-0',
+        'bg-background text-foreground border-border backdrop:bg-foreground/40 m-0 mr-auto h-dvh max-h-none w-[min(84%,20rem)] max-w-none -translate-x-full overscroll-contain border-r p-0 opacity-0 transition-[opacity,translate,overlay,display] transition-discrete duration-200 ease-out open:translate-x-0 open:opacity-100 motion-reduce:transition-none starting:open:-translate-x-full starting:open:opacity-0',
         props.class,
       ]}
     >

@@ -214,7 +214,7 @@ export const Composer = () => {
           }}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          class="text-foreground placeholder:text-muted-foreground/80 min-w-0 flex-1 bg-transparent text-base outline-none md:text-sm"
+          class="text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-base outline-none md:text-sm"
         />
         <button
           type="submit"
