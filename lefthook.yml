@@ -1,5 +1,5 @@
 pre-commit:
-  parallel: true
+  piped: true
   jobs:
     - name: typecheck
       run: bun run check:type

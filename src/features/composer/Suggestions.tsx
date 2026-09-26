@@ -30,7 +30,7 @@ export const Suggestions = (props: SuggestionsProps) => {
       id={SUGGESTIONS_ID}
       role="listbox"
       aria-label="Command suggestions"
-      class="bg-popover text-popover-foreground border-border absolute inset-x-0 bottom-full z-20 m-0 mb-1 max-h-[min(12rem,35dvh)] list-none overflow-y-auto border p-0 py-1 text-xs"
+      class="bg-popover text-popover-foreground border-border absolute inset-x-0 bottom-full z-20 m-0 mb-1 list-none overflow-y-auto border text-xs"
     >
       <For each={props.items}>
         {(item, index) => (
@@ -41,10 +41,10 @@ export const Suggestions = (props: SuggestionsProps) => {
             data-active={index() === props.active ? 'true' : 'false'}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => props.onSelect(item.key)}
-            class="text-muted-foreground hover:bg-muted hover:text-foreground data-[active=true]:border-primary data-[active=true]:bg-muted data-[active=true]:text-foreground flex min-w-0 cursor-pointer items-baseline gap-3 border-l-2 border-transparent px-3 py-2 md:py-1.5"
+            class="data-[active=true]:border-primary data-[active=true]:bg-muted data-[active=true]:text-foreground flex min-w-0 cursor-pointer items-baseline gap-3 border-l-2 border-transparent px-3 py-2 md:py-1.5"
           >
-            <span class="text-foreground flex-none">{item.key}</span>
-            <span class="min-w-0 truncate">{item.desc}</span>
+            <span class="text-primary w-24 flex-none font-bold">{item.key}</span>
+            <span class="text-muted-foreground min-w-0 truncate">{item.desc}</span>
           </li>
         )}
       </For>
