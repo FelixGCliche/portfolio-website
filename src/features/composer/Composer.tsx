@@ -26,6 +26,8 @@ export const Composer = () => {
   const [focused, setFocused] = createSignal(false, { name: 'promptFocused' })
   const [dismissed, setDismissed] = createSignal(false, { name: 'suggestionsDismissed' })
   const [active, setActive] = createSignal(0, { name: 'suggestionActive' })
+  // True once the user explicitly picks a suggestion with the arrow keys
+  const [navigated, setNavigated] = createSignal(false, { name: 'suggestionNavigated' })
   const [input, setInput] = createSignal<HTMLInputElement | undefined>(undefined, {
     name: 'promptInputEl',
   })
@@ -33,7 +35,12 @@ export const Composer = () => {
   const matches = createMemo(() => (value().startsWith('/') ? matchSessions(value()) : []), {
     name: 'suggestionMatches',
   })
-  const open = createMemo(() => focused() && !dismissed() && matches().length > 0, {
+  // A lone suggestion identical to the input has nothing left to offer
+  const completed = createMemo(
+    () => matches().length === 1 && matches()[0].key === value().toLowerCase(),
+    { name: 'suggestionCompleted' }
+  )
+  const open = createMemo(() => focused() && !dismissed() && matches().length > 0 && !completed(), {
     name: 'suggestionsOpen',
   })
   const activeIndex = createMemo(() => Math.max(0, Math.min(active(), matches().length - 1)), {
@@ -51,11 +58,13 @@ export const Composer = () => {
   const accept = (key: Session['key']) => {
     setValue(key)
     setActive(0)
+    setNavigated(false)
     setError('')
   }
 
   const recall = (entry: string) => {
     setValue(entry)
+    setNavigated(false)
     setDismissed(true)
   }
 
@@ -70,14 +79,19 @@ export const Composer = () => {
     void navigate({ to: session.key })
     history.push(command)
     setValue('')
+    setNavigated(false)
     setError('')
   }
 
   const hotkeyOptions = { target: input, preventDefault: false, ignoreInputs: false }
 
+  // Arrows only cycle when there is an actual choice to make; otherwise they walk history
+  const canCycle = () => open() && matches().length > 1
+
   const cycle = (step: number) => {
     const count = matches().length
     setActive((activeIndex() + step + count) % count)
+    setNavigated(true)
   }
 
   const walkHistory = (event: KeyboardEvent, entry: string | undefined) => {
@@ -89,7 +103,7 @@ export const Composer = () => {
   useHotkey(
     'ArrowUp',
     (event) => {
-      if (open()) {
+      if (canCycle()) {
         event.preventDefault()
         cycle(-1)
       } else walkHistory(event, history.prev(value()))
@@ -100,7 +114,7 @@ export const Composer = () => {
   useHotkey(
     'ArrowDown',
     (event) => {
-      if (open()) {
+      if (canCycle()) {
         event.preventDefault()
         cycle(1)
       } else walkHistory(event, history.next())
@@ -122,10 +136,11 @@ export const Composer = () => {
   useHotkey(
     'Enter',
     (event) => {
+      if (event.isComposing) return
+      // Without explicit arrow navigation, fall through to the native form submit of the literal input
       const match = activeMatch()
-      if (!match) return
+      if (!match || !navigated()) return
       event.preventDefault()
-      accept(match.key)
       handleSubmit(match.key)
     },
     hotkeyOptions
@@ -187,13 +202,14 @@ export const Composer = () => {
           aria-describedby="promptError"
           role="combobox"
           aria-expanded={open() ? 'true' : 'false'}
-          aria-controls={SUGGESTIONS_ID}
+          aria-controls={open() ? SUGGESTIONS_ID : undefined}
           aria-autocomplete="list"
           aria-activedescendant={activeOptionId()}
           onInput={(event) => {
             setValue(event.currentTarget.value)
             setError('')
             setActive(0)
+            setNavigated(false)
             setDismissed(false)
           }}
           onFocus={() => setFocused(true)}
