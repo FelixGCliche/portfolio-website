@@ -2,10 +2,10 @@ import { formatForDisplay } from '@tanstack/hotkeys'
 import { useNavigate } from '@tanstack/solid-router'
 import { createMemo, createSignal, For, Show } from 'solid-js'
 
-import { findSession, matchSessions } from '@features/sessions'
-import type { Session } from '@features/sessions'
+import { usePreferences } from '@features/preferences'
 import { useHotkey } from '@hooks'
 
+import { findCommand, matchCommands } from './commands'
 import { Suggestions, SUGGESTIONS_ID, suggestionOptionId } from './Suggestions'
 import { useCommandHistory } from './useCommandHistory'
 
@@ -20,6 +20,7 @@ export const Composer = () => {
   const paletteLabel = formatForDisplay('Mod+K')
 
   const navigate = useNavigate()
+  const preferences = usePreferences()
   const history = useCommandHistory()
   const [value, setValue] = createSignal('', { name: 'promptValue' })
   const [error, setError] = createSignal('', { name: 'promptError' })
@@ -32,7 +33,7 @@ export const Composer = () => {
     name: 'promptInputEl',
   })
 
-  const matches = createMemo(() => (value().startsWith('/') ? matchSessions(value()) : []), {
+  const matches = createMemo(() => (value().startsWith('/') ? matchCommands(value()) : []), {
     name: 'suggestionMatches',
   })
   // A lone suggestion identical to the input has nothing left to offer
@@ -55,7 +56,7 @@ export const Composer = () => {
     return match ? suggestionOptionId(match.key) : undefined
   }
 
-  const accept = (key: Session['key']) => {
+  const accept = (key: string) => {
     setValue(key)
     setActive(0)
     setNavigated(false)
@@ -69,15 +70,19 @@ export const Composer = () => {
   }
 
   const handleSubmit = (input: string) => {
-    const command = input.trim()
-    if (!command) return
-    const session = findSession(command)
-    if (!session) {
-      setError(`command not found: ${command}`)
+    const raw = input.trim()
+    if (!raw) return
+    const command = findCommand(raw)
+    if (!command) {
+      setError(`command not found: ${raw}`)
       return
     }
-    void navigate({ to: session.key })
-    history.push(command)
+
+    if (command.kind === 'session') void navigate({ to: command.key })
+    else if (command.kind === 'theme') preferences.toggleTheme()
+    else preferences.toggleLang()
+
+    history.push(raw)
     setValue('')
     setNavigated(false)
     setError('')

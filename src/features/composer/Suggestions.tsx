@@ -1,15 +1,15 @@
 import { createEffect, For } from 'solid-js'
 
-import type { Session } from '@features/sessions'
-
 export const SUGGESTIONS_ID = 'promptSuggestions'
 
-export const suggestionOptionId = (key: Session['key']) => `${SUGGESTIONS_ID}-${key.slice(1)}`
+export const suggestionOptionId = (key: string) => `${SUGGESTIONS_ID}-${key.slice(1)}`
+
+export type SuggestionItem = { key: string; meta: string; desc: string }
 
 export type SuggestionsProps = {
-  items: Session[]
+  items: SuggestionItem[]
   active: number
-  onSelect: (key: Session['key']) => void
+  onSelect: (key: string) => void
 }
 
 export const Suggestions = (props: SuggestionsProps) => {
