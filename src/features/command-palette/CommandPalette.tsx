@@ -136,7 +136,7 @@ export const CommandPalette = () => {
             <div role="group" aria-label={entry.group}>
               <div
                 role="presentation"
-                class="text-muted-foreground px-3 pt-2 pb-1 text-[10.5px] tracking-[0.16em] uppercase"
+                class="text-foreground px-3 pt-2 pb-1 text-[10.5px] tracking-[0.16em] uppercase"
               >
                 {entry.group}
               </div>
@@ -154,9 +154,9 @@ export const CommandPalette = () => {
                         if (!selected()) setActive(results().indexOf(item))
                       }}
                       onClick={() => run(item)}
-                      class="text-muted-foreground data-[active=true]:border-primary data-[active=true]:bg-muted data-[active=true]:text-foreground flex min-w-0 cursor-pointer items-baseline gap-3 border-l-2 border-transparent px-3 py-2 md:py-1.5"
+                      class="text-muted-foreground/67 data-[active=true]:border-primary data-[active=true]:bg-muted data-[active=true]:text-foreground flex min-w-0 cursor-pointer items-baseline gap-3 border-l-2 border-transparent px-3 py-2 md:py-1.5"
                     >
-                      <span class="text-foreground flex-none">{item.label}</span>
+                      <span class="text-primary flex-none">{item.label}</span>
                       <Show when={item.hint}>
                         {(hint) => <span class="min-w-0 truncate">{hint()}</span>}
                       </Show>
