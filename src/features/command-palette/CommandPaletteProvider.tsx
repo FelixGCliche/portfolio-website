@@ -17,8 +17,12 @@ export const CommandPaletteProvider = (props: ParentProps) => {
   const [open, setOpen] = createSignal(false, { name: 'commandPaletteOpen' })
 
   const toggle = () => setOpen((value) => !value)
-  // ignoreInputs: false — the palette must open even while typing in the composer.
-  useHotkey('Mod+K', toggle, { preventDefault: true, ignoreInputs: false })
+
+  useHotkey('Mod+K', toggle, {
+    preventDefault: true,
+    ignoreInputs: false,
+    target: document.body,
+  })
 
   const value: CommandPaletteContextValue = { open, setOpen, toggle }
 
