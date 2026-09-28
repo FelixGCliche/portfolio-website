@@ -178,7 +178,7 @@ export const Composer = () => {
         handleSubmit(value())
       }}
     >
-      <div class="border-border bg-background focus-within:border-primary focus-within:ring-primary relative flex items-center gap-3 border px-3 py-3 focus-within:ring-1">
+      <div class="border-border bg-card focus-within:border-primary focus-within:ring-primary relative flex cursor-text items-center gap-3 border px-3 py-3 focus-within:ring-1">
         <Show when={open()}>
           <Suggestions
             items={matches()}
@@ -232,7 +232,7 @@ export const Composer = () => {
         <button
           type="submit"
           aria-label="Send command"
-          class="border-border text-muted-foreground hover:text-primary hover:border-primary focus-visible:ring-ring size-11 flex-none border focus-visible:ring-2 focus-visible:outline-none md:h-6 md:w-7"
+          class="border-border text-foreground hover:text-primary hover:border-primary focus-visible:ring-ring size-11 flex-none border focus-visible:ring-2 focus-visible:outline-none md:h-6 md:w-7"
         >
           <span aria-hidden="true">↵</span>
         </button>
