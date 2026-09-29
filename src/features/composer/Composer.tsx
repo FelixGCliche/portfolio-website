@@ -6,6 +6,7 @@ import { usePreferences } from '@features/preferences'
 import { useHotkey } from '@hooks'
 
 import { findCommand, matchCommands } from './commands'
+import { useComposer } from './ComposerProvider'
 import { Suggestions, SUGGESTIONS_ID, suggestionOptionId } from './Suggestions'
 import { useCommandHistory } from './useCommandHistory'
 
@@ -22,7 +23,7 @@ export const Composer = () => {
   const navigate = useNavigate()
   const preferences = usePreferences()
   const history = useCommandHistory()
-  const [value, setValue] = createSignal('', { name: 'promptValue' })
+  const { value, setValue, focus, registerInput } = useComposer()
   const [error, setError] = createSignal('', { name: 'promptError' })
   const [focused, setFocused] = createSignal(false, { name: 'promptFocused' })
   const [dismissed, setDismissed] = createSignal(false, { name: 'suggestionsDismissed' })
@@ -183,7 +184,7 @@ export const Composer = () => {
             active={activeIndex()}
             onSelect={(key) => {
               accept(key)
-              input()?.focus()
+              focus()
             }}
           />
         </Show>
@@ -194,7 +195,10 @@ export const Composer = () => {
           Command
         </label>
         <input
-          ref={setInput}
+          ref={(el) => {
+            registerInput(el)
+            setInput(el)
+          }}
           id="promptInput"
           name="command"
           type="text"
