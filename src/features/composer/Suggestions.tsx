@@ -41,7 +41,7 @@ export const Suggestions = (props: SuggestionsProps) => {
             data-active={index() === props.active ? 'true' : 'false'}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => props.onSelect(item.key)}
-            class="hover:bg-foreground/10 data-[active=true]:border-primary data-[active=true]:bg-foreground/10 data-[active=true]:text-foreground flex min-w-0 cursor-pointer items-baseline gap-3 border-l-2 border-transparent px-3 py-2 md:py-1.5"
+            class="hover:bg-primary/10 data-[active=true]:border-primary data-[active=true]:bg-primary/10 data-[active=true]:text-foreground flex min-w-0 cursor-pointer items-baseline gap-3 border-l-2 border-transparent px-3 py-2 md:py-1.5"
           >
             <span class="text-primary w-24 flex-none font-bold">{item.key}</span>
             <span class="text-muted-foreground min-w-0 truncate">{item.desc}</span>
