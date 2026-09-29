@@ -225,7 +225,7 @@ export const Composer = () => {
             }}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            class="text-foreground placeholder:text-muted-foreground w-full min-w-0 bg-transparent text-base outline-none md:text-sm"
+            class="text-foreground placeholder:text-muted-foreground w-full min-w-0 bg-transparent outline-none"
           />
           <BlockCaret input={input()} />
         </div>

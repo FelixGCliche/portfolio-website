@@ -21,6 +21,14 @@ export const BlockCaret = (props: BlockCaretProps) => {
   let context: CanvasRenderingContext2D | null = null
   let cellWidth = 0
   let inset = 0
+  let caretEl: HTMLSpanElement | undefined
+
+  const restartBlink = () => {
+    if (!caretEl) return
+    caretEl.style.animationName = 'none'
+    void caretEl.offsetWidth
+    caretEl.style.animationName = ''
+  }
 
   const measure = (input: HTMLInputElement) => {
     const style = getComputedStyle(input)
@@ -56,6 +64,7 @@ export const BlockCaret = (props: BlockCaretProps) => {
       width: cellWidth,
       visible: true,
     })
+    restartBlink()
   }
 
   createEffect(
@@ -116,6 +125,7 @@ export const BlockCaret = (props: BlockCaretProps) => {
   return (
     <Show when={caret().visible}>
       <span
+        ref={(el) => (caretEl = el)}
         aria-hidden="true"
         class="bg-primary/70 animate-caret-blink pointer-events-none absolute top-1/2 h-[1lh] -translate-y-1/2 motion-reduce:animate-none forced-colors:hidden"
         style={{ left: `${caret().left}px`, width: `${caret().width}px` }}
