@@ -1,10 +1,12 @@
 import { formatForDisplay } from '@tanstack/hotkeys'
 
 import { SidebarTrigger } from '@components'
+import { usePreferences } from '@features/preferences'
 
 export const Titlebar = () => {
   // Client-only app: the platform is known at render time
   const paletteLabel = formatForDisplay('Mod+K')
+  const preferences = usePreferences()
 
   return (
     <header class="bg-card border-border flex h-14 flex-none items-stretch border-b md:h-10">
@@ -28,11 +30,13 @@ export const Titlebar = () => {
       <div class="border-border flex flex-none items-stretch border-l">
         <button
           type="button"
-          class="text-muted-foreground hover:text-primary hover:bg-muted focus-visible:ring-ring inline-flex min-w-11 items-center justify-center px-3 text-[11.5px] focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:min-w-0"
+          onClick={preferences.toggleLang}
+          class="text-muted-foreground hover:text-primary hover:bg-muted focus-visible:ring-ring inline-flex min-w-11 items-center justify-center px-3 text-[11.5px] uppercase focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:min-w-0"
         >
           <span class="sr-only">Switch language</span>
-          <span class="xl:hidden">EN</span>
-          <span class="hidden whitespace-nowrap xl:inline">EN · FR</span>
+          {/* Driven by <html lang> (set before first paint by the init script), not the signal */}
+          <span class="[html[lang=fr]_&]:hidden">EN</span>
+          <span class="hidden [html[lang=fr]_&]:inline">FR</span>
         </button>
 
         <button
