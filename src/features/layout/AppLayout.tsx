@@ -1,7 +1,7 @@
 import type { ParentProps } from 'solid-js'
 
 import { SidebarInset, SidebarProvider } from '@components'
-import { PromptDock } from '@features/composer'
+import { Composer } from '@features/composer'
 import { AppSidebar } from '@features/session-sidebar'
 
 import { StatusBar } from './StatusBar'
@@ -30,7 +30,7 @@ export const AppLayout = (props: ParentProps) => (
               >
                 {props.children}
               </div>
-              <PromptDock />
+              <Composer />
             </SidebarInset>
           </div>
           <StatusBar />

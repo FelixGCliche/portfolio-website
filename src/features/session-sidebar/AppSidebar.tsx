@@ -10,20 +10,8 @@ import {
   SidebarMenuLink,
   useSidebar,
 } from '@components'
-
-type Session = {
-  key: '/about' | '/work' | '/skills' | '/resume' | '/contact'
-  meta: string
-  desc: string
-}
-
-const sessions: Session[] = [
-  { key: '/about', meta: '5y', desc: 'How I got here, briefly' },
-  { key: '/work', meta: '4 roles', desc: 'What I shipped, and where' },
-  { key: '/skills', meta: '6 areas', desc: 'The toolbox, honestly rated' },
-  { key: '/resume', meta: 'pdf', desc: 'The full CV, downloadable' },
-  { key: '/contact', meta: 'open', desc: 'Same-day answer, promised' },
-]
+import { EMAIL, GITHUB_URL } from '@features/profile'
+import { sessions } from '@features/sessions'
 
 const linkClass =
   'text-primary focus-visible:ring-ring inline-flex min-h-11 items-center hover:underline focus-visible:ring-2 focus-visible:outline-none md:min-h-0'
@@ -121,18 +109,13 @@ export const AppSidebar = () => {
         </p>
         <p class="flex items-baseline gap-2">
           <span class="text-muted-foreground flex-none">email</span>
-          <a href="mailto:felix@gagnecliche.dev" class={[linkClass, 'ml-auto break-all']}>
-            felix@gagnecliche.dev
+          <a href={`mailto:${EMAIL}`} class={[linkClass, 'ml-auto break-all']}>
+            {EMAIL}
           </a>
         </p>
         <p class="flex items-baseline gap-2">
           <span class="text-muted-foreground flex-none">social</span>
-          <a
-            href="https://github.com/FelixGCliche"
-            target="_blank"
-            rel="noreferrer"
-            class={[linkClass, 'ml-auto']}
-          >
+          <a href={GITHUB_URL} target="_blank" rel="noreferrer" class={[linkClass, 'ml-auto']}>
             github
           </a>
         </p>

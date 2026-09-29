@@ -7,7 +7,7 @@ const KEY_HINTS = [
   { key: 'esc', label: 'clears' },
 ]
 
-export const PromptDock = () => {
+export const Composer = () => {
   const handleSubmit = (event: SubmitEvent) => {
     event.preventDefault()
   }
