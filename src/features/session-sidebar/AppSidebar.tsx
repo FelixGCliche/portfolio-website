@@ -7,9 +7,10 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuLink,
+  SidebarMenuButton,
   useSidebar,
 } from '@components'
+import { useConversation } from '@features/conversation'
 import { EMAIL, GITHUB_URL } from '@features/profile'
 import { sessions } from '@features/sessions'
 
@@ -18,6 +19,7 @@ const linkClass =
 
 export const AppSidebar = () => {
   const sidebar = useSidebar()
+  const conversation = useConversation()
 
   const closeDrawer = () => {
     if (sidebar.isMobile()) sidebar.setOpenMobile(false)
@@ -69,10 +71,13 @@ export const AppSidebar = () => {
             <For each={sessions}>
               {(session) => (
                 <SidebarMenuItem>
-                  <SidebarMenuLink
-                    to={session.key}
-                    activeOptions={{ exact: true }}
-                    onClick={closeDrawer}
+                  <SidebarMenuButton
+                    active={conversation.state.active === session.key}
+                    aria-current={conversation.state.active === session.key ? 'page' : undefined}
+                    onClick={() => {
+                      conversation.run(session.key)
+                      closeDrawer()
+                    }}
                     class="py-2.5"
                   >
                     <span class="flex min-w-0 flex-1 flex-col gap-1">
@@ -84,7 +89,7 @@ export const AppSidebar = () => {
                       </span>
                       <span class="text-muted-foreground text-xs text-pretty">{session.desc}</span>
                     </span>
-                  </SidebarMenuLink>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
             </For>

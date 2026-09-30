@@ -1,9 +1,8 @@
 import { createContext, createStore, useContext } from 'solid-js'
 import type { ParentProps } from 'solid-js'
 
-import { findCommand } from '@features/composer'
-import type { Command } from '@features/composer'
-import type { SessionKey } from '@features/sessions'
+import { sessions } from '@features/sessions'
+import type { Session, SessionKey } from '@features/sessions'
 
 export type Role = 'user' | 'agent'
 
@@ -15,13 +14,12 @@ export type Message = {
 }
 
 export type RunError = {
-  reason: 'unknown' | 'unhandled'
+  reason: 'unknown'
   input: string
-  command: Command | undefined
 }
 
 export type RunResult = {
-  command: Command | undefined
+  command: Session | undefined
   handled: boolean
   error: RunError | undefined
 }
@@ -43,6 +41,13 @@ export type ConversationContextValue = {
   run: (input: string, options?: RunOptions) => Promise<RunResult>
 }
 
+const findSession = (input: string): Session | undefined => {
+  const normalized = input.trim().toLowerCase()
+  if (!normalized) return undefined
+  const key = normalized.startsWith('/') ? normalized : `/${normalized}`
+  return sessions.find((session) => session.key === key)
+}
+
 export const ConversationContext = createContext<ConversationContextValue>()
 
 export const useConversation = () => useContext(ConversationContext)
@@ -57,9 +62,9 @@ export const ConversationProvider = (props: ParentProps) => {
 
   const run = async (input: string, options?: RunOptions): Promise<RunResult> => {
     const raw = input.trim()
-    const command = findCommand(raw)
-    if (command?.kind !== 'session') {
-      const error: RunError = { reason: command ? 'unhandled' : 'unknown', input: raw, command }
+    const command = findSession(raw)
+    if (!command) {
+      const error: RunError = { reason: 'unknown', input: raw }
       const failed: RunResult = { command, handled: false, error }
       options?.onError?.(failed)
       options?.onSettled?.(failed)

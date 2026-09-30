@@ -1,7 +1,6 @@
-import { useNavigate } from '@tanstack/solid-router'
-
 import { useSidebar } from '@components'
 import { useComposer } from '@features/composer'
+import { useConversation } from '@features/conversation'
 import { usePreferences } from '@features/preferences'
 import { EMAIL, GITHUB_URL } from '@features/profile'
 import { sessions } from '@features/sessions'
@@ -60,7 +59,7 @@ export const filterCommands = (items: CommandItem[], query: string) => {
 }
 
 export const useCommands = (): CommandItem[] => {
-  const navigate = useNavigate()
+  const conversation = useConversation()
   const sidebar = useSidebar()
   const composer = useComposer()
   const preferences = usePreferences()
@@ -72,7 +71,7 @@ export const useCommands = (): CommandItem[] => {
     hint: session.desc,
     keywords: ['go', 'open', 'page', session.meta],
     run: () => {
-      void navigate({ to: session.key })
+      conversation.run(session.key)
       composer.focus()
     },
   }))

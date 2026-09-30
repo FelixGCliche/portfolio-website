@@ -1,6 +1,6 @@
-import type { FileRoutesByTo } from '../../routeTree.gen'
+export const SESSION_KEYS = ['/about', '/work', '/skills', '/resume', '/contact'] as const
 
-export type SessionKey = Exclude<keyof FileRoutesByTo, '/'>
+export type SessionKey = (typeof SESSION_KEYS)[number]
 
 export type Session = {
   key: SessionKey
