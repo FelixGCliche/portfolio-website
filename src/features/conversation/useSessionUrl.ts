@@ -1,4 +1,4 @@
-import { createEffect } from 'solid-js'
+import { createEffect, untrack } from 'solid-js'
 import type { Accessor } from 'solid-js'
 
 import type { SessionKey } from '@features/sessions'
@@ -15,11 +15,15 @@ export const useSessionUrl = (session: Accessor<string | undefined>, navigate: S
   const conversation = useConversation()
 
   const syncUrl = (key: SessionKey | '') => {
-    void navigate({
-      to: '/{-$session}',
-      params: { session: key ? key.slice(1) : undefined },
-      replace: true,
-    })
+    // navigate reads router state; untracked so callers inside effect callbacks don't subscribe to it
+    untrack(
+      () =>
+        void navigate({
+          to: '/{-$session}',
+          params: { session: key ? key.slice(1) : undefined },
+          replace: true,
+        })
+    )
   }
 
   createEffect(
@@ -28,14 +32,6 @@ export const useSessionUrl = (session: Accessor<string | undefined>, navigate: S
       if (param) void conversation.run(param, { silent: true, onError: () => syncUrl('') })
     },
     { name: 'sessionUrlToConversation' }
-  )
-
-  createEffect(
-    () => conversation.state.active,
-    (active) => {
-      if (active) syncUrl(active)
-    },
-    { name: 'conversationToSessionUrl' }
   )
 
   return { syncUrl }
