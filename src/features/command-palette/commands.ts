@@ -105,6 +105,17 @@ export const useCommands = (): CommandItem[] => {
       },
     },
     {
+      id: 'action-clear-conversation',
+      group: 'Actions',
+      label: 'Clear conversation',
+      hint: 'reset the thread',
+      keywords: ['thread', 'messages', 'reset', 'clear'],
+      run: () => {
+        conversation.clear()
+        composer.focus()
+      },
+    },
+    {
       id: 'action-toggle-language',
       group: 'Actions',
       label: 'Toggle language',

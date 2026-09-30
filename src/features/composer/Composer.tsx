@@ -82,7 +82,8 @@ export const Composer = () => {
 
     if (command.kind === 'session') void conversation.run(raw)
     else if (command.kind === 'theme') preferences.toggleTheme()
-    else preferences.toggleLang()
+    else if (command.kind === 'lang') preferences.toggleLang()
+    else conversation.clear()
 
     history.push(raw)
     setValue('')

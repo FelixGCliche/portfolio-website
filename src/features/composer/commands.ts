@@ -5,12 +5,14 @@ export type Command =
   | ({ kind: 'session' } & Session)
   | { kind: 'theme'; key: '/theme'; meta: string; desc: string }
   | { kind: 'lang'; key: '/lang'; meta: string; desc: string }
+  | { kind: 'clear'; key: '/clear'; meta: string; desc: string }
 
-export type CommandKey = SessionKey | '/theme' | '/lang'
+export type CommandKey = SessionKey | '/theme' | '/lang' | '/clear'
 
 const ACTION_COMMANDS: Command[] = [
   { kind: 'theme', key: '/theme', meta: 'toggle', desc: 'Switch color theme (dark/light)' },
   { kind: 'lang', key: '/lang', meta: 'toggle', desc: 'Switch site language (en/fr)' },
+  { kind: 'clear', key: '/clear', meta: 'reset', desc: 'Clear the conversation' },
 ]
 
 const commands: Command[] = [

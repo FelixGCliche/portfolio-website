@@ -20,6 +20,7 @@ export type ConversationContextValue = {
   // Returns whether the input named a known session
   run: (input: string, options?: RunOptions) => boolean
   clearActive: () => void
+  clear: () => void
 }
 
 export const ConversationContext = createContext<ConversationContextValue>()
@@ -63,7 +64,14 @@ export const ConversationProvider = (props: ParentProps) => {
     })
   }
 
-  const value: ConversationContextValue = { state, run, clearActive }
+  const clear = () => {
+    setState((draft) => {
+      draft.messages = []
+      draft.active = ''
+    })
+  }
+
+  const value: ConversationContextValue = { state, run, clearActive, clear }
 
   return <ConversationContext value={value}>{props.children}</ConversationContext>
 }
