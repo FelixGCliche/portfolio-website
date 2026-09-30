@@ -6,7 +6,6 @@ import type { Message } from './ConversationProvider'
 import { responses } from './responses'
 
 const SCROLLER_SELECTOR = '[role="region"][aria-label="Content"]'
-// Distance from the bottom still treated as "following along"
 const PIN_THRESHOLD = 80
 
 const distanceFromBottom = (el: HTMLElement) => el.scrollHeight - el.scrollTop - el.clientHeight
@@ -31,7 +30,6 @@ const AgentRow = (props: { message: Message }) => (
 export const Thread = () => {
   const conversation = useConversation()
   let threadEl: HTMLDivElement | undefined
-  // Updated from scroll events so it reflects the position *before* an append grows the content
   let pinned = true
 
   const scroller = () => threadEl?.closest<HTMLElement>(SCROLLER_SELECTOR) ?? undefined

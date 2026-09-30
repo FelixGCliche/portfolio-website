@@ -1,4 +1,4 @@
-import { onSettled, untrack } from 'solid-js'
+import { createEffect } from 'solid-js'
 import type { Accessor } from 'solid-js'
 
 import type { SessionKey } from '@features/sessions'
@@ -14,11 +14,6 @@ export type SessionNavigate = (options: {
 export const useSessionUrl = (session: Accessor<string | undefined>, navigate: SessionNavigate) => {
   const conversation = useConversation()
 
-  onSettled(() => {
-    const initial = untrack(session)
-    if (initial) void conversation.run(initial, { silent: true })
-  })
-
   const syncUrl = (key: SessionKey | '') => {
     void navigate({
       to: '/{-$session}',
@@ -26,6 +21,22 @@ export const useSessionUrl = (session: Accessor<string | undefined>, navigate: S
       replace: true,
     })
   }
+
+  createEffect(
+    () => session(),
+    (param) => {
+      if (param) void conversation.run(param, { silent: true, onError: () => syncUrl('') })
+    },
+    { name: 'sessionUrlToConversation' }
+  )
+
+  createEffect(
+    () => conversation.state.active,
+    (active) => {
+      if (active) syncUrl(active)
+    },
+    { name: 'conversationToSessionUrl' }
+  )
 
   return { syncUrl }
 }
