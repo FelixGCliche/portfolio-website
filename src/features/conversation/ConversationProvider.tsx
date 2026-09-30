@@ -14,13 +14,23 @@ export type Message = {
   session?: SessionKey
 }
 
-export type RunOptions = {
-  silent?: boolean
+export type RunError = {
+  reason: 'unknown' | 'unhandled'
+  input: string
+  command: Command | undefined
 }
 
 export type RunResult = {
   command: Command | undefined
   handled: boolean
+  error: RunError | undefined
+}
+
+export type RunOptions = {
+  silent?: boolean
+  onSuccess?: (result: RunResult) => void
+  onError?: (result: RunResult) => void
+  onSettled?: (result: RunResult) => void
 }
 
 export type ConversationState = {
@@ -30,7 +40,7 @@ export type ConversationState = {
 
 export type ConversationContextValue = {
   state: ConversationState
-  run: (input: string, options?: RunOptions) => RunResult
+  run: (input: string, options?: RunOptions) => Promise<RunResult>
 }
 
 export const ConversationContext = createContext<ConversationContextValue>()
@@ -45,10 +55,16 @@ export const ConversationProvider = (props: ParentProps) => {
   let nextId = 0
   const createId = () => `m${nextId++}`
 
-  const run = (input: string, options?: RunOptions): RunResult => {
+  const run = async (input: string, options?: RunOptions): Promise<RunResult> => {
     const raw = input.trim()
     const command = findCommand(raw)
-    if (command?.kind !== 'session') return { command, handled: false }
+    if (command?.kind !== 'session') {
+      const error: RunError = { reason: command ? 'unhandled' : 'unknown', input: raw, command }
+      const failed: RunResult = { command, handled: false, error }
+      options?.onError?.(failed)
+      options?.onSettled?.(failed)
+      return failed
+    }
 
     const reply: Message = { id: createId(), role: 'agent', session: command.key }
     const echo: Message[] = options?.silent ? [] : [{ id: createId(), role: 'user', text: raw }]
@@ -58,7 +74,10 @@ export const ConversationProvider = (props: ParentProps) => {
       draft.active = command.key
     })
 
-    return { command, handled: true }
+    const result: RunResult = { command, handled: true, error: undefined }
+    options?.onSuccess?.(result)
+    options?.onSettled?.(result)
+    return result
   }
 
   const value: ConversationContextValue = { state, run }

@@ -16,7 +16,7 @@ export const useSessionUrl = (session: Accessor<string | undefined>, navigate: S
 
   onSettled(() => {
     const initial = untrack(session)
-    if (initial) conversation.run(initial, { silent: true })
+    if (initial) void conversation.run(initial, { silent: true })
   })
 
   const syncUrl = (key: SessionKey | '') => {
