@@ -1,2 +1,5 @@
 export * from './ConversationProvider'
+export * from './Placeholder'
+export * from './responses'
+export * from './Thread'
 export * from './useSessionUrl'
