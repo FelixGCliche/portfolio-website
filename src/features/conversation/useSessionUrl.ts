@@ -5,7 +5,6 @@ import type { SessionKey } from '@features/sessions'
 
 import { useConversation } from './ConversationProvider'
 
-// Structural shape of the router navigate call; the `/{-$session}` route is registered in a later layer
 export type SessionNavigate = (options: {
   to: '/{-$session}'
   params: { session?: string }
@@ -15,7 +14,6 @@ export type SessionNavigate = (options: {
 export const useSessionUrl = (session: Accessor<string | undefined>, navigate: SessionNavigate) => {
   const conversation = useConversation()
 
-  // Restore once from the deep link; later URL changes are driven by the conversation itself
   onSettled(() => {
     const initial = untrack(session)
     if (initial) conversation.run(initial, { silent: true })

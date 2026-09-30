@@ -15,14 +15,11 @@ export type Message = {
 }
 
 export type RunOptions = {
-  /** Skip echoing the raw input as a user message (e.g. restoring from the URL) */
   silent?: boolean
 }
 
 export type RunResult = {
-  /** Resolved command, or undefined when the input matches nothing */
   command: Command | undefined
-  /** True when the conversation consumed the command (session commands only) */
   handled: boolean
 }
 
