@@ -1,5 +1,5 @@
 import { Dynamic } from '@solidjs/web'
-import { createRenderEffect, For, Match, onSettled, Show, Switch } from 'solid-js'
+import { createEffect, For, Match, onSettled, Show, Switch } from 'solid-js'
 
 import { useConversation } from './ConversationProvider'
 import type { Message } from './ConversationProvider'
@@ -45,10 +45,11 @@ export const Thread = () => {
     return () => el.removeEventListener('scroll', onScroll)
   })
 
-  createRenderEffect(
-    () => {
+  createEffect(
+    (prev?: { count: number; fromUser: boolean }) => {
       const messages = conversation.state.messages
-      return { count: messages.length, fromUser: messages.at(-1)?.role === 'user' }
+      const appended = messages.slice(prev?.count ?? messages.length)
+      return { count: messages.length, fromUser: appended.some((m) => m.role === 'user') }
     },
     (next, prev) => {
       if (!prev || next.count <= prev.count) return
