@@ -71,7 +71,7 @@ export const useCommands = (): CommandItem[] => {
     hint: session.desc,
     keywords: ['go', 'open', 'page', session.meta],
     run: () => {
-      conversation.run(session.key)
+      void conversation.run(session.key)
       composer.focus()
     },
   }))

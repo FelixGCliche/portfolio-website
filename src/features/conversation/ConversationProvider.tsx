@@ -1,7 +1,7 @@
 import { createContext, createStore, useContext } from 'solid-js'
 import type { ParentProps } from 'solid-js'
 
-import { sessions } from '@features/sessions'
+import { findSession } from '@features/sessions'
 import type { Session, SessionKey } from '@features/sessions'
 
 export type Role = 'user' | 'agent'
@@ -39,13 +39,6 @@ export type ConversationState = {
 export type ConversationContextValue = {
   state: ConversationState
   run: (input: string, options?: RunOptions) => Promise<RunResult>
-}
-
-const findSession = (input: string): Session | undefined => {
-  const normalized = input.trim().toLowerCase()
-  if (!normalized) return undefined
-  const key = normalized.startsWith('/') ? normalized : `/${normalized}`
-  return sessions.find((session) => session.key === key)
 }
 
 export const ConversationContext = createContext<ConversationContextValue>()

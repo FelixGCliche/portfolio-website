@@ -1,6 +1,6 @@
-export const SESSION_KEYS = ['/about', '/work', '/skills', '/resume', '/contact'] as const
+import type { FileRoutesByTo } from '../../routeTree.gen'
 
-export type SessionKey = (typeof SESSION_KEYS)[number]
+export type SessionKey = Exclude<keyof FileRoutesByTo, '/'>
 
 export type Session = {
   key: SessionKey
@@ -15,3 +15,14 @@ export const sessions: Session[] = [
   { key: '/resume', meta: 'pdf', desc: 'The full CV, downloadable' },
   { key: '/contact', meta: 'open', desc: 'Same-day answer, promised' },
 ]
+
+export const normalizeKey = (input: string): string => {
+  const normalized = input.trim().toLowerCase()
+  if (!normalized) return ''
+  return normalized.startsWith('/') ? normalized : `/${normalized}`
+}
+
+export const findSession = (input: string): Session | undefined => {
+  const key = normalizeKey(input)
+  return sessions.find((session) => session.key === key)
+}

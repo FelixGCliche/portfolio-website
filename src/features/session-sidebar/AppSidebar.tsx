@@ -7,7 +7,7 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuButton,
+  SidebarMenuLink,
   useSidebar,
 } from '@components'
 import { useConversation } from '@features/conversation'
@@ -71,11 +71,20 @@ export const AppSidebar = () => {
             <For each={sessions}>
               {(session) => (
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    active={conversation.state.active === session.key}
-                    aria-current={conversation.state.active === session.key ? 'page' : undefined}
-                    onClick={() => {
-                      conversation.run(session.key)
+                  <SidebarMenuLink
+                    to={session.key}
+                    activeOptions={{ exact: true }}
+                    onClick={(event: MouseEvent) => {
+                      const plainClick =
+                        event.button === 0 &&
+                        !event.metaKey &&
+                        !event.ctrlKey &&
+                        !event.shiftKey &&
+                        !event.altKey
+                      if (plainClick) {
+                        event.preventDefault()
+                        void conversation.run(session.key)
+                      }
                       closeDrawer()
                     }}
                     class="py-2.5"
@@ -89,7 +98,7 @@ export const AppSidebar = () => {
                       </span>
                       <span class="text-muted-foreground text-xs text-pretty">{session.desc}</span>
                     </span>
-                  </SidebarMenuButton>
+                  </SidebarMenuLink>
                 </SidebarMenuItem>
               )}
             </For>
