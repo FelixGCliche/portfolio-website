@@ -66,7 +66,7 @@ export const ConversationProvider = (props: ParentProps) => {
       return failed
     }
 
-    if (state.active === command.key) {
+    if (options?.silent && state.active === command.key) {
       const result: RunResult = { command, handled: true, error: undefined }
       options?.onSuccess?.(result)
       options?.onSettled?.(result)

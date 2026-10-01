@@ -56,8 +56,8 @@ export const Thread = () => {
       if (!pinned && !next.fromUser) return
       const el = scroller()
       if (!el) return
-      el.scrollTo({ top: el.scrollHeight, behavior: 'auto' })
       pinned = true
+      requestAnimationFrame(() => el.scrollTo({ top: el.scrollHeight, behavior: 'auto' }))
     },
     { name: 'threadAutoScroll' }
   )
