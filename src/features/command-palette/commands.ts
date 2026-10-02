@@ -4,11 +4,13 @@ import type { Accessor } from 'solid-js'
 import { useSidebar } from '@components'
 import { useComposer } from '@features/composer'
 import { useConversation } from '@features/conversation'
+import { LOCALES, stringsFor, translate, useI18n } from '@features/i18n'
+import type { UiKey } from '@features/i18n'
 import { usePreferences } from '@features/preferences'
 import { EMAIL, GITHUB_URL } from '@features/profile'
 import { useSessions } from '@features/sessions'
 
-export type CommandGroup = 'Sessions' | 'Actions' | 'Links'
+export type CommandGroup = 'sessions' | 'actions' | 'links'
 
 export type CommandItem = {
   id: string
@@ -19,30 +21,62 @@ export type CommandItem = {
   run: () => void
 }
 
-export const COMMAND_GROUPS: CommandGroup[] = ['Sessions', 'Actions', 'Links']
+export const COMMAND_GROUPS: CommandGroup[] = ['sessions', 'actions', 'links']
 
-type ExternalLink = {
-  id: string
-  label: string
-  hint: string
-  href: string
-  keywords: string[]
+export const COMMAND_GROUP_LABELS: Record<CommandGroup, UiKey> = {
+  sessions: 'palette.group.sessions',
+  actions: 'palette.group.actions',
+  links: 'palette.group.links',
 }
 
-const LINKS: ExternalLink[] = [
+const splitWords = (text: string) => text.toLowerCase().split(/\s+/).filter(Boolean)
+
+// The key's text in every locale, so search matches either language whatever the active one
+const allLocales = (key: UiKey) => LOCALES.map((locale) => translate(stringsFor(locale), key))
+
+const keywordsFor = (key: UiKey) => allLocales(key).flatMap(splitWords)
+
+// A translated string, or a literal that reads the same in every locale (brand names, codes)
+type Text = UiKey | { literal: string }
+
+const textIn = (text: Text, t: (key: UiKey) => string) =>
+  typeof text === 'string' ? t(text) : text.literal
+
+const textInAllLocales = (text: Text) =>
+  typeof text === 'string' ? allLocales(text) : [text.literal]
+
+type ActionDef = {
+  id: string
+  label: UiKey
+  hint: Text
+  keywords: UiKey
+  // Composer command sharing this action; its (bilingual) content keywords join the search
+  command?: string
+  run: () => void
+}
+
+type LinkDef = {
+  id: string
+  label: Text
+  hint: string
+  href: string
+  keywords: UiKey
+}
+
+const LINKS: LinkDef[] = [
   {
     id: 'github',
-    label: 'GitHub',
+    label: { literal: 'GitHub' },
     hint: GITHUB_URL.replace(/^https?:\/\//, ''),
     href: GITHUB_URL,
-    keywords: ['code', 'source', 'repositories'],
+    keywords: 'palette.keywords.github',
   },
   {
     id: 'email',
-    label: 'Email',
+    label: 'palette.link.email',
     hint: EMAIL,
     href: `mailto:${EMAIL}`,
-    keywords: ['mail', 'contact', 'write'],
+    keywords: 'palette.keywords.email',
   },
 ]
 
@@ -62,48 +96,33 @@ export const filterCommands = (items: CommandItem[], query: string) => {
 }
 
 export const useCommands = (): Accessor<CommandItem[]> => {
+  const i18n = useI18n()
   const conversation = useConversation()
   const sidebar = useSidebar()
   const composer = useComposer()
   const preferences = usePreferences()
   const sessions = useSessions()
 
-  const sessionItems = (): CommandItem[] =>
-    sessions().map((session) => ({
-      id: `session-${session.key.slice(1)}`,
-      group: 'Sessions',
-      label: session.key,
-      hint: session.desc,
-      keywords: ['go', 'open', 'page', session.meta],
-      run: () => {
-        void conversation.run(session.key)
-        composer.focus()
-      },
-    }))
-
-  const actionItems: CommandItem[] = [
+  const actions: ActionDef[] = [
     {
       id: 'action-toggle-sidebar',
-      group: 'Actions',
-      label: 'Toggle sidebar',
-      hint: 'show or hide sessions',
-      keywords: ['menu', 'navigation', 'drawer'],
+      label: 'palette.action.toggleSidebar',
+      hint: 'palette.action.toggleSidebarHint',
+      keywords: 'palette.keywords.toggleSidebar',
       run: sidebar.toggleSidebar,
     },
     {
       id: 'action-focus-prompt',
-      group: 'Actions',
-      label: 'Focus prompt',
-      hint: 'jump to the command line',
-      keywords: ['input', 'command', 'type'],
+      label: 'palette.action.focusPrompt',
+      hint: 'palette.action.focusPromptHint',
+      keywords: 'palette.keywords.focusPrompt',
       run: composer.focus,
     },
     {
       id: 'action-clear-prompt',
-      group: 'Actions',
-      label: 'Clear prompt',
-      hint: 'empty the command line',
-      keywords: ['input', 'command', 'reset'],
+      label: 'palette.action.clearPrompt',
+      hint: 'palette.action.clearPromptHint',
+      keywords: 'palette.keywords.clearPrompt',
       run: () => {
         composer.clear()
         composer.focus()
@@ -111,10 +130,10 @@ export const useCommands = (): Accessor<CommandItem[]> => {
     },
     {
       id: 'action-clear-conversation',
-      group: 'Actions',
-      label: 'Clear conversation',
-      hint: 'reset the thread',
-      keywords: ['thread', 'messages', 'reset', 'clear'],
+      label: 'palette.action.clearConversation',
+      hint: 'palette.action.clearConversationHint',
+      keywords: 'palette.keywords.clearConversation',
+      command: '/clear',
       run: () => {
         conversation.clear()
         composer.focus()
@@ -122,32 +141,71 @@ export const useCommands = (): Accessor<CommandItem[]> => {
     },
     {
       id: 'action-toggle-language',
-      group: 'Actions',
-      label: 'Toggle language',
-      hint: 'en / fr',
-      keywords: ['english', 'french', 'français', 'locale'],
+      label: 'palette.action.toggleLanguage',
+      hint: { literal: 'en / fr' },
+      keywords: 'palette.keywords.toggleLanguage',
+      command: '/lang',
       run: preferences.toggleLang,
     },
     {
       id: 'action-toggle-theme',
-      group: 'Actions',
-      label: 'Toggle theme',
-      hint: 'dark / light',
-      keywords: ['mode', 'color', 'appearance'],
+      label: 'palette.action.toggleTheme',
+      hint: 'palette.action.toggleThemeHint',
+      keywords: 'palette.keywords.toggleTheme',
+      command: '/theme',
       run: preferences.toggleTheme,
     },
   ]
 
-  const linkItems = LINKS.map<CommandItem>((link) => ({
-    id: `link-${link.id}`,
-    group: 'Links',
-    label: link.label,
-    hint: link.hint,
-    keywords: link.keywords,
-    run: () => openLink(link.href),
-  }))
+  return createMemo(
+    () => {
+      const t = i18n.t
+      const commandKeywords = new Map(
+        i18n.commands().map((entry) => [entry.name, [entry.short, ...splitWords(entry.keywords)]])
+      )
+      const contentKeywords = (name?: string) => (name ? (commandKeywords.get(name) ?? []) : [])
 
-  return createMemo(() => [...sessionItems(), ...actionItems, ...linkItems], {
-    name: 'commandPaletteItems',
-  })
+      const sessionItems = sessions().map<CommandItem>((session) => ({
+        id: `session-${session.key.slice(1)}`,
+        group: 'sessions',
+        label: session.key,
+        hint: session.desc,
+        keywords: [
+          ...keywordsFor('palette.keywords.session'),
+          session.meta,
+          ...contentKeywords(session.key),
+        ],
+        run: () => {
+          void conversation.run(session.key)
+          composer.focus()
+        },
+      }))
+
+      const actionItems = actions.map<CommandItem>((action) => ({
+        id: action.id,
+        group: 'actions',
+        label: t(action.label),
+        hint: textIn(action.hint, t),
+        keywords: [
+          ...allLocales(action.label),
+          ...textInAllLocales(action.hint),
+          ...keywordsFor(action.keywords),
+          ...contentKeywords(action.command),
+        ],
+        run: action.run,
+      }))
+
+      const linkItems = LINKS.map<CommandItem>((link) => ({
+        id: `link-${link.id}`,
+        group: 'links',
+        label: textIn(link.label, t),
+        hint: link.hint,
+        keywords: [...textInAllLocales(link.label), ...keywordsFor(link.keywords)],
+        run: () => openLink(link.href),
+      }))
+
+      return [...sessionItems, ...actionItems, ...linkItems]
+    },
+    { name: 'commandPaletteItems' }
+  )
 }
