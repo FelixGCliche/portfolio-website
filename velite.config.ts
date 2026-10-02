@@ -145,7 +145,76 @@ const ui = defineCollection({
   })),
 })
 
+const locales: Locale[] = ['en', 'fr']
+
+type Localized = { locale: Locale }
+
+const placeholders = (value: string) =>
+  [...value.matchAll(/\{(\w+)\}/g)]
+    .map((m) => m[1])
+    .sort()
+    .join(',')
+
+// Collects "<collection>: <locale> missing <id>" for every id present in another locale but not this one.
+const diffLocales = (collection: string, idsByLocale: Record<Locale, Set<string>>) => {
+  const all = new Set(locales.flatMap((locale) => [...idsByLocale[locale]]))
+  return locales.flatMap((locale) =>
+    [...all]
+      .filter((id) => !idsByLocale[locale].has(id))
+      .map((id) => `${collection}: ${locale} missing ${id}`)
+  )
+}
+
+const groupIds = <T extends Localized>(items: T[], id: (item: T) => string[]) =>
+  Object.fromEntries(
+    locales.map((locale) => [
+      locale,
+      new Set(items.filter((item) => item.locale === locale).flatMap(id)),
+    ])
+  ) as Record<Locale, Set<string>>
+
+const checkParity = (data: {
+  profile: Localized[]
+  about: Localized[]
+  education: Localized[]
+  roles: (Localized & { slug: string })[]
+  skills: (Localized & { slug: string })[]
+  sessions: (Localized & { slug: string })[]
+  commands: (Localized & { slug: string })[]
+  ui: (Localized & { strings: Record<string, string> })[]
+}) => {
+  const singletons = (['profile', 'about', 'education'] as const).flatMap((name) =>
+    diffLocales(
+      name,
+      groupIds(data[name], () => ['entry'])
+    )
+  )
+  const slugged = (['roles', 'skills', 'sessions', 'commands'] as const).flatMap((name) =>
+    diffLocales(
+      name,
+      groupIds(data[name], (item) => [`slug "${item.slug}"`])
+    )
+  )
+  const uiKeys = diffLocales(
+    'ui',
+    groupIds(data.ui, (item) => Object.keys(item.strings).map((key) => `key "${key}"`))
+  )
+  const [en, fr] = locales.map(
+    (locale) => data.ui.find((item) => item.locale === locale)?.strings ?? {}
+  )
+  const uiPlaceholders = Object.keys(en)
+    .filter((key) => key in fr && placeholders(en[key]) !== placeholders(fr[key]))
+    .map(
+      (key) =>
+        `ui: placeholder mismatch for key "${key}" (en {${placeholders(en[key])}} vs fr {${placeholders(fr[key])}})`
+    )
+  const errors = [...singletons, ...slugged, ...uiKeys, ...uiPlaceholders]
+  if (errors.length > 0)
+    throw new Error(`Bilingual content parity check failed:\n  - ${errors.join('\n  - ')}`)
+}
+
 export default defineConfig({
+  complete: (data) => checkParity(data),
   root: 'content',
   output: {
     data: '.velite',
