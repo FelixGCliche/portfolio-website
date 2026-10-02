@@ -17,7 +17,6 @@ type RunOptions = { silent?: boolean; onError?: () => void }
 
 export type ConversationContextValue = {
   state: ConversationState
-  // Returns whether the input named a known session
   run: (input: string, options?: RunOptions) => boolean
   clearActive: () => void
   clear: () => void
@@ -56,7 +55,6 @@ export const ConversationProvider = (props: ParentProps) => {
     return true
   }
 
-  // Keeps the message history; only forgets the active session so the next command for it isn't a no-op
   const clearActive = () => {
     if (!state.active) return
     setState((draft) => {
