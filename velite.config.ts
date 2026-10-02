@@ -134,6 +134,17 @@ const commands = defineCollection({
     })),
 })
 
+// Flat dot-notation keys (e.g. `composer.placeholder`); `{var}` marks an interpolation slot.
+// Every locale file must carry the exact key set of content/en/ui.yaml.
+const ui = defineCollection({
+  name: 'Ui',
+  pattern: '*/ui.yaml',
+  schema: s.record(s.string(), s.string()).transform((strings, { meta }) => ({
+    locale: localeFromPath(meta.path),
+    strings,
+  })),
+})
+
 export default defineConfig({
   root: 'content',
   output: {
@@ -143,5 +154,5 @@ export default defineConfig({
     name: '[name]-[hash:8].[ext]',
     clean: true,
   },
-  collections: { profile, about, roles, education, skills, sessions, commands },
+  collections: { profile, about, roles, education, skills, sessions, commands, ui },
 })
