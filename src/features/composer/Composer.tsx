@@ -80,10 +80,24 @@ export const Composer = () => {
       return
     }
 
-    if (command.kind === 'session') void conversation.run(raw)
-    else if (command.kind === 'theme') preferences.toggleTheme()
-    else if (command.kind === 'lang') preferences.toggleLang()
-    else conversation.clear()
+    switch (command.kind) {
+      case 'session':
+        conversation.run(command.key)
+        break
+      case 'theme':
+        preferences.toggleTheme()
+        break
+      case 'lang':
+        preferences.toggleLang()
+        break
+      case 'clear':
+        conversation.clear()
+        break
+      default: {
+        const unhandled: never = command
+        throw new Error(`unhandled command: ${JSON.stringify(unhandled)}`)
+      }
+    }
 
     history.push(raw)
     setValue('')

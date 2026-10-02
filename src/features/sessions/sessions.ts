@@ -31,5 +31,6 @@ export const findSession = (input: string): Session | undefined => {
 
 export const keyToParam = (key: SessionKey): string => key.slice(1)
 
-export const isSessionParam = (value: string): boolean =>
-  SESSION_KEYS.some((key) => keyToParam(key) === value)
+const SESSION_PARAMS: ReadonlySet<string> = new Set(SESSION_KEYS.map(keyToParam))
+
+export const isSessionParam = (value: string): boolean => SESSION_PARAMS.has(value)
