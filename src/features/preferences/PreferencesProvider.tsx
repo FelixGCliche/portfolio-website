@@ -1,21 +1,17 @@
-import { createContext, createEffect, createSignal, onSettled, useContext } from 'solid-js'
+import { useNavigate, useParams } from '@tanstack/solid-router'
+import { createContext, createEffect, createSignal, onSettled, untrack, useContext } from 'solid-js'
 import type { Accessor, ParentProps } from 'solid-js'
 
-import {
-  DEFAULT_LANG,
-  DEFAULT_THEME,
-  LANG_STORAGE_KEY,
-  THEME_COLOR_META_ID,
-  THEME_COLORS,
-  THEME_STORAGE_KEY,
-} from './constants'
+import { storeLocale, useI18n } from '@features/i18n'
+import type { Locale } from '@features/i18n'
+
+import { DEFAULT_THEME, THEME_COLOR_META_ID, THEME_COLORS, THEME_STORAGE_KEY } from './constants'
 
 export type Theme = 'dark' | 'light'
-export type Lang = 'en' | 'fr'
 
 export type PreferencesContextValue = {
   theme: Accessor<Theme>
-  lang: Accessor<Lang>
+  lang: Accessor<Locale>
   toggleTheme: () => void
   toggleLang: () => void
 }
@@ -25,7 +21,6 @@ export const PreferencesContext = createContext<PreferencesContextValue>()
 export const usePreferences = () => useContext(PreferencesContext)
 
 const isTheme = (value: unknown): value is Theme => value === 'dark' || value === 'light'
-const isLang = (value: unknown): value is Lang => value === 'en' || value === 'fr'
 
 const persist = (key: string, value: string) => {
   try {
@@ -35,22 +30,22 @@ const persist = (key: string, value: string) => {
   }
 }
 
+// Must be mounted inside I18nProvider: lang is the route-derived locale.
 export const PreferencesProvider = (props: ParentProps) => {
+  const i18n = useI18n()
+  const navigate = useNavigate()
+  const params = useParams({ strict: false, shouldThrow: false })
   const [theme, setTheme] = createSignal<Theme>(DEFAULT_THEME, { name: 'preferencesTheme' })
-  const [lang, setLang] = createSignal<Lang>(DEFAULT_LANG, { name: 'preferencesLang' })
   const [synced, setSynced] = createSignal(false, { name: 'preferencesSynced' })
 
   onSettled(() => {
     // THEME_INIT_SCRIPT already resolved stored/OS preferences onto <html> before first paint
-    const root = document.documentElement
-    setTheme(root.classList.contains('dark') ? 'dark' : 'light')
-    if (isLang(root.lang)) setLang(root.lang)
+    setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light')
     setSynced(true)
 
-    // Live sync across tabs; values come from another tab, so they are applied without re-persisting
+    // Live theme sync across tabs; values come from another tab, so they are applied without re-persisting
     const onStorage = (event: StorageEvent) => {
       if (event.key === THEME_STORAGE_KEY && isTheme(event.newValue)) setTheme(event.newValue)
-      if (event.key === LANG_STORAGE_KEY && isLang(event.newValue)) setLang(event.newValue)
     }
 
     window.addEventListener('storage', onStorage)
@@ -69,9 +64,9 @@ export const PreferencesProvider = (props: ParentProps) => {
   )
 
   createEffect(
-    () => (synced() ? lang() : undefined),
+    () => i18n.locale(),
     (current) => {
-      if (current) document.documentElement.lang = current
+      document.documentElement.lang = current
     },
     { name: 'preferencesLangEffect' }
   )
@@ -82,13 +77,20 @@ export const PreferencesProvider = (props: ParentProps) => {
     persist(THEME_STORAGE_KEY, next)
   }
 
+  // The URL is the source of truth: switch the locale segment, keeping session, search and hash.
   const toggleLang = () => {
-    const next: Lang = lang() === 'en' ? 'fr' : 'en'
-    setLang(next)
-    persist(LANG_STORAGE_KEY, next)
+    const next: Locale = untrack(() => i18n.locale()) === 'en' ? 'fr' : 'en'
+    const session = untrack(() => (params() as { session?: string } | undefined)?.session)
+    storeLocale(next)
+    void navigate({
+      to: '/$locale/{-$session}',
+      params: { locale: next, session },
+      search: true,
+      hash: true,
+    })
   }
 
-  const value: PreferencesContextValue = { theme, lang, toggleTheme, toggleLang }
+  const value: PreferencesContextValue = { theme, lang: i18n.locale, toggleTheme, toggleLang }
 
   return <PreferencesContext value={value}>{props.children}</PreferencesContext>
 }
