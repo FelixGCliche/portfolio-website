@@ -78,6 +78,19 @@ export const I18nProvider = (props: ParentProps) => {
   const localeSessions = createMemo(() => pickSorted(sessions, locale()), { name: 'i18nSessions' })
   const localeCommands = createMemo(() => pickSorted(commands, locale()), { name: 'i18nCommands' })
 
+  // Document.tsx renders the default-locale title/description; keep them in sync with the locale.
+  createEffect(
+    () => ({
+      title: translate(strings(), 'document.title'),
+      description: translate(strings(), 'document.description'),
+    }),
+    ({ title, description }) => {
+      document.title = title
+      document.querySelector('meta[name="description"]')?.setAttribute('content', description)
+    },
+    { name: 'i18nDocumentMetaEffect' }
+  )
+
   const value: I18nContextValue = {
     locale,
     t: (key, vars) => translate(strings(), key, vars),
