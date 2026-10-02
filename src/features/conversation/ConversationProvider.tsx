@@ -66,6 +66,13 @@ export const ConversationProvider = (props: ParentProps) => {
       return failed
     }
 
+    if (options?.silent && state.active === command.key) {
+      const result: RunResult = { command, handled: true, error: undefined }
+      options?.onSuccess?.(result)
+      options?.onSettled?.(result)
+      return result
+    }
+
     const reply: Message = { id: createId(), role: 'agent', session: command.key }
     const echo: Message[] = options?.silent ? [] : [{ id: createId(), role: 'user', text: raw }]
 

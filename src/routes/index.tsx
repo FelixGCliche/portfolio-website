@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/solid-router'
 
-import { TokenPreview } from '@features/design-tokens'
+import { Thread } from '@features/conversation'
 
-const Home = () => <TokenPreview />
+const Home = () => <Thread />
 
 export const Route = createFileRoute('/')({
   component: Home,

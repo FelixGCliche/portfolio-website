@@ -1,10 +1,10 @@
 import { createFileRoute } from '@tanstack/solid-router'
 
+import { SkillsResponse } from '@features/conversation'
+
 const Skills = () => (
-  <section class="flex flex-col gap-2">
-    <h1 class="text-primary text-lg">/skills</h1>
-    <p class="text-foreground text-sm">The toolbox, honestly rated</p>
-    <p class="text-muted-foreground text-xs">Placeholder — content lands in a later PR</p>
+  <section class="flex flex-col gap-4">
+    <SkillsResponse />
   </section>
 )
 
