@@ -1,9 +1,7 @@
-import { sessions } from '@features/sessions'
+import { getSession } from '@features/sessions'
 
 import { Placeholder } from '../Placeholder'
 
-const session = sessions.find((s) => s.key === '/skills')
+const session = getSession('/skills')
 
-export const SkillsResponse = () => (
-  <Placeholder title="/skills" meta={session?.meta} desc={session?.desc ?? ''} />
-)
+export const SkillsResponse = () => <Placeholder session={session} />

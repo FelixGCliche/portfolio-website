@@ -8,8 +8,6 @@ import { ResumeResponse } from './ResumeResponse'
 import { SkillsResponse } from './SkillsResponse'
 import { WorkResponse } from './WorkResponse'
 
-export { AboutResponse, ContactResponse, ResumeResponse, SkillsResponse, WorkResponse }
-
 export const responses: Record<SessionKey, Component> = {
   '/about': AboutResponse,
   '/work': WorkResponse,

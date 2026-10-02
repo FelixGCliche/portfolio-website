@@ -2,24 +2,29 @@ import { createFileRoute, notFound, useNavigate } from '@tanstack/solid-router'
 import { createEffect, untrack } from 'solid-js'
 
 import { Thread, useConversation, useSessionUrl } from '@features/conversation'
-import { SESSION_KEYS } from '@features/sessions'
-
-const isSessionParam = (value: string) => SESSION_KEYS.some((key) => key.slice(1) === value)
+import { isSessionParam, keyToParam } from '@features/sessions'
 
 const SessionThread = () => {
   const params = Route.useParams()
   const navigate = useNavigate()
   const conversation = useConversation()
-  // The param is only read once (untracked) to replay the deep link; afterwards the conversation drives the URL
+  // URL -> conversation: replays deep links and follows back/forward; conversation -> URL is the effect below
   const { syncUrl } = useSessionUrl(() => params().session, navigate)
+
+  // The first run sees the provider's initial `active`, which must not overwrite a deep-linked URL
+  let isFirstRun = true
 
   createEffect(
     () => conversation.state.active,
     (active, prev) => {
-      // Skip the initial value and no-op transitions so URL writes never echo back into commands
-      if (prev === undefined || active === prev) return
+      if (isFirstRun) {
+        isFirstRun = false
+        return
+      }
+      // Skip no-op transitions so URL writes never echo back into commands
+      if (active === prev) return
       const current = untrack(() => params().session)
-      if ((active ? active.slice(1) : undefined) === current) return
+      if ((active ? keyToParam(active) : undefined) === current) return
       syncUrl(active)
     },
     { name: 'sessionUrlSync' }

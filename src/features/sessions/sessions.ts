@@ -1,6 +1,6 @@
-import type { FileRoutesByTo } from '../../routeTree.gen'
+export const SESSION_KEYS = ['/about', '/work', '/skills', '/resume', '/contact'] as const
 
-export type SessionKey = Exclude<keyof FileRoutesByTo, '/'>
+export type SessionKey = (typeof SESSION_KEYS)[number]
 
 export type Session = {
   key: SessionKey
@@ -16,13 +16,20 @@ export const sessions: Session[] = [
   { key: '/contact', meta: 'open', desc: 'Same-day answer, promised' },
 ]
 
-export const normalizeKey = (input: string): string => {
-  const normalized = input.trim().toLowerCase()
-  if (!normalized) return ''
-  return normalized.startsWith('/') ? normalized : `/${normalized}`
-}
+const sessionsByKey = Object.fromEntries(
+  sessions.map((session) => [session.key, session])
+) as Record<SessionKey, Session>
+
+export const getSession = (key: SessionKey): Session => sessionsByKey[key]
 
 export const findSession = (input: string): Session | undefined => {
-  const key = normalizeKey(input)
+  const normalized = input.trim().toLowerCase()
+  if (!normalized) return undefined
+  const key = normalized.startsWith('/') ? normalized : `/${normalized}`
   return sessions.find((session) => session.key === key)
 }
+
+export const keyToParam = (key: SessionKey): string => key.slice(1)
+
+export const isSessionParam = (value: string): boolean =>
+  SESSION_KEYS.some((key) => keyToParam(key) === value)
