@@ -1,0 +1,10 @@
+slug: ninedots
+title: 'QA · Dev Support'
+company: 'NineDots Studio'
+start: '2023-05'
+end: '2024-04'
+order: 1
+bullets:
+  - 'Supported the dev team on integration work across Unity and Unreal Engine 5.'
+  - 'Ran QA passes that caught the ugly stuff before it ever reached a player.'
+  - 'Sat between production and engineering, turning vague bug reports into fixable tickets.'

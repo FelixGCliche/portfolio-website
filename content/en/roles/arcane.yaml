@@ -1,0 +1,10 @@
+slug: arcane
+title: 'Software Programmer'
+company: 'Arcane Technologies'
+start: '2022-04'
+end: '2023-01'
+order: 3
+bullets:
+  - 'Built 3D and VR Unity applications for both desktop and web.'
+  - 'Wrote a UWP frontend wired into an existing React platform.'
+  - 'Owned features end to end — prototype, review, deployed build.'

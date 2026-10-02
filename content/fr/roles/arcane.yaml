@@ -1,0 +1,10 @@
+slug: arcane
+title: 'Programmeur logiciel'
+company: 'Arcane Technologies'
+start: '2022-04'
+end: '2023-01'
+order: 3
+bullets:
+  - "Développement d'applications 3D/VR Unity, sur desktop et web."
+  - 'Frontend UWP branché sur une plateforme React existante.'
+  - 'Features de bout en bout : prototype, révision, build déployé.'
