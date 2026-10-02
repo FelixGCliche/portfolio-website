@@ -4,9 +4,17 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import { build as buildContent } from 'velite'
 import { defineConfig } from 'vite'
 
+// The config is evaluated several times per process; share one content build so concurrent
+// `clean` runs don't wipe .velite while another run (or the bundler) is reading it.
+const contentBuild = globalThis as { __veliteBuild?: Promise<unknown> }
+
 export default defineConfig(async ({ command, isPreview }) => {
   if (!isPreview) {
-    await buildContent({ watch: command === 'serve', clean: command === 'build' })
+    contentBuild.__veliteBuild ??= buildContent({
+      watch: command === 'serve',
+      clean: command === 'build',
+    })
+    await contentBuild.__veliteBuild
   }
 
   return {
