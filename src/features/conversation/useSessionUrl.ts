@@ -16,7 +16,6 @@ export const useSessionUrl = (session: Accessor<string | undefined>, navigate: S
   const conversation = useConversation()
 
   const syncUrl = (key: SessionKey | '') => {
-    // navigate reads router state; untracked so callers inside effect callbacks don't subscribe to it
     untrack(
       () =>
         void navigate({
@@ -34,8 +33,6 @@ export const useSessionUrl = (session: Accessor<string | undefined>, navigate: S
         conversation.run(param, { silent: true, onError: () => syncUrl('') })
         return
       }
-      // URL left the session (back button, link to `/`): keep `active` in sync. A no-op on the initial `/` load;
-      // the resulting active '' already matches the empty param, so the route's sync effect won't navigate back
       conversation.clearActive()
     },
     { name: 'sessionUrlToConversation' }
