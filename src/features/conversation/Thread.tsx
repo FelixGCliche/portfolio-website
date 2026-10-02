@@ -5,7 +5,7 @@ import { useConversation } from './ConversationProvider'
 import type { Message } from './ConversationProvider'
 import { responses } from './responses'
 
-const SCROLLER_SELECTOR = '[role="region"][aria-label="Content"]'
+const SCROLLER_SELECTOR = '[data-scroller]'
 const PIN_THRESHOLD = 80
 const ROW_CLASS = 'animate-rise flex motion-reduce:animate-none'
 
