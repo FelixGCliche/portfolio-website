@@ -1,0 +1,7 @@
+slug: backend
+area: 'Backend'
+tools:
+  - 'C#'
+  - '.NET'
+  - 'SQL'
+order: 2
