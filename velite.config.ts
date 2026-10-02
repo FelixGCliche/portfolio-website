@@ -99,6 +99,23 @@ const education = defineCollection({
     })),
 })
 
+const sessions = defineCollection({
+  name: 'Session',
+  pattern: '*/sessions/*.yaml',
+  schema: s
+    .object({
+      slug: s.string().regex(/^[a-z0-9-]+$/),
+      key: s.string().regex(/^\/[a-z0-9-]+$/),
+      meta: s.string(),
+      desc: s.string(),
+      order: s.number(),
+    })
+    .transform((data, { meta }) => ({
+      ...data,
+      locale: localeFromPath(meta.path),
+    })),
+})
+
 export default defineConfig({
   root: 'content',
   output: {
@@ -108,5 +125,5 @@ export default defineConfig({
     name: '[name]-[hash:8].[ext]',
     clean: true,
   },
-  collections: { profile, about, roles, education, skills },
+  collections: { profile, about, roles, education, skills, sessions },
 })
