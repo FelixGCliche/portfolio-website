@@ -145,7 +145,70 @@ const ui = defineCollection({
   })),
 })
 
+const locales: Locale[] = ['en', 'fr']
+
+type ParityItem = { locale: Locale; slug?: string; strings?: Record<string, string> }
+
+const placeholders = (value: string) =>
+  [...value.matchAll(/\{(\w+)\}/g)]
+    .map((m) => m[1])
+    .sort()
+    .join(',')
+
+const singletonId = () => ['entry']
+const slugId = (item: ParityItem) => [`slug "${item.slug}"`]
+const uiKeyIds = (item: ParityItem) => Object.keys(item.strings ?? {}).map((key) => `key "${key}"`)
+
+// How each collection's entries are matched across locales
+const parityIds = {
+  profile: singletonId,
+  about: singletonId,
+  education: singletonId,
+  roles: slugId,
+  skills: slugId,
+  sessions: slugId,
+  commands: slugId,
+  ui: uiKeyIds,
+}
+
+// Collects "<collection>: <locale> missing <id>" for every id present in another locale but not this one.
+const diffLocales = (
+  collection: string,
+  items: ParityItem[],
+  ids: (item: ParityItem) => string[]
+) => {
+  const idsByLocale = locales.map(
+    (locale) => new Set(items.filter((item) => item.locale === locale).flatMap(ids))
+  )
+  const all = new Set(idsByLocale.flatMap((set) => [...set]))
+  return locales.flatMap((locale, i) =>
+    [...all]
+      .filter((id) => !idsByLocale[i].has(id))
+      .map((id) => `${collection}: ${locale} missing ${id}`)
+  )
+}
+
+const checkParity = (data: Record<keyof typeof parityIds, ParityItem[]>) => {
+  const missing = (Object.keys(parityIds) as (keyof typeof parityIds)[]).flatMap((name) =>
+    diffLocales(name, data[name], parityIds[name])
+  )
+  const [en, fr] = locales.map(
+    (locale) => data.ui.find((item) => item.locale === locale)?.strings ?? {}
+  )
+  const mismatched = Object.keys(en).flatMap((key) => {
+    if (!(key in fr)) return []
+    const [enSlots, frSlots] = [placeholders(en[key]), placeholders(fr[key])]
+    return enSlots === frSlots
+      ? []
+      : [`ui: placeholder mismatch for key "${key}" (en {${enSlots}} vs fr {${frSlots}})`]
+  })
+  const errors = [...missing, ...mismatched]
+  if (errors.length > 0)
+    throw new Error(`Bilingual content parity check failed:\n  - ${errors.join('\n  - ')}`)
+}
+
 export default defineConfig({
+  complete: checkParity,
   root: 'content',
   output: {
     data: '.velite',
