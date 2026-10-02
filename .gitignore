@@ -29,3 +29,7 @@ Thumbs.db
 
 # TanStack Router
 .tanstack/
+
+# Velite
+.velite/
+public/static/
