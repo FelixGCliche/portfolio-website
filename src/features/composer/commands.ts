@@ -1,4 +1,4 @@
-import { sessions } from '@features/sessions'
+import { normalizeKey, sessions } from '@features/sessions'
 import type { Session, SessionKey } from '@features/sessions'
 
 export type Command =
@@ -25,8 +25,6 @@ export const matchCommands = (query: string): Command[] => {
 }
 
 export const findCommand = (input: string): Command | undefined => {
-  const normalized = input.trim().toLowerCase()
-  if (!normalized) return undefined
-  const key = normalized.startsWith('/') ? normalized : `/${normalized}`
+  const key = normalizeKey(input)
   return commands.find((command) => command.key === key)
 }

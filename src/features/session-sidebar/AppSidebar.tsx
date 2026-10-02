@@ -10,6 +10,7 @@ import {
   SidebarMenuLink,
   useSidebar,
 } from '@components'
+import { useConversation } from '@features/conversation'
 import { EMAIL, GITHUB_URL } from '@features/profile'
 import { sessions } from '@features/sessions'
 
@@ -18,6 +19,7 @@ const linkClass =
 
 export const AppSidebar = () => {
   const sidebar = useSidebar()
+  const conversation = useConversation()
 
   const closeDrawer = () => {
     if (sidebar.isMobile()) sidebar.setOpenMobile(false)
@@ -72,7 +74,19 @@ export const AppSidebar = () => {
                   <SidebarMenuLink
                     to={session.key}
                     activeOptions={{ exact: true }}
-                    onClick={closeDrawer}
+                    onClick={(event: MouseEvent) => {
+                      const plainClick =
+                        event.button === 0 &&
+                        !event.metaKey &&
+                        !event.ctrlKey &&
+                        !event.shiftKey &&
+                        !event.altKey
+                      if (plainClick) {
+                        event.preventDefault()
+                        void conversation.run(session.key)
+                      }
+                      closeDrawer()
+                    }}
                     class="py-2.5"
                   >
                     <span class="flex min-w-0 flex-1 flex-col gap-1">

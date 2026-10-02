@@ -1,7 +1,7 @@
 import { formatForDisplay } from '@tanstack/hotkeys'
-import { useNavigate } from '@tanstack/solid-router'
 import { createMemo, createSignal, For, Show } from 'solid-js'
 
+import { useConversation } from '@features/conversation'
 import { usePreferences } from '@features/preferences'
 import { useHotkey } from '@hooks'
 
@@ -21,7 +21,7 @@ export const Composer = () => {
   // Client-only app: the platform is known at render time
   const paletteLabel = formatForDisplay('Mod+K')
 
-  const navigate = useNavigate()
+  const conversation = useConversation()
   const preferences = usePreferences()
   const history = useCommandHistory()
   const { value, setValue, focus, registerInput } = useComposer()
@@ -80,7 +80,7 @@ export const Composer = () => {
       return
     }
 
-    if (command.kind === 'session') void navigate({ to: command.key })
+    if (command.kind === 'session') void conversation.run(raw)
     else if (command.kind === 'theme') preferences.toggleTheme()
     else preferences.toggleLang()
 
