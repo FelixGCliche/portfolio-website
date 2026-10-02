@@ -2,6 +2,7 @@ import { formatForDisplay } from '@tanstack/hotkeys'
 
 import { SidebarTrigger } from '@components'
 import { useCommandPalette } from '@features/command-palette'
+import { useI18n } from '@features/i18n'
 import { usePreferences } from '@features/preferences'
 
 export const Titlebar = () => {
@@ -9,11 +10,12 @@ export const Titlebar = () => {
   const paletteLabel = formatForDisplay('Mod+K')
   const preferences = usePreferences()
   const palette = useCommandPalette()
+  const { t, locale } = useI18n()
 
   return (
     <header class="bg-card border-border flex h-14 flex-none items-stretch border-b md:h-10">
       <div class="border-border flex flex-none items-center border-r">
-        <SidebarTrigger />
+        <SidebarTrigger label={t('sidebar.toggle')} />
       </div>
 
       <div class="text-primary border-border flex flex-none items-center px-3 text-[13px] font-bold md:border-r">
@@ -25,7 +27,7 @@ export const Titlebar = () => {
           felix@portfolio
         </span>
         <span class="text-muted-foreground hidden text-[11px] whitespace-nowrap md:inline">
-          ~/console — software developer
+          {t('titlebar.subtitle')}
         </span>
       </div>
 
@@ -35,10 +37,9 @@ export const Titlebar = () => {
           onClick={preferences.toggleLang}
           class="text-muted-foreground hover:text-primary hover:bg-muted focus-visible:ring-ring inline-flex min-w-11 items-center justify-center px-3 text-[11.5px] uppercase focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:min-w-0"
         >
-          <span class="sr-only">Switch language</span>
-          {/* Driven by <html lang> (set before first paint by the init script), not the signal */}
-          <span class="[html[lang=fr]_&]:hidden">EN</span>
-          <span class="hidden [html[lang=fr]_&]:inline">FR</span>
+          <span class="sr-only">{t('titlebar.switchLanguage')}</span>
+          {/* The language a click switches to */}
+          <span aria-hidden="true">{locale() === 'en' ? 'FR' : 'EN'}</span>
         </button>
 
         <button
@@ -50,7 +51,7 @@ export const Titlebar = () => {
           aria-keyshortcuts="Control+K Meta+K"
           class="text-muted-foreground hover:text-primary hover:bg-muted focus-visible:ring-ring inline-flex min-w-11 items-center justify-center px-3 text-[11.5px] focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:min-w-0"
         >
-          <span class="sr-only">Open command palette</span>
+          <span class="sr-only">{t('titlebar.openPalette')}</span>
           <svg
             aria-hidden="true"
             viewBox="0 0 24 24"
