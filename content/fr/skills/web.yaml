@@ -1,0 +1,10 @@
+slug: web
+area: 'Web'
+tools:
+  - 'Vue'
+  - 'React'
+  - 'Angular'
+  - 'HTML'
+  - 'CSS/SCSS'
+  - 'JS/TS'
+order: 1

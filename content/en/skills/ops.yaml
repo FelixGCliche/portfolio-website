@@ -1,0 +1,7 @@
+slug: ops
+area: 'Ops'
+tools:
+  - 'Git'
+  - 'Docker'
+  - 'Linux'
+order: 5

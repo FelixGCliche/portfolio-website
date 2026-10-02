@@ -67,6 +67,22 @@ const roles = defineCollection({
     })),
 })
 
+const skills = defineCollection({
+  name: 'Skill',
+  pattern: '*/skills/*.yaml',
+  schema: s
+    .object({
+      slug: s.string().regex(/^[a-z0-9-]+$/),
+      area: s.string(),
+      tools: s.array(s.string()),
+      order: s.number(),
+    })
+    .transform((data, { meta }) => ({
+      ...data,
+      locale: localeFromPath(meta.path),
+    })),
+})
+
 const education = defineCollection({
   name: 'Education',
   pattern: '*/education.yaml',
@@ -92,5 +108,5 @@ export default defineConfig({
     name: '[name]-[hash:8].[ext]',
     clean: true,
   },
-  collections: { profile, about, roles, education },
+  collections: { profile, about, roles, education, skills },
 })
