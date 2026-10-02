@@ -3,6 +3,8 @@ import { join } from 'node:path'
 
 import { defineCollection, defineConfig, s } from 'velite'
 
+import { SESSION_KEYS } from './src/features/sessions/session-keys'
+
 type Locale = 'en' | 'fr'
 
 const localeFromPath = (path: string): Locale => {
@@ -150,7 +152,7 @@ const ui = defineCollection({
 
 const locales: Locale[] = ['en', 'fr']
 
-type ParityItem = { locale: Locale; slug?: string; strings?: Record<string, string> }
+type ParityItem = { locale: Locale; slug?: string; key?: string; strings?: Record<string, string> }
 
 const placeholders = (value: string) =>
   [...value.matchAll(/\{(\w+)\}/g)]
@@ -205,7 +207,18 @@ const checkParity = (data: Record<keyof typeof parityIds, ParityItem[]>) => {
       ? []
       : [`ui: placeholder mismatch for key "${key}" (en {${enSlots}} vs fr {${frSlots}})`]
   })
-  const errors = [...missing, ...mismatched]
+  const sessionKeys = data.sessions.flatMap((item) => {
+    const key = item.key ?? ''
+    return (SESSION_KEYS as readonly string[]).includes(key)
+      ? []
+      : [`sessions: ${item.locale} has key "${key}" not in SESSION_KEYS`]
+  })
+  const absentKeys = locales.flatMap((locale) =>
+    SESSION_KEYS.filter(
+      (key) => !data.sessions.some((item) => item.locale === locale && item.key === key)
+    ).map((key) => `sessions: ${locale} missing SESSION_KEYS entry ${key}`)
+  )
+  const errors = [...missing, ...mismatched, ...sessionKeys, ...absentKeys]
   if (errors.length > 0)
     throw new Error(`Bilingual content parity check failed:\n  - ${errors.join('\n  - ')}`)
 }

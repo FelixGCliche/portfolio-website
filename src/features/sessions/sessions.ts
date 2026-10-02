@@ -1,13 +1,11 @@
-import { sessions as contentSessions } from '@content'
+import { SESSION_KEYS } from './session-keys'
+import type { SessionKey } from './session-keys'
 
-import { DEFAULT_LOCALE } from '@features/i18n'
+export { SESSION_KEYS }
+export type { SessionKey }
 
-// Session identity is static: route guards and other non-reactive callers need it synchronously.
+// Session identity (SESSION_KEYS) is static: route guards and other non-reactive callers need it synchronously.
 // The human text (meta, desc) is locale-dependent and read through useSessions()/useSession().
-export const SESSION_KEYS = ['/about', '/work', '/skills', '/resume', '/contact'] as const
-
-export type SessionKey = (typeof SESSION_KEYS)[number]
-
 export type Session = {
   key: SessionKey
   slug: string
@@ -17,17 +15,6 @@ export type Session = {
 
 export const isSessionKey = (value: string): value is SessionKey =>
   (SESSION_KEYS as readonly string[]).includes(value)
-
-// Keep SESSION_KEYS in lockstep with the content collection (the parity check covers other locales)
-const contentKeys = contentSessions
-  .filter((session) => session.locale === DEFAULT_LOCALE)
-  .map((session) => session.key)
-const missingInContent = SESSION_KEYS.filter((key) => !contentKeys.includes(key))
-const unknownInContent = contentKeys.filter((key) => !isSessionKey(key))
-if (missingInContent.length > 0 || unknownInContent.length > 0)
-  throw new Error(
-    `Session keys out of sync with content: missing [${missingInContent.join(', ')}], unknown [${unknownInContent.join(', ')}]`
-  )
 
 export const findSessionKey = (input: string): SessionKey | undefined => {
   const normalized = input.trim().toLowerCase()
