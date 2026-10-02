@@ -1,0 +1,123 @@
+# Chaînes d'interface — clés plates en notation pointée, `{var}` marque une interpolation.
+# Garder exactement le même jeu de clés que content/en/ui.yaml.
+
+document.title: 'Félix Gagné Cliche — Développeur logiciel'
+document.description: 'Félix Gagné Cliche, développeur logiciel à Québec. Cinq ans entre le web et le jeu vidéo — demande à la console mon parcours, mes compétences ou mon CV.'
+
+layout.skipToContent: 'Aller au contenu'
+layout.contentLabel: 'Contenu'
+
+titlebar.subtitle: '~/console — développeur logiciel'
+titlebar.switchLanguage: 'Changer de langue'
+titlebar.openPalette: 'Ouvrir la palette de commandes'
+
+statusbar.available: 'disponible'
+statusbar.entries: '{count} lignes'
+statusbar.session: 'session {name}'
+
+sidebar.label: 'Panneau latéral'
+sidebar.toggle: 'Afficher ou masquer le panneau'
+sidebar.close: 'Fermer le panneau'
+sidebar.sessions: 'sessions'
+sidebar.available: 'disponible'
+sidebar.where: 'où'
+sidebar.reply: 'réponse'
+sidebar.replyValue: 'le jour même'
+sidebar.email: 'courriel'
+sidebar.social: 'réseaux'
+sidebar.copyEmail: 'copier le courriel'
+sidebar.copied: 'copié ✓'
+
+composer.label: 'Commande'
+composer.placeholder: 'tape une commande, p. ex. /about'
+composer.placeholderAsk: 'pose une question, ou tape /'
+composer.send: 'Envoyer la commande'
+composer.commandNotFound: 'commande introuvable : {command}'
+composer.suggestions: 'Suggestions de commandes'
+composer.metaToggle: 'bascule'
+composer.metaReset: 'remise à zéro'
+
+keyhints.commands: 'commandes'
+keyhints.run: 'envoyer'
+keyhints.history: 'historique'
+keyhints.complete: 'complète'
+keyhints.clear: 'efface'
+keyhints.palette: 'palette'
+keyhints.sidebar: 'panneau'
+
+palette.label: 'Palette de commandes'
+palette.searchLabel: 'Rechercher des commandes'
+palette.placeholder: 'chercher sessions, actions, liens'
+palette.placeholderRun: 'lancer une commande…'
+palette.listLabel: 'Commandes'
+palette.empty: 'Aucune commande correspondante'
+palette.group.sessions: 'Sessions'
+palette.group.actions: 'Actions'
+palette.group.links: 'Liens'
+palette.hint.navigate: 'naviguer'
+palette.hint.run: 'lancer'
+palette.hint.close: 'fermer'
+palette.action.toggleSidebar: 'Afficher ou masquer le panneau'
+palette.action.toggleSidebarHint: 'montrer ou cacher les sessions'
+palette.action.focusPrompt: "Aller à l'invite"
+palette.action.focusPromptHint: 'sauter à la ligne de commande'
+palette.action.clearPrompt: "Vider l'invite"
+palette.action.clearPromptHint: 'effacer la ligne de commande'
+palette.action.clearConversation: 'Effacer la conversation'
+palette.action.clearConversationHint: 'repartir le fil à zéro'
+palette.action.toggleLanguage: 'Changer de langue'
+palette.action.toggleTheme: 'Changer de thème'
+palette.action.toggleThemeHint: 'sombre / clair'
+palette.link.email: 'Courriel'
+
+thread.label: 'Conversation'
+
+hero.chipsLabel: 'Raccourcis'
+
+chips.about: 'qui je suis'
+chips.work: "où j'ai travaillé"
+chips.skills: 'mes outils'
+chips.resume: 'voir le CV'
+chips.contact: 'me joindre'
+
+replies.langSwitchedEn: 'Back to English. New answers follow suit — /lang switches again.'
+replies.langSwitchedFr: "On passe en français. Les prochaines réponses suivent — /lang pour revenir à l'anglais."
+replies.fallback: "Là, je n'ai rien de bon à dire. Ce portfolio est scripté : il connaît une poignée de commandes, pas plus."
+replies.fallbackCommand: 'Je ne fais pas de vraie conversation — mais ça, je peux répondre. Voici {command} :'
+
+contact.intro: 'Le plus simple : un courriel. Je réponds dans la journée, et volontiers à une question technique précise.'
+contact.copyEmail: 'copier le courriel'
+contact.copied: 'copié ✓'
+contact.writeEmail: 'écrire un courriel'
+contact.seeResume: 'voir le CV'
+contact.label.email: 'courriel'
+contact.label.phone: 'téléphone'
+contact.label.where: 'où'
+contact.label.status: 'statut'
+
+work.intro: 'Quatre postes, deux mondes : le web et le jeu. Voici la version courte, puis les détails.'
+work.timeline: 'parcours'
+work.header.when: 'PÉRIODE'
+work.header.where: 'ENDROIT'
+work.header.role: 'RÔLE'
+work.present: 'présent'
+work.education: 'formation'
+
+skills.intro: "Rien ici que je n'ai pas utilisé pour livrer quelque chose. Les deux premières lignes, c'est là où je suis le plus rapide."
+skills.label: 'compétences'
+skills.header.area: 'DOMAINE'
+skills.header.tools: 'OUTILS'
+skills.note: "le côté design vient des études en jeu vidéo — pratique quand il n'y a pas de designer dans la pièce"
+
+resume.toolLabel: 'lecture de resume.pdf'
+resume.intro: 'Voici le CV en texte — la version téléchargeable dit la même chose.'
+resume.copyMarkdown: 'copier en markdown'
+resume.copied: 'CV copié en markdown.'
+resume.download: 'télécharger le PDF'
+resume.section.profile: 'Profil'
+resume.section.experience: 'Expérience'
+resume.section.education: 'Formation'
+resume.section.skills: 'Compétences'
+resume.profileBlurb: "Développeur full-stack curieux et passionné, amoureux du développement web. À l'aise pour bâtir et déployer des applications multiplateformes ; il résout les nouveaux problèmes en apprenant de nouvelles technologies pour livrer un travail de qualité."
+
+notFound.body: "Aucune session n'habite à cette adresse."

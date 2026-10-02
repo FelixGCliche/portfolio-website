@@ -1,0 +1,123 @@
+# UI strings — flat dot-notation keys, `{var}` marks an interpolation slot.
+# Keep the key set identical to content/fr/ui.yaml.
+
+document.title: 'Félix Gagné Cliche — Software Developer'
+document.description: 'Félix Gagné Cliche, software developer in Québec. Five years across web and games — ask the console about my work, skills or CV.'
+
+layout.skipToContent: 'Skip to content'
+layout.contentLabel: 'Content'
+
+titlebar.subtitle: '~/console — software developer'
+titlebar.switchLanguage: 'Switch language'
+titlebar.openPalette: 'Open command palette'
+
+statusbar.available: 'available'
+statusbar.entries: '{count} entries'
+statusbar.session: 'session {name}'
+
+sidebar.label: 'Sidebar'
+sidebar.toggle: 'Toggle sidebar'
+sidebar.close: 'Close sidebar'
+sidebar.sessions: 'sessions'
+sidebar.available: 'available for work'
+sidebar.where: 'where'
+sidebar.reply: 'reply'
+sidebar.replyValue: 'same day'
+sidebar.email: 'email'
+sidebar.social: 'social'
+sidebar.copyEmail: 'copy email'
+sidebar.copied: 'copied ✓'
+
+composer.label: 'Command'
+composer.placeholder: 'type a command, e.g. /about'
+composer.placeholderAsk: 'ask me something, or type /'
+composer.send: 'Send command'
+composer.commandNotFound: 'command not found: {command}'
+composer.suggestions: 'Command suggestions'
+composer.metaToggle: 'toggle'
+composer.metaReset: 'reset'
+
+keyhints.commands: 'commands'
+keyhints.run: 'run'
+keyhints.history: 'history'
+keyhints.complete: 'complete'
+keyhints.clear: 'clear'
+keyhints.palette: 'palette'
+keyhints.sidebar: 'sidebar'
+
+palette.label: 'Command palette'
+palette.searchLabel: 'Search commands'
+palette.placeholder: 'search sessions, actions, links'
+palette.placeholderRun: 'run a command…'
+palette.listLabel: 'Commands'
+palette.empty: 'No matching commands'
+palette.group.sessions: 'Sessions'
+palette.group.actions: 'Actions'
+palette.group.links: 'Links'
+palette.hint.navigate: 'navigate'
+palette.hint.run: 'run'
+palette.hint.close: 'close'
+palette.action.toggleSidebar: 'Toggle sidebar'
+palette.action.toggleSidebarHint: 'show or hide sessions'
+palette.action.focusPrompt: 'Focus prompt'
+palette.action.focusPromptHint: 'jump to the command line'
+palette.action.clearPrompt: 'Clear prompt'
+palette.action.clearPromptHint: 'empty the command line'
+palette.action.clearConversation: 'Clear conversation'
+palette.action.clearConversationHint: 'reset the thread'
+palette.action.toggleLanguage: 'Toggle language'
+palette.action.toggleTheme: 'Toggle theme'
+palette.action.toggleThemeHint: 'dark / light'
+palette.link.email: 'Email'
+
+thread.label: 'Conversation'
+
+hero.chipsLabel: 'Quick actions'
+
+chips.about: 'who I am'
+chips.work: "where I've worked"
+chips.skills: 'my toolbox'
+chips.resume: 'see the CV'
+chips.contact: 'get in touch'
+
+replies.langSwitchedEn: 'Back to English. New answers follow suit — /lang switches again.'
+replies.langSwitchedFr: "On passe en français. Les prochaines réponses suivent — /lang pour revenir à l'anglais."
+replies.fallback: "That one I don't have a good answer for. This portfolio is scripted — it knows a handful of commands and nothing beyond them."
+replies.fallbackCommand: "I don't do real conversation, but I can answer that one. Here's {command}:"
+
+contact.intro: "Email is the fastest way to reach me. I answer the same day, and I'm happy to talk through a specific technical problem."
+contact.copyEmail: 'copy email'
+contact.copied: 'copied ✓'
+contact.writeEmail: 'write an email'
+contact.seeResume: 'see the resume'
+contact.label.email: 'email'
+contact.label.phone: 'phone'
+contact.label.where: 'where'
+contact.label.status: 'status'
+
+work.intro: 'Four roles across two worlds — web and games. Short version first, then the detail.'
+work.timeline: 'timeline'
+work.header.when: 'WHEN'
+work.header.where: 'WHERE'
+work.header.role: 'ROLE'
+work.present: 'present'
+work.education: 'education'
+
+skills.intro: "Nothing here I haven't used to ship something. The top two rows are where I'm quickest."
+skills.label: 'skills'
+skills.header.area: 'AREA'
+skills.header.tools: 'TOOLS'
+skills.note: "the design column is left over from game school — handy when there's no designer in the room"
+
+resume.toolLabel: 'read resume.pdf'
+resume.intro: "Here's the CV as text — the downloadable version says the same thing."
+resume.copyMarkdown: 'copy as markdown'
+resume.copied: 'resume copied as markdown.'
+resume.download: 'download pdf'
+resume.section.profile: 'Profile'
+resume.section.experience: 'Experience'
+resume.section.education: 'Education'
+resume.section.skills: 'Skills'
+resume.profileBlurb: 'Curious, passionate full-stack developer in love with web development. Skilled in building and deploying multi-platform applications; solves new problems by picking up new technologies to deliver quality results.'
+
+notFound.body: 'No session lives at this address.'
