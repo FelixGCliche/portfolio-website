@@ -32,6 +32,19 @@ const profile = defineCollection({
     })),
 })
 
+const about = defineCollection({
+  name: 'About',
+  pattern: '*/about.md',
+  schema: s
+    .object({
+      body: s.markdown(),
+    })
+    .transform((data, { meta }) => ({
+      ...data,
+      locale: localeFromPath(meta.path),
+    })),
+})
+
 export default defineConfig({
   root: 'content',
   output: {
@@ -41,5 +54,5 @@ export default defineConfig({
     name: '[name]-[hash:8].[ext]',
     clean: true,
   },
-  collections: { profile },
+  collections: { profile, about },
 })
