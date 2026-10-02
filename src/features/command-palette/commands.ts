@@ -1,9 +1,12 @@
+import { createMemo } from 'solid-js'
+import type { Accessor } from 'solid-js'
+
 import { useSidebar } from '@components'
 import { useComposer } from '@features/composer'
 import { useConversation } from '@features/conversation'
 import { usePreferences } from '@features/preferences'
 import { EMAIL, GITHUB_URL } from '@features/profile'
-import { sessions } from '@features/sessions'
+import { useSessions } from '@features/sessions'
 
 export type CommandGroup = 'Sessions' | 'Actions' | 'Links'
 
@@ -58,23 +61,25 @@ export const filterCommands = (items: CommandItem[], query: string) => {
   )
 }
 
-export const useCommands = (): CommandItem[] => {
+export const useCommands = (): Accessor<CommandItem[]> => {
   const conversation = useConversation()
   const sidebar = useSidebar()
   const composer = useComposer()
   const preferences = usePreferences()
+  const sessions = useSessions()
 
-  const sessionItems = sessions.map<CommandItem>((session) => ({
-    id: `session-${session.key.slice(1)}`,
-    group: 'Sessions',
-    label: session.key,
-    hint: session.desc,
-    keywords: ['go', 'open', 'page', session.meta],
-    run: () => {
-      void conversation.run(session.key)
-      composer.focus()
-    },
-  }))
+  const sessionItems = (): CommandItem[] =>
+    sessions().map((session) => ({
+      id: `session-${session.key.slice(1)}`,
+      group: 'Sessions',
+      label: session.key,
+      hint: session.desc,
+      keywords: ['go', 'open', 'page', session.meta],
+      run: () => {
+        void conversation.run(session.key)
+        composer.focus()
+      },
+    }))
 
   const actionItems: CommandItem[] = [
     {
@@ -142,5 +147,7 @@ export const useCommands = (): CommandItem[] => {
     run: () => openLink(link.href),
   }))
 
-  return [...sessionItems, ...actionItems, ...linkItems]
+  return createMemo(() => [...sessionItems(), ...actionItems, ...linkItems], {
+    name: 'commandPaletteItems',
+  })
 }

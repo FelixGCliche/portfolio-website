@@ -1,4 +1,3 @@
-import { findSession, sessions } from '@features/sessions'
 import type { Session, SessionKey } from '@features/sessions'
 
 export type Command =
@@ -15,21 +14,20 @@ const ACTION_COMMANDS: Command[] = [
   { kind: 'clear', key: '/clear', meta: 'reset', desc: 'Clear the conversation' },
 ]
 
-const commands: Command[] = [
+const toCommands = (sessions: Session[]): Command[] => [
   ...sessions.map((session): Command => ({ kind: 'session', ...session })),
   ...ACTION_COMMANDS,
 ]
 
-export const matchCommands = (query: string): Command[] => {
+// `sessions` is the locale-aware list from useSessions()
+export const matchCommands = (query: string, sessions: Session[]): Command[] => {
   const normalized = query.toLowerCase()
   if (!normalized) return []
-  return commands.filter((command) => command.key.startsWith(normalized))
+  return toCommands(sessions).filter((command) => command.key.startsWith(normalized))
 }
 
-export const findCommand = (input: string): Command | undefined => {
-  const session = findSession(input)
-  if (session) return { kind: 'session', ...session }
+export const findCommand = (input: string, sessions: Session[]): Command | undefined => {
   const normalized = input.trim().toLowerCase()
   const key = normalized.startsWith('/') ? normalized : `/${normalized}`
-  return ACTION_COMMANDS.find((command) => command.key === key)
+  return toCommands(sessions).find((command) => command.key === key)
 }

@@ -1,32 +1,26 @@
-export const SESSION_KEYS = ['/about', '/work', '/skills', '/resume', '/contact'] as const
+import { SESSION_KEYS } from './session-keys'
+import type { SessionKey } from './session-keys'
 
-export type SessionKey = (typeof SESSION_KEYS)[number]
+export { SESSION_KEYS }
+export type { SessionKey }
 
+// Session identity (SESSION_KEYS) is static: route guards and other non-reactive callers need it synchronously.
+// The human text (meta, desc) is locale-dependent and read through useSessions()/useSession().
 export type Session = {
   key: SessionKey
+  slug: string
   meta: string
   desc: string
 }
 
-export const sessions: Session[] = [
-  { key: '/about', meta: '5y', desc: 'How I got here, briefly' },
-  { key: '/work', meta: '4 roles', desc: 'What I shipped, and where' },
-  { key: '/skills', meta: '6 areas', desc: 'The toolbox, honestly rated' },
-  { key: '/resume', meta: 'pdf', desc: 'The full CV, downloadable' },
-  { key: '/contact', meta: 'open', desc: 'Same-day answer, promised' },
-]
+export const isSessionKey = (value: string): value is SessionKey =>
+  (SESSION_KEYS as readonly string[]).includes(value)
 
-const sessionsByKey = Object.fromEntries(
-  sessions.map((session) => [session.key, session])
-) as Record<SessionKey, Session>
-
-export const getSession = (key: SessionKey): Session => sessionsByKey[key]
-
-export const findSession = (input: string): Session | undefined => {
+export const findSessionKey = (input: string): SessionKey | undefined => {
   const normalized = input.trim().toLowerCase()
   if (!normalized) return undefined
   const key = normalized.startsWith('/') ? normalized : `/${normalized}`
-  return sessions.find((session) => session.key === key)
+  return isSessionKey(key) ? key : undefined
 }
 
 export const keyToParam = (key: SessionKey): string => key.slice(1)

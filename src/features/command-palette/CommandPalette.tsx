@@ -26,7 +26,7 @@ export const CommandPalette = () => {
   // previously focused element, which would otherwise override focus set by the action.
   let pendingAction: (() => void) | undefined
 
-  const results = createMemo(() => filterCommands(commands, query()), {
+  const results = createMemo(() => filterCommands(commands(), query()), {
     name: 'commandPaletteResults',
   })
   const groups = createMemo(

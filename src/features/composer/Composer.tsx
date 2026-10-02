@@ -3,6 +3,7 @@ import { createMemo, createSignal, For, Show } from 'solid-js'
 
 import { useConversation } from '@features/conversation'
 import { usePreferences } from '@features/preferences'
+import { useSessions } from '@features/sessions'
 import { useHotkey } from '@hooks'
 
 import { BlockCaret } from './BlockCaret'
@@ -23,6 +24,7 @@ export const Composer = () => {
 
   const conversation = useConversation()
   const preferences = usePreferences()
+  const sessions = useSessions()
   const history = useCommandHistory()
   const { value, setValue, focus, registerInput } = useComposer()
   const [error, setError] = createSignal('', { name: 'promptError' })
@@ -35,9 +37,12 @@ export const Composer = () => {
     name: 'promptInputEl',
   })
 
-  const matches = createMemo(() => (value().startsWith('/') ? matchCommands(value()) : []), {
-    name: 'suggestionMatches',
-  })
+  const matches = createMemo(
+    () => (value().startsWith('/') ? matchCommands(value(), sessions()) : []),
+    {
+      name: 'suggestionMatches',
+    }
+  )
   // A lone suggestion identical to the input has nothing left to offer
   const completed = createMemo(
     () => matches().length === 1 && matches()[0].key === value().toLowerCase(),
@@ -74,7 +79,7 @@ export const Composer = () => {
   const handleSubmit = (input: string) => {
     const raw = input.trim()
     if (!raw) return
-    const command = findCommand(raw)
+    const command = findCommand(raw, sessions())
     if (!command) {
       setError(`command not found: ${raw}`)
       return

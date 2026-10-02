@@ -13,7 +13,7 @@ import {
 import { useConversation } from '@features/conversation'
 import { useI18n } from '@features/i18n'
 import { EMAIL, GITHUB_URL } from '@features/profile'
-import { keyToParam, sessions } from '@features/sessions'
+import { keyToParam, useSessions } from '@features/sessions'
 
 const linkClass =
   'text-primary focus-visible:ring-ring inline-flex min-h-11 items-center hover:underline focus-visible:ring-2 focus-visible:outline-none md:min-h-0'
@@ -22,6 +22,7 @@ export const AppSidebar = () => {
   const sidebar = useSidebar()
   const conversation = useConversation()
   const i18n = useI18n()
+  const sessions = useSessions()
 
   const closeDrawer = () => {
     if (sidebar.isMobile()) sidebar.setOpenMobile(false)
@@ -70,12 +71,12 @@ export const AppSidebar = () => {
             sessions
           </p>
           <SidebarMenu>
-            <For each={sessions}>
+            <For each={sessions()} keyed={(session) => session.key}>
               {(session) => (
                 <SidebarMenuItem>
                   <SidebarMenuLink
                     to="/$locale/{-$session}"
-                    params={{ locale: i18n.locale(), session: keyToParam(session.key) }}
+                    params={{ locale: i18n.locale(), session: keyToParam(session().key) }}
                     activeOptions={{ exact: true }}
                     onClick={(event: MouseEvent) => {
                       const plainClick =
@@ -86,7 +87,7 @@ export const AppSidebar = () => {
                         !event.altKey
                       if (plainClick) {
                         event.preventDefault()
-                        conversation.run(session.key)
+                        conversation.run(session().key)
                       }
                       closeDrawer()
                     }}
@@ -94,12 +95,14 @@ export const AppSidebar = () => {
                   >
                     <span class="flex min-w-0 flex-1 flex-col gap-1">
                       <span class="flex items-baseline gap-2">
-                        <span class="text-primary truncate">{session.key}</span>
+                        <span class="text-primary truncate">{session().key}</span>
                         <span class="text-muted-foreground ml-auto flex-none text-[10.5px]">
-                          {session.meta}
+                          {session().meta}
                         </span>
                       </span>
-                      <span class="text-muted-foreground text-xs text-pretty">{session.desc}</span>
+                      <span class="text-muted-foreground text-xs text-pretty">
+                        {session().desc}
+                      </span>
                     </span>
                   </SidebarMenuLink>
                 </SidebarMenuItem>
