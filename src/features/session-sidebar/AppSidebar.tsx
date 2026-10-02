@@ -30,7 +30,7 @@ export const AppSidebar = () => {
   }
 
   return (
-    <Sidebar>
+    <Sidebar label={i18n.t('sidebar.label')}>
       <SidebarHeader>
         <div class="flex items-center gap-2">
           <span
@@ -46,7 +46,7 @@ export const AppSidebar = () => {
           <Show when={sidebar.isMobile()}>
             <button
               type="button"
-              aria-label="Close sidebar"
+              aria-label={i18n.t('sidebar.close')}
               onClick={() => sidebar.setOpenMobile(false)}
               class="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring ml-auto inline-flex size-11 flex-none items-center justify-center focus-visible:ring-2 focus-visible:outline-none"
             >
@@ -67,9 +67,9 @@ export const AppSidebar = () => {
       </SidebarHeader>
 
       <SidebarContent>
-        <nav aria-label="Sessions">
+        <nav aria-label={i18n.t('sidebar.sessions')}>
           <p class="text-muted-foreground px-2 pb-2 text-[10.5px] tracking-[0.16em] uppercase">
-            sessions
+            {i18n.t('sidebar.sessions')}
           </p>
           <SidebarMenu>
             <For each={sessions()} keyed={(session) => session.key}>
@@ -119,21 +119,21 @@ export const AppSidebar = () => {
           <span class="text-success text-xs">{profile().status}</span>
         </p>
         <p class="flex items-baseline gap-2">
-          <span class="text-muted-foreground">where</span>
+          <span class="text-muted-foreground">{i18n.t('sidebar.where')}</span>
           <span class="text-foreground ml-auto">{profile().location}</span>
         </p>
         <p class="flex items-baseline gap-2">
-          <span class="text-muted-foreground">reply</span>
-          <span class="text-foreground ml-auto">same day</span>
+          <span class="text-muted-foreground">{i18n.t('sidebar.reply')}</span>
+          <span class="text-foreground ml-auto">{i18n.t('sidebar.replyValue')}</span>
         </p>
         <p class="flex items-baseline gap-2">
-          <span class="text-muted-foreground flex-none">email</span>
+          <span class="text-muted-foreground flex-none">{i18n.t('sidebar.email')}</span>
           <a href={`mailto:${profile().email}`} class={[linkClass, 'ml-auto break-all']}>
             {profile().email}
           </a>
         </p>
         <p class="flex items-baseline gap-2">
-          <span class="text-muted-foreground flex-none">social</span>
+          <span class="text-muted-foreground flex-none">{i18n.t('sidebar.social')}</span>
           <a
             href={profile().github}
             target="_blank"
