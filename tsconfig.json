@@ -19,6 +19,7 @@
       "@components": ["./src/components"],
       "@components/*": ["./src/components/*"],
       "@content": ["./.velite"],
+      "@content/*": ["./.velite/*"],
       "@features/*": ["./src/features/*"],
       "@hooks": ["./src/hooks"],
       "@hooks/*": ["./src/hooks/*"],
