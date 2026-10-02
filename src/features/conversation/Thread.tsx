@@ -1,6 +1,8 @@
 import { Dynamic } from '@solidjs/web'
 import { createEffect, For, onSettled } from 'solid-js'
 
+import { useI18n } from '@features/i18n'
+
 import { useConversation } from './ConversationProvider'
 import type { Message } from './ConversationProvider'
 import { responses } from './responses'
@@ -30,6 +32,7 @@ const AgentRow = (props: { message: AgentMessage }) => (
 )
 
 export const Thread = () => {
+  const { t } = useI18n()
   const conversation = useConversation()
   let threadEl: HTMLDivElement | undefined
   let pinned = true
@@ -74,7 +77,7 @@ export const Thread = () => {
       }}
       role="log"
       aria-live="polite"
-      aria-label="Conversation"
+      aria-label={t('thread.label')}
       class="mx-auto flex w-full max-w-[700px] flex-col gap-6 px-4 py-6 sm:px-6"
     >
       <For each={conversation.state.messages}>
