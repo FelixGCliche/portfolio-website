@@ -12,7 +12,7 @@ import {
 } from '@components'
 import { useConversation } from '@features/conversation'
 import { useI18n } from '@features/i18n'
-import { EMAIL, GITHUB_URL } from '@features/profile'
+import { useProfile } from '@features/profile'
 import { keyToParam, useSessions } from '@features/sessions'
 
 const linkClass =
@@ -23,6 +23,7 @@ export const AppSidebar = () => {
   const conversation = useConversation()
   const i18n = useI18n()
   const sessions = useSessions()
+  const profile = useProfile()
 
   const closeDrawer = () => {
     if (sidebar.isMobile()) sidebar.setOpenMobile(false)
@@ -39,8 +40,8 @@ export const AppSidebar = () => {
             fg
           </span>
           <div class="flex min-w-0 flex-col">
-            <span class="text-foreground text-sm font-bold">Félix Gagné Cliche</span>
-            <span class="text-muted-foreground text-xs">Software developer</span>
+            <span class="text-foreground text-sm font-bold">{profile().name}</span>
+            <span class="text-muted-foreground text-xs">{profile().role}</span>
           </div>
           <Show when={sidebar.isMobile()}>
             <button
@@ -115,11 +116,11 @@ export const AppSidebar = () => {
       <SidebarFooter>
         <p class="flex items-center gap-2">
           <span aria-hidden="true" class="bg-success size-1.5 flex-none" />
-          <span class="text-success text-xs">available for work</span>
+          <span class="text-success text-xs">{profile().status}</span>
         </p>
         <p class="flex items-baseline gap-2">
           <span class="text-muted-foreground">where</span>
-          <span class="text-foreground ml-auto">Québec, QC</span>
+          <span class="text-foreground ml-auto">{profile().location}</span>
         </p>
         <p class="flex items-baseline gap-2">
           <span class="text-muted-foreground">reply</span>
@@ -127,13 +128,18 @@ export const AppSidebar = () => {
         </p>
         <p class="flex items-baseline gap-2">
           <span class="text-muted-foreground flex-none">email</span>
-          <a href={`mailto:${EMAIL}`} class={[linkClass, 'ml-auto break-all']}>
-            {EMAIL}
+          <a href={`mailto:${profile().email}`} class={[linkClass, 'ml-auto break-all']}>
+            {profile().email}
           </a>
         </p>
         <p class="flex items-baseline gap-2">
           <span class="text-muted-foreground flex-none">social</span>
-          <a href={GITHUB_URL} target="_blank" rel="noreferrer" class={[linkClass, 'ml-auto']}>
+          <a
+            href={profile().github}
+            target="_blank"
+            rel="noreferrer"
+            class={[linkClass, 'ml-auto']}
+          >
             github
           </a>
         </p>
