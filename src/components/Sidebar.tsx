@@ -79,7 +79,7 @@ export const SidebarProvider = (props: ParentProps) => {
   )
 }
 
-export type SidebarProps = ParentProps<{ class?: ComponentProps<'div'>['class'] }>
+export type SidebarProps = ParentProps<{ label: string; class?: ComponentProps<'div'>['class'] }>
 
 export const Sidebar = (props: SidebarProps) => {
   const sidebar = useSidebar()
@@ -89,7 +89,7 @@ export const Sidebar = (props: SidebarProps) => {
       <Match when={sidebar.isMobile()}>
         <Sheet
           id="sidebar"
-          label="Sidebar"
+          label={props.label}
           open={sidebar.openMobile()}
           onOpenChange={sidebar.setOpenMobile}
           class={props.class}
@@ -102,7 +102,7 @@ export const Sidebar = (props: SidebarProps) => {
           <div class="h-full w-(--sidebar-width) transition-[width] duration-200 ease-linear group-data-[state=collapsed]:w-0 motion-reduce:transition-none" />
           <aside
             id="sidebar"
-            aria-label="Sidebar"
+            aria-label={props.label}
             inert={sidebar.state() === 'collapsed'}
             class={[
               'bg-background border-border absolute inset-y-0 left-0 z-10 flex w-(--sidebar-width) flex-col border-r transition-transform duration-200 ease-linear group-data-[state=collapsed]:-translate-x-full motion-reduce:transition-none',
@@ -214,11 +214,11 @@ const SidebarMenuAnchor = (props: ComponentProps<'a'> & { 'data-status'?: string
 
 export const SidebarMenuLink = createLink(SidebarMenuAnchor)
 
-export type SidebarTriggerProps = ComponentProps<'button'>
+export type SidebarTriggerProps = ComponentProps<'button'> & { label?: string }
 
 export const SidebarTrigger = (props: SidebarTriggerProps) => {
   const sidebar = useSidebar()
-  const rest = omit(props, 'class', 'children', 'onClick')
+  const rest = omit(props, 'class', 'children', 'onClick', 'label')
 
   const expanded = () =>
     sidebar.isMobile() ? sidebar.openMobile() : sidebar.state() === 'expanded'
@@ -246,7 +246,7 @@ export const SidebarTrigger = (props: SidebarTriggerProps) => {
       >
         <path d="M3.5 5.5h17M3.5 12h17M3.5 18.5h17" />
       </svg>
-      <span class="sr-only">Toggle sidebar</span>
+      <span class="sr-only">{props.label ?? 'Toggle sidebar'}</span>
     </button>
   )
 }
