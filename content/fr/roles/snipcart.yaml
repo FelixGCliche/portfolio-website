@@ -1,0 +1,10 @@
+slug: snipcart
+title: 'Développeur fullstack'
+company: 'Snipcart'
+start: '2021-06'
+end: '2021-09'
+order: 4
+bullets:
+  - 'Features livrées pour un SaaS e-commerce en production.'
+  - 'VueJS au front, .NET Core au back.'
+  - "Première vraie base de code : j'y ai appris à lire bien plus qu'à écrire."

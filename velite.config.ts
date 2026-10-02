@@ -3,7 +3,7 @@ import { defineCollection, defineConfig, s } from 'velite'
 type Locale = 'en' | 'fr'
 
 const localeFromPath = (path: string): Locale => {
-  const locale = path.split(/[\\/]+/).at(-2)
+  const locale = path.split(/[\\/]+/).find((segment) => segment === 'en' || segment === 'fr')
   if (locale !== 'en' && locale !== 'fr') throw new Error(`Cannot derive locale from path: ${path}`)
   return locale
 }
@@ -45,6 +45,44 @@ const about = defineCollection({
     })),
 })
 
+const roles = defineCollection({
+  name: 'Role',
+  pattern: '*/roles/*.yaml',
+  schema: s
+    .object({
+      slug: s.string().regex(/^[a-z0-9-]+$/),
+      title: s.string(),
+      company: s.string(),
+      start: s.string().regex(/^\d{4}-\d{2}$/),
+      end: s
+        .string()
+        .regex(/^\d{4}-\d{2}$/)
+        .nullable(),
+      order: s.number(),
+      bullets: s.array(s.string()),
+    })
+    .transform((data, { meta }) => ({
+      ...data,
+      locale: localeFromPath(meta.path),
+    })),
+})
+
+const education = defineCollection({
+  name: 'Education',
+  pattern: '*/education.yaml',
+  schema: s
+    .object({
+      degree: s.string(),
+      school: s.string(),
+      start: s.number().int(),
+      end: s.number().int(),
+    })
+    .transform((data, { meta }) => ({
+      ...data,
+      locale: localeFromPath(meta.path),
+    })),
+})
+
 export default defineConfig({
   root: 'content',
   output: {
@@ -54,5 +92,5 @@ export default defineConfig({
     name: '[name]-[hash:8].[ext]',
     clean: true,
   },
-  collections: { profile, about },
+  collections: { profile, about, roles, education },
 })

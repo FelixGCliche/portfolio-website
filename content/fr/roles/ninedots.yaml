@@ -1,0 +1,10 @@
+slug: ninedots
+title: 'QA · Support dev'
+company: 'NineDots Studio'
+start: '2023-05'
+end: '2024-04'
+order: 1
+bullets:
+  - "Support à l'équipe de dev sur l'intégration dans Unity et Unreal Engine 5."
+  - 'Passes de QA structurées : attraper les vrais problèmes avant les joueurs.'
+  - "Pont entre la production et l'ingénierie — transformer un rapport flou en ticket réparable."
