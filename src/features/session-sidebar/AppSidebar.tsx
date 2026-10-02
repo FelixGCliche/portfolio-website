@@ -11,6 +11,7 @@ import {
   useSidebar,
 } from '@components'
 import { useConversation } from '@features/conversation'
+import { useI18n } from '@features/i18n'
 import { EMAIL, GITHUB_URL } from '@features/profile'
 import { keyToParam, sessions } from '@features/sessions'
 
@@ -20,6 +21,7 @@ const linkClass =
 export const AppSidebar = () => {
   const sidebar = useSidebar()
   const conversation = useConversation()
+  const i18n = useI18n()
 
   const closeDrawer = () => {
     if (sidebar.isMobile()) sidebar.setOpenMobile(false)
@@ -72,8 +74,8 @@ export const AppSidebar = () => {
               {(session) => (
                 <SidebarMenuItem>
                   <SidebarMenuLink
-                    to="/{-$session}"
-                    params={{ session: keyToParam(session.key) }}
+                    to="/$locale/{-$session}"
+                    params={{ locale: i18n.locale(), session: keyToParam(session.key) }}
                     activeOptions={{ exact: true }}
                     onClick={(event: MouseEvent) => {
                       const plainClick =

@@ -9,50 +9,97 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as Char123SessionChar125RouteImport } from './routes/{-$session}'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as LocaleRouteRouteImport } from './routes/$locale/route'
+import { Route as LocaleChar123SessionChar125RouteImport } from './routes/$locale/{-$session}'
 
-const Char123SessionChar125Route = Char123SessionChar125RouteImport.update({
-  id: '/{-$session}',
-  path: '/{-$session}',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LocaleRouteRoute = LocaleRouteRouteImport.update({
+  id: '/$locale',
+  path: '/$locale',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LocaleChar123SessionChar125Route =
+  LocaleChar123SessionChar125RouteImport.update({
+    id: '/{-$session}',
+    path: '/{-$session}',
+    getParentRoute: () => LocaleRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/{-$session}': typeof Char123SessionChar125Route
+  '/': typeof IndexRoute
+  '/$locale': typeof LocaleRouteRouteWithChildren
+  '/$locale/{-$session}': typeof LocaleChar123SessionChar125Route
 }
 export interface FileRoutesByTo {
-  '/{-$session}': typeof Char123SessionChar125Route
+  '/': typeof IndexRoute
+  '/$locale': typeof LocaleRouteRouteWithChildren
+  '/$locale/{-$session}': typeof LocaleChar123SessionChar125Route
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/{-$session}': typeof Char123SessionChar125Route
+  '/': typeof IndexRoute
+  '/$locale': typeof LocaleRouteRouteWithChildren
+  '/$locale/{-$session}': typeof LocaleChar123SessionChar125Route
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/{-$session}'
+  fullPaths: '/' | '/$locale' | '/$locale/{-$session}'
   fileRoutesByTo: FileRoutesByTo
-  to: '/{-$session}'
-  id: '__root__' | '/{-$session}'
+  to: '/' | '/$locale' | '/$locale/{-$session}'
+  id: '__root__' | '/' | '/$locale' | '/$locale/{-$session}'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  Char123SessionChar125Route: typeof Char123SessionChar125Route
+  IndexRoute: typeof IndexRoute
+  LocaleRouteRoute: typeof LocaleRouteRouteWithChildren
 }
 
 declare module '@tanstack/solid-router' {
   interface FileRoutesByPath {
-    '/{-$session}': {
-      id: '/{-$session}'
-      path: '/{-$session}'
-      fullPath: '/{-$session}'
-      preLoaderRoute: typeof Char123SessionChar125RouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/$locale': {
+      id: '/$locale'
+      path: '/$locale'
+      fullPath: '/$locale'
+      preLoaderRoute: typeof LocaleRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$locale/{-$session}': {
+      id: '/$locale/{-$session}'
+      path: '/{-$session}'
+      fullPath: '/$locale/{-$session}'
+      preLoaderRoute: typeof LocaleChar123SessionChar125RouteImport
+      parentRoute: typeof LocaleRouteRoute
     }
   }
 }
 
+interface LocaleRouteRouteChildren {
+  LocaleChar123SessionChar125Route: typeof LocaleChar123SessionChar125Route
+}
+
+const LocaleRouteRouteChildren: LocaleRouteRouteChildren = {
+  LocaleChar123SessionChar125Route: LocaleChar123SessionChar125Route,
+}
+
+const LocaleRouteRouteWithChildren = LocaleRouteRoute._addFileChildren(
+  LocaleRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  Char123SessionChar125Route: Char123SessionChar125Route,
+  IndexRoute: IndexRoute,
+  LocaleRouteRoute: LocaleRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

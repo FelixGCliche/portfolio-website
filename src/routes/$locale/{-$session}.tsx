@@ -30,7 +30,7 @@ const SessionThread = () => {
   return <Thread />
 }
 
-export const Route = createFileRoute('/{-$session}')({
+export const Route = createFileRoute('/$locale/{-$session}')({
   beforeLoad: ({ params }) => {
     if (params.session !== undefined && !isSessionParam(params.session)) throw notFound()
   },
