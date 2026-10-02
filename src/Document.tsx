@@ -1,8 +1,8 @@
 import { HydrationScript } from '@solidjs/web'
 import type { ParentProps } from 'solid-js'
 
+import { DEFAULT_LOCALE } from '@features/i18n'
 import {
-  DEFAULT_LANG,
   DEFAULT_THEME,
   THEME_COLOR_META_ID,
   THEME_COLORS,
@@ -10,7 +10,7 @@ import {
 } from '@features/preferences'
 
 const Document = (props: ParentProps) => (
-  <html lang={DEFAULT_LANG} class={DEFAULT_THEME === 'dark' ? 'dark' : undefined}>
+  <html lang={DEFAULT_LOCALE} class={DEFAULT_THEME === 'dark' ? 'dark' : undefined}>
     <head>
       <meta charset="utf-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />

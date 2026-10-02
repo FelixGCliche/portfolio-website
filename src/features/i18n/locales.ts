@@ -4,7 +4,7 @@ export type Locale = (typeof LOCALES)[number]
 
 export const DEFAULT_LOCALE: Locale = 'en'
 
-// Same key as preferences' LANG_STORAGE_KEY (read by THEME_INIT_SCRIPT before first paint)
+// Also read by preferences' THEME_INIT_SCRIPT before first paint
 export const LOCALE_STORAGE_KEY = 'lang'
 
 export const isLocale = (value: unknown): value is Locale =>
