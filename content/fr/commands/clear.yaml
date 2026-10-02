@@ -1,0 +1,6 @@
+slug: clear
+name: '/clear'
+short: 'vider la conversation'
+keywords: 'reset wipe cls empty effacer vider'
+nav: true
+order: 8

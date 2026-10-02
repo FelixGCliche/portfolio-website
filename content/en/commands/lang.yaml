@@ -1,0 +1,6 @@
+slug: lang
+name: '/lang'
+short: 'switch language'
+keywords: 'french francais language langue english fr en'
+nav: true
+order: 6

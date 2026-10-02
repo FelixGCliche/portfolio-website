@@ -116,6 +116,24 @@ const sessions = defineCollection({
     })),
 })
 
+const commands = defineCollection({
+  name: 'Command',
+  pattern: '*/commands/*.yaml',
+  schema: s
+    .object({
+      slug: s.string().regex(/^[a-z0-9-]+$/),
+      name: s.string().regex(/^\/[a-z0-9-]+$/),
+      short: s.string(),
+      keywords: s.string(),
+      nav: s.boolean(),
+      order: s.number(),
+    })
+    .transform((data, { meta }) => ({
+      ...data,
+      locale: localeFromPath(meta.path),
+    })),
+})
+
 export default defineConfig({
   root: 'content',
   output: {
@@ -125,5 +143,5 @@ export default defineConfig({
     name: '[name]-[hash:8].[ext]',
     clean: true,
   },
-  collections: { profile, about, roles, education, skills, sessions },
+  collections: { profile, about, roles, education, skills, sessions, commands },
 })
