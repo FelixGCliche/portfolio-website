@@ -1,5 +1,6 @@
 // eslint-disable-next-line solid/imports -- solid-js 2.x has no intrinsic-element prop types; the renderer package owns them
 import type { ComponentProps } from '@solidjs/web'
+import { createLink } from '@tanstack/solid-router'
 import {
   createContext,
   createEffect,
@@ -196,6 +197,22 @@ export const SidebarMenuButton = (props: SidebarMenuButtonProps) => {
     </button>
   )
 }
+
+const SidebarMenuAnchor = (props: ComponentProps<'a'> & { 'data-status'?: string }) => {
+  const rest = omit(props, 'class', 'children')
+
+  return (
+    <a
+      {...rest}
+      data-active={props['data-status'] === 'active' ? 'true' : 'false'}
+      class={[menuRowClass, props.class]}
+    >
+      {props.children}
+    </a>
+  )
+}
+
+export const SidebarMenuLink = createLink(SidebarMenuAnchor)
 
 export type SidebarTriggerProps = ComponentProps<'button'>
 
