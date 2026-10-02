@@ -1,23 +1,26 @@
 import { createEffect, createMemo, createSignal, For, Show } from 'solid-js'
 
 import { Dialog } from '@components'
+import { useI18n } from '@features/i18n'
+import type { UiKey } from '@features/i18n'
 
 import { useCommandPalette } from './CommandPaletteProvider'
-import { COMMAND_GROUPS, filterCommands, useCommands } from './commands'
+import { COMMAND_GROUP_LABELS, COMMAND_GROUPS, filterCommands, useCommands } from './commands'
 import type { CommandItem } from './commands'
 
 const LISTBOX_ID = 'commandPaletteList'
 
 const optionId = (item: CommandItem) => `${LISTBOX_ID}-${item.id}`
 
-const FOOTER_HINTS = [
-  { key: '↑↓', label: 'navigate' },
-  { key: '↵', label: 'run' },
-  { key: 'esc', label: 'close' },
+const FOOTER_HINTS: { key: string; label: UiKey }[] = [
+  { key: '↑↓', label: 'palette.hint.navigate' },
+  { key: '↵', label: 'palette.hint.run' },
+  { key: 'esc', label: 'palette.hint.close' },
 ]
 
 export const CommandPalette = () => {
   const palette = useCommandPalette()
+  const { t } = useI18n()
   const commands = useCommands()
   const [query, setQuery] = createSignal('', { name: 'commandPaletteQuery' })
   const [active, setActive] = createSignal(0, { name: 'commandPaletteActive' })
@@ -91,7 +94,7 @@ export const CommandPalette = () => {
   return (
     <Dialog
       id="commandPalette"
-      label="Command palette"
+      label={t('palette.label')}
       open={palette.open()}
       onOpenChange={handleOpenChange}
     >
@@ -100,12 +103,12 @@ export const CommandPalette = () => {
           ›
         </span>
         <label for="commandPaletteInput" class="sr-only">
-          Search commands
+          {t('palette.searchLabel')}
         </label>
         <input
           id="commandPaletteInput"
           type="text"
-          placeholder="search sessions, actions, links"
+          placeholder={t('palette.placeholder')}
           autofocus
           autocomplete="off"
           spellcheck={false}
@@ -128,17 +131,17 @@ export const CommandPalette = () => {
         ref={(el) => (listbox = el)}
         id={LISTBOX_ID}
         role="listbox"
-        aria-label="Commands"
+        aria-label={t('palette.listLabel')}
         class="max-h-[min(20rem,50dvh)] overflow-y-auto overscroll-contain py-1 text-xs"
       >
         <For each={groups()}>
           {(entry) => (
-            <div role="group" aria-label={entry.group}>
+            <div role="group" aria-label={t(COMMAND_GROUP_LABELS[entry.group])}>
               <div
                 role="presentation"
                 class="text-foreground px-3 pt-2 pb-1 text-[10.5px] tracking-[0.16em] uppercase"
               >
-                {entry.group}
+                {t(COMMAND_GROUP_LABELS[entry.group])}
               </div>
               <For each={entry.items}>
                 {(item) => {
@@ -169,13 +172,13 @@ export const CommandPalette = () => {
         </For>
       </div>
       <Show when={results().length === 0}>
-        <p class="text-muted-foreground m-0 px-3 py-2 text-xs">No matching commands</p>
+        <p class="text-muted-foreground m-0 px-3 py-2 text-xs">{t('palette.empty')}</p>
       </Show>
       <ul class="border-border text-muted-foreground m-0 hidden list-none gap-x-5 border-t p-0 px-3 py-2 text-[11px] md:flex">
         <For each={FOOTER_HINTS}>
           {(hint) => (
             <li class="whitespace-nowrap">
-              <kbd class="text-foreground">{hint.key}</kbd> {hint.label}
+              <kbd class="text-foreground">{hint.key}</kbd> {t(hint.label)}
             </li>
           )}
         </For>
