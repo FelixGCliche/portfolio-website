@@ -1,10 +1,10 @@
 import { about, commands, education, profile, roles, sessions, skills } from '@content'
 import type { About, Command, Education, Profile, Role, Session, Skill } from '@content'
 import { useParams } from '@tanstack/solid-router'
-import { createContext, createMemo, useContext } from 'solid-js'
+import { createContext, createEffect, createMemo, useContext } from 'solid-js'
 import type { Accessor, ParentProps } from 'solid-js'
 
-import { detectLocale } from './detectLocale'
+import { detectLocale, storeLocale } from './detectLocale'
 import { DEFAULT_LOCALE, isLocale, type Locale } from './locales'
 import { stringsFor, translate, type TranslateVars, type UiKey } from './translate'
 
@@ -52,6 +52,18 @@ export const I18nProvider = (props: ParentProps) => {
       return isLocale(param) ? param : detected
     },
     { name: 'i18nLocale' }
+  )
+
+  // Persist a locale reached by direct URL so `/` redirects to it on the next visit.
+  createEffect(
+    () => {
+      const param = (params() as { locale?: unknown } | undefined)?.locale
+      return isLocale(param) ? param : undefined
+    },
+    (routeLocale) => {
+      if (routeLocale) storeLocale(routeLocale)
+    },
+    { name: 'i18nPersistLocale' }
   )
 
   const strings = createMemo(() => stringsFor(locale()), { name: 'i18nStrings' })
