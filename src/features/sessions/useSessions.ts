@@ -1,7 +1,8 @@
+import { sessions as sessionContent } from '@content'
 import { createMemo } from 'solid-js'
 import type { Accessor } from 'solid-js'
 
-import { useI18n } from '@features/i18n'
+import { pickSorted, useI18n } from '@features/i18n'
 
 import { isSessionKey } from './sessions'
 import type { Session, SessionKey } from './sessions'
@@ -11,11 +12,9 @@ export const useSessions = (): Accessor<Session[]> => {
   const i18n = useI18n()
   return createMemo(
     () =>
-      i18n
-        .sessions()
-        .flatMap(({ key, slug, meta, desc }) =>
-          isSessionKey(key) ? [{ key, slug, meta, desc }] : []
-        ),
+      pickSorted(sessionContent, i18n.locale()).flatMap(({ key, slug, meta, desc }) =>
+        isSessionKey(key) ? [{ key, slug, meta, desc }] : []
+      ),
     { name: 'sessions' }
   )
 }

@@ -2,7 +2,7 @@ import { createMemo } from 'solid-js'
 import type { Accessor } from 'solid-js'
 
 import { useSidebar } from '@components'
-import { useComposer } from '@features/composer'
+import { useCommandEntries, useComposer } from '@features/composer'
 import { useConversation } from '@features/conversation'
 import { LOCALES, stringsFor, translate, useI18n } from '@features/i18n'
 import type { UiKey } from '@features/i18n'
@@ -102,6 +102,7 @@ export const useCommands = (): Accessor<CommandItem[]> => {
   const composer = useComposer()
   const preferences = usePreferences()
   const sessions = useSessions()
+  const entries = useCommandEntries()
 
   const actions: ActionDef[] = [
     {
@@ -161,7 +162,7 @@ export const useCommands = (): Accessor<CommandItem[]> => {
     () => {
       const t = i18n.t
       const commandKeywords = new Map(
-        i18n.commands().map((entry) => [entry.name, [entry.short, ...splitWords(entry.keywords)]])
+        entries().map((entry) => [entry.name, [entry.short, ...splitWords(entry.keywords)]])
       )
       const contentKeywords = (name?: string) => (name ? (commandKeywords.get(name) ?? []) : [])
 
