@@ -1,5 +1,5 @@
 import { Dynamic } from '@solidjs/web'
-import { createEffect, For, Match, onSettled, Show, Switch } from 'solid-js'
+import { createEffect, For, onSettled } from 'solid-js'
 
 import { useConversation } from './ConversationProvider'
 import type { Message } from './ConversationProvider'
@@ -7,11 +7,15 @@ import { responses } from './responses'
 
 const SCROLLER_SELECTOR = '[role="region"][aria-label="Content"]'
 const PIN_THRESHOLD = 80
+const ROW_CLASS = 'animate-rise flex motion-reduce:animate-none'
 
 const distanceFromBottom = (el: HTMLElement) => el.scrollHeight - el.scrollTop - el.clientHeight
 
-const UserRow = (props: { message: Message }) => (
-  <div class="animate-rise flex gap-3 font-medium motion-reduce:animate-none">
+type UserMessage = Extract<Message, { role: 'user' }>
+type AgentMessage = Extract<Message, { role: 'agent' }>
+
+const UserRow = (props: { message: UserMessage }) => (
+  <div class={`${ROW_CLASS} gap-3 font-medium`}>
     <span class="text-success flex-none" aria-hidden="true">
       ›
     </span>
@@ -19,11 +23,9 @@ const UserRow = (props: { message: Message }) => (
   </div>
 )
 
-const AgentRow = (props: { message: Message }) => (
-  <div class="animate-rise flex flex-col gap-4 pt-3 pl-[26px] motion-reduce:animate-none">
-    <Show when={props.message.session}>
-      {(session) => <Dynamic component={responses[session()]} />}
-    </Show>
+const AgentRow = (props: { message: AgentMessage }) => (
+  <div class={`${ROW_CLASS} flex-col gap-4 pt-3 pl-[26px]`}>
+    <Dynamic component={responses[props.message.session]} />
   </div>
 )
 
@@ -48,8 +50,11 @@ export const Thread = () => {
   createEffect(
     (prev?: { count: number; fromUser: boolean }) => {
       const messages = conversation.state.messages
-      const appended = messages.slice(prev?.count ?? messages.length)
-      return { count: messages.length, fromUser: appended.some((m) => m.role === 'user') }
+      let fromUser = false
+      for (let i = prev?.count ?? messages.length; i < messages.length; i++) {
+        if (messages[i].role === 'user') fromUser = true
+      }
+      return { count: messages.length, fromUser }
     },
     (next, prev) => {
       if (!prev || next.count <= prev.count) return
@@ -73,16 +78,9 @@ export const Thread = () => {
       class="mx-auto flex w-full max-w-[700px] flex-col gap-6 px-4 py-6 sm:px-6"
     >
       <For each={conversation.state.messages}>
-        {(message) => (
-          <Switch>
-            <Match when={message.role === 'user'}>
-              <UserRow message={message} />
-            </Match>
-            <Match when={message.role === 'agent'}>
-              <AgentRow message={message} />
-            </Match>
-          </Switch>
-        )}
+        {(message) =>
+          message.role === 'user' ? <UserRow message={message} /> : <AgentRow message={message} />
+        }
       </For>
     </div>
   )

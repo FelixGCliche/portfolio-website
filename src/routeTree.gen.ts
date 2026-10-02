@@ -9,140 +9,50 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as ResumeRouteImport } from './routes/resume'
-import { Route as SkillsRouteImport } from './routes/skills'
-import { Route as WorkRouteImport } from './routes/work'
+import { Route as Char123SessionChar125RouteImport } from './routes/{-$session}'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResumeRoute = ResumeRouteImport.update({
-  id: '/resume',
-  path: '/resume',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SkillsRoute = SkillsRouteImport.update({
-  id: '/skills',
-  path: '/skills',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const WorkRoute = WorkRouteImport.update({
-  id: '/work',
-  path: '/work',
+const Char123SessionChar125Route = Char123SessionChar125RouteImport.update({
+  id: '/{-$session}',
+  path: '/{-$session}',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/contact': typeof ContactRoute
-  '/resume': typeof ResumeRoute
-  '/skills': typeof SkillsRoute
-  '/work': typeof WorkRoute
+  '/{-$session}': typeof Char123SessionChar125Route
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/contact': typeof ContactRoute
-  '/resume': typeof ResumeRoute
-  '/skills': typeof SkillsRoute
-  '/work': typeof WorkRoute
+  '/{-$session}': typeof Char123SessionChar125Route
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/contact': typeof ContactRoute
-  '/resume': typeof ResumeRoute
-  '/skills': typeof SkillsRoute
-  '/work': typeof WorkRoute
+  '/{-$session}': typeof Char123SessionChar125Route
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/contact' | '/resume' | '/skills' | '/work'
+  fullPaths: '/{-$session}'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/contact' | '/resume' | '/skills' | '/work'
-  id: '__root__' | '/' | '/about' | '/contact' | '/resume' | '/skills' | '/work'
+  to: '/{-$session}'
+  id: '__root__' | '/{-$session}'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
-  ContactRoute: typeof ContactRoute
-  ResumeRoute: typeof ResumeRoute
-  SkillsRoute: typeof SkillsRoute
-  WorkRoute: typeof WorkRoute
+  Char123SessionChar125Route: typeof Char123SessionChar125Route
 }
 
 declare module '@tanstack/solid-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/resume': {
-      id: '/resume'
-      path: '/resume'
-      fullPath: '/resume'
-      preLoaderRoute: typeof ResumeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/skills': {
-      id: '/skills'
-      path: '/skills'
-      fullPath: '/skills'
-      preLoaderRoute: typeof SkillsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/work': {
-      id: '/work'
-      path: '/work'
-      fullPath: '/work'
-      preLoaderRoute: typeof WorkRouteImport
+    '/{-$session}': {
+      id: '/{-$session}'
+      path: '/{-$session}'
+      fullPath: '/{-$session}'
+      preLoaderRoute: typeof Char123SessionChar125RouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
-  ContactRoute: ContactRoute,
-  ResumeRoute: ResumeRoute,
-  SkillsRoute: SkillsRoute,
-  WorkRoute: WorkRoute,
+  Char123SessionChar125Route: Char123SessionChar125Route,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

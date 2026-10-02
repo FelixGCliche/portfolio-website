@@ -1,11 +1,12 @@
-import { createEffect } from 'solid-js'
+import { createEffect, untrack } from 'solid-js'
 import type { Accessor } from 'solid-js'
 
+import { keyToParam } from '@features/sessions'
 import type { SessionKey } from '@features/sessions'
 
 import { useConversation } from './ConversationProvider'
 
-export type SessionNavigate = (options: {
+type SessionNavigate = (options: {
   to: '/{-$session}'
   params: { session?: string }
   replace: boolean
@@ -15,27 +16,29 @@ export const useSessionUrl = (session: Accessor<string | undefined>, navigate: S
   const conversation = useConversation()
 
   const syncUrl = (key: SessionKey | '') => {
-    void navigate({
-      to: '/{-$session}',
-      params: { session: key ? key.slice(1) : undefined },
-      replace: true,
-    })
+    // navigate reads router state; untracked so callers inside effect callbacks don't subscribe to it
+    untrack(
+      () =>
+        void navigate({
+          to: '/{-$session}',
+          params: { session: key ? keyToParam(key) : undefined },
+          replace: true,
+        })
+    )
   }
 
   createEffect(
     () => session(),
     (param) => {
-      if (param) void conversation.run(param, { silent: true, onError: () => syncUrl('') })
+      if (param) {
+        conversation.run(param, { silent: true, onError: () => syncUrl('') })
+        return
+      }
+      // URL left the session (back button, link to `/`): keep `active` in sync. A no-op on the initial `/` load;
+      // the resulting active '' already matches the empty param, so the route's sync effect won't navigate back
+      conversation.clearActive()
     },
     { name: 'sessionUrlToConversation' }
-  )
-
-  createEffect(
-    () => conversation.state.active,
-    (active) => {
-      if (active) syncUrl(active)
-    },
-    { name: 'conversationToSessionUrl' }
   )
 
   return { syncUrl }

@@ -12,7 +12,7 @@ import {
 } from '@components'
 import { useConversation } from '@features/conversation'
 import { EMAIL, GITHUB_URL } from '@features/profile'
-import { sessions } from '@features/sessions'
+import { keyToParam, sessions } from '@features/sessions'
 
 const linkClass =
   'text-primary focus-visible:ring-ring inline-flex min-h-11 items-center hover:underline focus-visible:ring-2 focus-visible:outline-none md:min-h-0'
@@ -72,7 +72,8 @@ export const AppSidebar = () => {
               {(session) => (
                 <SidebarMenuItem>
                   <SidebarMenuLink
-                    to={session.key}
+                    to="/{-$session}"
+                    params={{ session: keyToParam(session.key) }}
                     activeOptions={{ exact: true }}
                     onClick={(event: MouseEvent) => {
                       const plainClick =
@@ -83,7 +84,7 @@ export const AppSidebar = () => {
                         !event.altKey
                       if (plainClick) {
                         event.preventDefault()
-                        void conversation.run(session.key)
+                        conversation.run(session.key)
                       }
                       closeDrawer()
                     }}

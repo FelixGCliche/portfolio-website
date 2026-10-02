@@ -2,43 +2,24 @@ import { createContext, createStore, useContext } from 'solid-js'
 import type { ParentProps } from 'solid-js'
 
 import { findSession } from '@features/sessions'
-import type { Session, SessionKey } from '@features/sessions'
+import type { SessionKey } from '@features/sessions'
 
-export type Role = 'user' | 'agent'
+export type Message =
+  | { id: string; role: 'user'; text: string }
+  | { id: string; role: 'agent'; session: SessionKey }
 
-export type Message = {
-  id: string
-  role: Role
-  text?: string
-  session?: SessionKey
-}
-
-export type RunError = {
-  reason: 'unknown'
-  input: string
-}
-
-export type RunResult = {
-  command: Session | undefined
-  handled: boolean
-  error: RunError | undefined
-}
-
-export type RunOptions = {
-  silent?: boolean
-  onSuccess?: (result: RunResult) => void
-  onError?: (result: RunResult) => void
-  onSettled?: (result: RunResult) => void
-}
-
-export type ConversationState = {
+type ConversationState = {
   messages: Message[]
   active: SessionKey | ''
 }
 
+type RunOptions = { silent?: boolean; onError?: () => void }
+
 export type ConversationContextValue = {
   state: ConversationState
-  run: (input: string, options?: RunOptions) => Promise<RunResult>
+  // Returns whether the input named a known session
+  run: (input: string, options?: RunOptions) => boolean
+  clearActive: () => void
 }
 
 export const ConversationContext = createContext<ConversationContextValue>()
@@ -53,23 +34,15 @@ export const ConversationProvider = (props: ParentProps) => {
   let nextId = 0
   const createId = () => `m${nextId++}`
 
-  const run = async (input: string, options?: RunOptions): Promise<RunResult> => {
+  const run = (input: string, options?: RunOptions): boolean => {
     const raw = input.trim()
     const command = findSession(raw)
     if (!command) {
-      const error: RunError = { reason: 'unknown', input: raw }
-      const failed: RunResult = { command, handled: false, error }
-      options?.onError?.(failed)
-      options?.onSettled?.(failed)
-      return failed
+      options?.onError?.()
+      return false
     }
 
-    if (options?.silent && state.active === command.key) {
-      const result: RunResult = { command, handled: true, error: undefined }
-      options?.onSuccess?.(result)
-      options?.onSettled?.(result)
-      return result
-    }
+    if (options?.silent && state.active === command.key) return true
 
     const reply: Message = { id: createId(), role: 'agent', session: command.key }
     const echo: Message[] = options?.silent ? [] : [{ id: createId(), role: 'user', text: raw }]
@@ -79,13 +52,18 @@ export const ConversationProvider = (props: ParentProps) => {
       draft.active = command.key
     })
 
-    const result: RunResult = { command, handled: true, error: undefined }
-    options?.onSuccess?.(result)
-    options?.onSettled?.(result)
-    return result
+    return true
   }
 
-  const value: ConversationContextValue = { state, run }
+  // Keeps the message history; only forgets the active session so the next command for it isn't a no-op
+  const clearActive = () => {
+    if (!state.active) return
+    setState((draft) => {
+      draft.active = ''
+    })
+  }
+
+  const value: ConversationContextValue = { state, run, clearActive }
 
   return <ConversationContext value={value}>{props.children}</ConversationContext>
 }

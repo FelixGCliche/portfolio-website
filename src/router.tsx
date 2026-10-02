@@ -8,8 +8,6 @@ export const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
   defaultNotFoundComponent: NotFound,
-  scrollRestoration: true,
-  scrollToTopSelectors: ['[role="region"][aria-label="Content"]'],
 })
 
 declare module '@tanstack/solid-router' {
