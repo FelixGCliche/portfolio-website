@@ -1,0 +1,6 @@
+slug: theme
+name: '/theme'
+short: 'changer le thème (sombre/clair)'
+keywords: 'dark light color couleur theme thème sombre clair'
+nav: true
+order: 7

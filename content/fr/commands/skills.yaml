@@ -1,0 +1,6 @@
+slug: skills
+name: '/skills'
+short: 'stack et outils'
+keywords: 'tech stack languages tools frameworks technologies competences'
+nav: true
+order: 4

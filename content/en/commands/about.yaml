@@ -1,0 +1,6 @@
+slug: about
+name: '/about'
+short: 'who I am'
+keywords: 'bio me intro hello hi who yourself presentation'
+nav: true
+order: 1
