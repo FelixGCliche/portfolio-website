@@ -2,20 +2,21 @@ import { formatForDisplay } from '@tanstack/hotkeys'
 import { createMemo, createSignal, For, Show } from 'solid-js'
 
 import { useConversation } from '@features/conversation'
+import { useI18n } from '@features/i18n'
+import type { UiKey } from '@features/i18n'
 import { usePreferences } from '@features/preferences'
-import { useSessions } from '@features/sessions'
 import { useHotkey } from '@hooks'
 
 import { BlockCaret } from './BlockCaret'
-import { findCommand, matchCommands } from './commands'
+import { findCommand, matchCommands, useComposerCommands } from './commands'
 import { useComposer } from './ComposerProvider'
 import { Suggestions, SUGGESTIONS_ID, suggestionOptionId } from './Suggestions'
 import { useCommandHistory } from './useCommandHistory'
 
-const KEY_HINTS = [
-  { key: '↑↓', label: 'history' },
-  { key: 'tab', label: 'completes' },
-  { key: 'esc', label: 'clears' },
+const KEY_HINTS: { key: string; label: UiKey }[] = [
+  { key: '↑↓', label: 'keyhints.history' },
+  { key: 'tab', label: 'keyhints.complete' },
+  { key: 'esc', label: 'keyhints.clear' },
 ]
 
 export const Composer = () => {
@@ -24,10 +25,13 @@ export const Composer = () => {
 
   const conversation = useConversation()
   const preferences = usePreferences()
-  const sessions = useSessions()
+  const { t } = useI18n()
+  const commands = useComposerCommands()
   const history = useCommandHistory()
   const { value, setValue, focus, registerInput } = useComposer()
+  // The unknown command that failed, rendered through t() so the message follows the locale
   const [error, setError] = createSignal('', { name: 'promptError' })
+  const errorMessage = () => (error() ? t('composer.commandNotFound', { command: error() }) : '')
   const [focused, setFocused] = createSignal(false, { name: 'promptFocused' })
   const [dismissed, setDismissed] = createSignal(false, { name: 'suggestionsDismissed' })
   const [active, setActive] = createSignal(0, { name: 'suggestionActive' })
@@ -38,7 +42,7 @@ export const Composer = () => {
   })
 
   const matches = createMemo(
-    () => (value().startsWith('/') ? matchCommands(value(), sessions()) : []),
+    () => (value().startsWith('/') ? matchCommands(value(), commands()) : []),
     {
       name: 'suggestionMatches',
     }
@@ -79,9 +83,9 @@ export const Composer = () => {
   const handleSubmit = (input: string) => {
     const raw = input.trim()
     if (!raw) return
-    const command = findCommand(raw, sessions())
+    const command = findCommand(raw, commands())
     if (!command) {
-      setError(`command not found: ${raw}`)
+      setError(raw)
       return
     }
 
@@ -213,7 +217,7 @@ export const Composer = () => {
           ›
         </span>
         <label for="promptInput" class="sr-only">
-          Command
+          {t('composer.label')}
         </label>
         <div class="relative min-w-0 flex-1 text-base md:text-sm">
           <input
@@ -224,7 +228,7 @@ export const Composer = () => {
             id="promptInput"
             name="command"
             type="text"
-            placeholder="type a command, e.g. /about"
+            placeholder={t('composer.placeholder')}
             autocomplete="off"
             spellcheck={false}
             autocapitalize="off"
@@ -251,7 +255,7 @@ export const Composer = () => {
         </div>
         <button
           type="submit"
-          aria-label="Send command"
+          aria-label={t('composer.send')}
           class="border-border text-foreground hover:text-primary hover:border-primary focus-visible:ring-ring size-11 flex-none border focus-visible:ring-2 focus-visible:outline-none md:h-6 md:w-7"
         >
           <span aria-hidden="true">↵</span>
@@ -263,16 +267,16 @@ export const Composer = () => {
         aria-live="polite"
         class={['text-destructive m-0 text-xs break-all', { 'pt-2': !!error() }]}
       >
-        {error()}
+        {errorMessage()}
       </p>
       <ul class="text-muted-foreground m-0 hidden list-none flex-wrap gap-x-5 gap-y-1 p-0 pt-2.5 text-[11px] md:flex">
         <li class="whitespace-nowrap">
-          <kbd class="text-foreground">{paletteLabel}</kbd> palette
+          <kbd class="text-foreground">{paletteLabel}</kbd> {t('keyhints.palette')}
         </li>
         <For each={KEY_HINTS}>
           {(hint) => (
             <li class="whitespace-nowrap">
-              <kbd class="text-foreground">{hint.key}</kbd> {hint.label}
+              <kbd class="text-foreground">{hint.key}</kbd> {t(hint.label)}
             </li>
           )}
         </For>

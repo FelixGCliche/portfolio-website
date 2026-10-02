@@ -1,5 +1,7 @@
 import { createEffect, For } from 'solid-js'
 
+import { useI18n } from '@features/i18n'
+
 export const SUGGESTIONS_ID = 'promptSuggestions'
 
 export const suggestionOptionId = (key: string) => `${SUGGESTIONS_ID}-${key.slice(1)}`
@@ -13,6 +15,7 @@ export type SuggestionsProps = {
 }
 
 export const Suggestions = (props: SuggestionsProps) => {
+  const { t } = useI18n()
   let listbox: HTMLUListElement | undefined
 
   createEffect(
@@ -29,7 +32,7 @@ export const Suggestions = (props: SuggestionsProps) => {
       ref={(el) => (listbox = el)}
       id={SUGGESTIONS_ID}
       role="listbox"
-      aria-label="Command suggestions"
+      aria-label={t('composer.suggestions')}
       class="bg-popover text-popover-foreground border-border absolute inset-x-0 bottom-full z-20 m-0 mb-1 list-none overflow-y-auto border text-xs"
     >
       <For each={props.items}>
