@@ -7,6 +7,8 @@ import type { UiKey } from '@features/i18n'
 import { isSessionKey, useSessions } from '@features/sessions'
 import type { Session, SessionKey } from '@features/sessions'
 
+import { useCommandEntries } from './useCommandEntries'
+
 type ActionKind = 'theme' | 'lang' | 'clear'
 
 type CommandText = { meta: string; desc: string; keywords: string[] }
@@ -43,11 +45,11 @@ const toCommand = (
 // Locale-aware composer commands, in content order
 export const useComposerCommands = (): Accessor<Command[]> => {
   const i18n = useI18n()
+  const entries = useCommandEntries()
   const sessions = useSessions()
-  return createMemo(
-    () => i18n.commands().flatMap((entry) => toCommand(entry, sessions(), i18n.t)),
-    { name: 'composerCommands' }
-  )
+  return createMemo(() => entries().flatMap((entry) => toCommand(entry, sessions(), i18n.t)), {
+    name: 'composerCommands',
+  })
 }
 
 // Name prefix matches first, then commands with a keyword starting with the query
