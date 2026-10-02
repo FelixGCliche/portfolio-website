@@ -147,7 +147,7 @@ const ui = defineCollection({
 
 const locales: Locale[] = ['en', 'fr']
 
-type Localized = { locale: Locale }
+type ParityItem = { locale: Locale; slug?: string; strings?: Record<string, string> }
 
 const placeholders = (value: string) =>
   [...value.matchAll(/\{(\w+)\}/g)]
@@ -155,66 +155,60 @@ const placeholders = (value: string) =>
     .sort()
     .join(',')
 
+const singletonId = () => ['entry']
+const slugId = (item: ParityItem) => [`slug "${item.slug}"`]
+const uiKeyIds = (item: ParityItem) => Object.keys(item.strings ?? {}).map((key) => `key "${key}"`)
+
+// How each collection's entries are matched across locales
+const parityIds = {
+  profile: singletonId,
+  about: singletonId,
+  education: singletonId,
+  roles: slugId,
+  skills: slugId,
+  sessions: slugId,
+  commands: slugId,
+  ui: uiKeyIds,
+}
+
 // Collects "<collection>: <locale> missing <id>" for every id present in another locale but not this one.
-const diffLocales = (collection: string, idsByLocale: Record<Locale, Set<string>>) => {
-  const all = new Set(locales.flatMap((locale) => [...idsByLocale[locale]]))
-  return locales.flatMap((locale) =>
+const diffLocales = (
+  collection: string,
+  items: ParityItem[],
+  ids: (item: ParityItem) => string[]
+) => {
+  const idsByLocale = locales.map(
+    (locale) => new Set(items.filter((item) => item.locale === locale).flatMap(ids))
+  )
+  const all = new Set(idsByLocale.flatMap((set) => [...set]))
+  return locales.flatMap((locale, i) =>
     [...all]
-      .filter((id) => !idsByLocale[locale].has(id))
+      .filter((id) => !idsByLocale[i].has(id))
       .map((id) => `${collection}: ${locale} missing ${id}`)
   )
 }
 
-const groupIds = <T extends Localized>(items: T[], id: (item: T) => string[]) =>
-  Object.fromEntries(
-    locales.map((locale) => [
-      locale,
-      new Set(items.filter((item) => item.locale === locale).flatMap(id)),
-    ])
-  ) as Record<Locale, Set<string>>
-
-const checkParity = (data: {
-  profile: Localized[]
-  about: Localized[]
-  education: Localized[]
-  roles: (Localized & { slug: string })[]
-  skills: (Localized & { slug: string })[]
-  sessions: (Localized & { slug: string })[]
-  commands: (Localized & { slug: string })[]
-  ui: (Localized & { strings: Record<string, string> })[]
-}) => {
-  const singletons = (['profile', 'about', 'education'] as const).flatMap((name) =>
-    diffLocales(
-      name,
-      groupIds(data[name], () => ['entry'])
-    )
-  )
-  const slugged = (['roles', 'skills', 'sessions', 'commands'] as const).flatMap((name) =>
-    diffLocales(
-      name,
-      groupIds(data[name], (item) => [`slug "${item.slug}"`])
-    )
-  )
-  const uiKeys = diffLocales(
-    'ui',
-    groupIds(data.ui, (item) => Object.keys(item.strings).map((key) => `key "${key}"`))
+const checkParity = (data: Record<keyof typeof parityIds, ParityItem[]>) => {
+  const missing = (Object.keys(parityIds) as (keyof typeof parityIds)[]).flatMap((name) =>
+    diffLocales(name, data[name], parityIds[name])
   )
   const [en, fr] = locales.map(
     (locale) => data.ui.find((item) => item.locale === locale)?.strings ?? {}
   )
-  const uiPlaceholders = Object.keys(en)
-    .filter((key) => key in fr && placeholders(en[key]) !== placeholders(fr[key]))
-    .map(
-      (key) =>
-        `ui: placeholder mismatch for key "${key}" (en {${placeholders(en[key])}} vs fr {${placeholders(fr[key])}})`
-    )
-  const errors = [...singletons, ...slugged, ...uiKeys, ...uiPlaceholders]
+  const mismatched = Object.keys(en).flatMap((key) => {
+    if (!(key in fr)) return []
+    const [enSlots, frSlots] = [placeholders(en[key]), placeholders(fr[key])]
+    return enSlots === frSlots
+      ? []
+      : [`ui: placeholder mismatch for key "${key}" (en {${enSlots}} vs fr {${frSlots}})`]
+  })
+  const errors = [...missing, ...mismatched]
   if (errors.length > 0)
     throw new Error(`Bilingual content parity check failed:\n  - ${errors.join('\n  - ')}`)
 }
 
 export default defineConfig({
-  complete: (data) => checkParity(data),
+  complete: checkParity,
   root: 'content',
   output: {
     data: '.velite',
