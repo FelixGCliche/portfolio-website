@@ -1,4 +1,3 @@
-import { findSessionKey } from '@features/sessions'
 import type { Session, SessionKey } from '@features/sessions'
 
 export type Command =
@@ -28,10 +27,7 @@ export const matchCommands = (query: string, sessions: Session[]): Command[] => 
 }
 
 export const findCommand = (input: string, sessions: Session[]): Command | undefined => {
-  const sessionKey = findSessionKey(input)
-  const session = sessions.find((entry) => entry.key === sessionKey)
-  if (session) return { kind: 'session', ...session }
   const normalized = input.trim().toLowerCase()
   const key = normalized.startsWith('/') ? normalized : `/${normalized}`
-  return ACTION_COMMANDS.find((command) => command.key === key)
+  return toCommands(sessions).find((command) => command.key === key)
 }
