@@ -1,4 +1,4 @@
-import { createUniqueId, For } from 'solid-js'
+import { createSignal, createUniqueId, For, onSettled } from 'solid-js'
 
 import { useComposer } from '@features/composer'
 import { useConversation } from '@features/conversation'
@@ -19,6 +19,10 @@ const CHIP_LABELS: Record<TopicKey, Extract<UiKey, `chips.${string}`>> = {
 
 const CHIP_CLASS =
   'border-border text-foreground hover:border-primary hover:text-primary hover:bg-muted focus-visible:ring-ring border px-[15px] py-2 text-[12.5px] whitespace-nowrap focus-visible:ring-2 focus-visible:outline-none'
+
+// Transitions only apply once data-animate is set, so the first paint (and a deep link's collapse) snaps
+const VARIANT_CLASS =
+  'grid ease-out duration-200 motion-reduce:transition-none motion-safe:group-data-[animate]/hero:transition-[grid-template-rows,opacity]'
 
 const SLIM_CHIP_CLASS =
   'border-border text-muted-foreground hover:border-primary hover:text-primary focus-visible:ring-ring border px-[10px] py-1 text-[11.5px] whitespace-nowrap focus-visible:ring-2 focus-visible:outline-none md:px-[11px]'
@@ -101,21 +105,37 @@ export const Hero = () => {
   const collapsed = conversation.hasMessages
   const titleId = createUniqueId()
   const nameId = createUniqueId()
+  const [animate, setAnimate] = createSignal(false, { name: 'heroAnimate' })
+
+  // Double rAF: the first frame paints the settled state (incl. a deep link's syncUrl collapse) without
+  // transitions, so turning them on in the next frame can't animate that initial snap
+  onSettled(() => {
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => setAnimate(true))
+    })
+    return () => cancelAnimationFrame(frame)
+  })
+
+  const variantState = (active: boolean) => ({
+    'grid-rows-[1fr] opacity-100': active,
+    'grid-rows-[0fr] opacity-0': !active,
+  })
 
   return (
     <section
       data-state={collapsed() ? 'collapsed' : 'full'}
+      data-animate={animate() ? '' : undefined}
       aria-labelledby={collapsed() ? nameId : titleId}
-      class="border-border data-[state=collapsed]:bg-card relative z-10 border-b data-[state=collapsed]:sticky data-[state=collapsed]:top-0"
+      class="group/hero border-border data-[state=collapsed]:bg-card relative z-10 border-b [overflow-anchor:none] data-[state=collapsed]:sticky data-[state=collapsed]:top-0"
     >
-      <div class={{ grid: !collapsed(), hidden: collapsed() }} inert={collapsed()}>
+      <div class={[VARIANT_CLASS, variantState(!collapsed())]} inert={collapsed()}>
         <div class="min-h-0 overflow-hidden">
           <div class="px-[18px] pt-6 pb-[22px] md:px-[38px] md:pt-[34px] md:pb-8">
             <HeroFull titleId={titleId} />
           </div>
         </div>
       </div>
-      <div class={{ grid: collapsed(), hidden: !collapsed() }} inert={!collapsed()}>
+      <div class={[VARIANT_CLASS, variantState(collapsed())]} inert={!collapsed()}>
         <div class="min-h-0 overflow-hidden">
           <HeroSlim nameId={nameId} />
         </div>
