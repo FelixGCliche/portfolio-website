@@ -87,7 +87,7 @@ export const AppSidebar = () => {
                         !event.altKey
                       if (plainClick) {
                         event.preventDefault()
-                        conversation.run(topic().key)
+                        conversation.run(topic().key, topic().key)
                       }
                       closeDrawer()
                     }}

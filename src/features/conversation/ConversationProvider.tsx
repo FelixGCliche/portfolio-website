@@ -1,7 +1,9 @@
-import { createContext, createStore, useContext } from 'solid-js'
+import { useNavigate } from '@tanstack/solid-router'
+import { createContext, createStore, untrack, useContext } from 'solid-js'
 import type { ParentProps } from 'solid-js'
 
-import { resolveInput } from '@features/topics'
+import { useI18n } from '@features/i18n'
+import { topicRoute } from '@features/topics'
 import type { TopicKey } from '@features/topics'
 
 export type Message =
@@ -10,15 +12,15 @@ export type Message =
 
 type ConversationState = {
   messages: Message[]
-  active: TopicKey | ''
 }
-
-type RunOptions = { silent?: boolean; onError?: () => void }
 
 export type ConversationContextValue = {
   state: ConversationState
-  run: (input: string, options?: RunOptions) => boolean
-  clearActive: () => void
+  // Echoes the user's text (when given), replies with the topic and moves the URL to it
+  run: (key: TopicKey, echo?: string) => void
+  // Appends only the agent reply; used when the URL changes to a topic without user input
+  reply: (key: TopicKey) => void
+  // Empties the conversation and returns to the bare locale URL
   clear: () => void
 }
 
@@ -26,50 +28,49 @@ export const ConversationContext = createContext<ConversationContextValue>()
 
 export const useConversation = () => useContext(ConversationContext)
 
+// Must be mounted inside the router and I18nProvider: the URL is the source of truth for the current topic.
 export const ConversationProvider = (props: ParentProps) => {
+  const navigate = useNavigate()
+  const i18n = useI18n()
   const [state, setState] = createStore<ConversationState>(
-    { messages: [], active: '' },
+    { messages: [] },
     { name: 'conversation' }
   )
   let nextId = 0
   const createId = () => `m${nextId++}`
 
-  const run = (input: string, options?: RunOptions): boolean => {
-    const raw = input.trim()
-    const key = resolveInput(raw)
-    if (!key) {
-      options?.onError?.()
-      return false
-    }
-
-    if (options?.silent && state.active === key) return true
-
-    const reply: Message = { id: createId(), role: 'agent', topic: key }
-    const echo: Message[] = options?.silent ? [] : [{ id: createId(), role: 'user', text: raw }]
-
-    setState((draft) => {
-      draft.messages.push(...echo, reply)
-      draft.active = key
+  const goTo = (key?: TopicKey) => {
+    void navigate({
+      ...topicRoute(
+        untrack(() => i18n.locale()),
+        key
+      ),
+      replace: true,
     })
-
-    return true
   }
 
-  const clearActive = () => {
-    if (!state.active) return
+  const reply = (key: TopicKey) => {
     setState((draft) => {
-      draft.active = ''
+      draft.messages.push({ id: createId(), role: 'agent', topic: key })
     })
+  }
+
+  const run = (key: TopicKey, echo?: string) => {
+    setState((draft) => {
+      if (echo !== undefined) draft.messages.push({ id: createId(), role: 'user', text: echo })
+      draft.messages.push({ id: createId(), role: 'agent', topic: key })
+    })
+    goTo(key)
   }
 
   const clear = () => {
     setState((draft) => {
       draft.messages = []
-      draft.active = ''
     })
+    goTo()
   }
 
-  const value: ConversationContextValue = { state, run, clearActive, clear }
+  const value: ConversationContextValue = { state, run, reply, clear }
 
   return <ConversationContext value={value}>{props.children}</ConversationContext>
 }

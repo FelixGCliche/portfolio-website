@@ -178,7 +178,7 @@ export const useCommands = (): Accessor<CommandItem[]> => {
           ...topic.keywords,
         ],
         run: () => {
-          void conversation.run(topic.key)
+          conversation.run(topic.key, topic.key)
           composer.focus()
         },
       }))
