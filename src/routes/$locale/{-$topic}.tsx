@@ -1,31 +1,22 @@
-import { createFileRoute, notFound, useNavigate } from '@tanstack/solid-router'
+import { createFileRoute, notFound } from '@tanstack/solid-router'
 import { createEffect, untrack } from 'solid-js'
 
-import { Thread, useConversation, useTopicUrl } from '@features/conversation'
+import { Thread, useConversation } from '@features/conversation'
 import { isLocale } from '@features/i18n'
-import { keyToParam, paramToKey } from '@features/topics'
+import { paramToKey } from '@features/topics'
 
 const TopicThread = () => {
   const params = Route.useParams()
-  const navigate = useNavigate()
   const conversation = useConversation()
-  const { syncUrl } = useTopicUrl(() => params().topic, navigate)
 
-  let isFirstRun = true
-
+  // The URL is the source of truth: a topic URL that run() didn't already answer gets a silent reply
   createEffect(
-    () => conversation.state.active,
-    (active, prev) => {
-      if (isFirstRun) {
-        isFirstRun = false
-        return
-      }
-      if (active === prev) return
-      const current = untrack(() => params().topic)
-      if ((active ? keyToParam(active) : undefined) === current) return
-      syncUrl(active)
+    () => params().topic,
+    (topic) => {
+      const key = topic ? paramToKey(topic) : undefined
+      untrack(() => conversation.syncUrl(key))
     },
-    { name: 'topicUrlSync' }
+    { name: 'topicUrlToConversation' }
   )
 
   return <Thread />
