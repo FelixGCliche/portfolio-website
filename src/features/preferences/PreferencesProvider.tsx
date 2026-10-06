@@ -4,6 +4,7 @@ import type { Accessor, ParentProps } from 'solid-js'
 
 import { storeLocale, useI18n } from '@features/i18n'
 import type { Locale } from '@features/i18n'
+import { paramToKey, topicRoute } from '@features/topics'
 
 import { DEFAULT_THEME, THEME_COLOR_META_ID, THEME_COLORS, THEME_STORAGE_KEY } from './constants'
 
@@ -80,11 +81,10 @@ export const PreferencesProvider = (props: ParentProps) => {
   // The URL is the source of truth: switch the locale segment, keeping topic, search and hash.
   const toggleLang = () => {
     const next: Locale = untrack(() => i18n.locale()) === 'en' ? 'fr' : 'en'
-    const topic = untrack(() => (params() as { topic?: string } | undefined)?.topic)
+    const topic = untrack(() => params()?.topic)
     storeLocale(next)
     void navigate({
-      to: '/$locale/{-$topic}',
-      params: { locale: next, topic },
+      ...topicRoute(next, topic ? paramToKey(topic) : undefined),
       search: true,
       hash: true,
     })

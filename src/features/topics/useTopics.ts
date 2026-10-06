@@ -1,32 +1,39 @@
 import { topics as topicContent } from '@content'
-import { createMemo } from 'solid-js'
 import type { Accessor } from 'solid-js'
 
-import { pickSorted, useI18n } from '@features/i18n'
+import { LOCALES, pickSorted, useI18n } from '@features/i18n'
+import type { Locale } from '@features/i18n'
 
-import { isTopicKey } from './topics'
-import type { Topic, TopicKey } from './topics'
+import type { TopicKey } from './topic-keys'
+import type { Topic } from './topics'
+
+type LocaleTopics = { list: Topic[]; byKey: Record<TopicKey, Topic> }
+
+// Content is static and only the locale varies, so every locale's topics are built once at module load and
+// shared by all callers; the hooks below are plain lookups keyed by the reactive locale. The key cast is safe:
+// velite.config.ts fails the build unless each locale's topic keys match TOPIC_KEYS exactly.
+const TOPICS = Object.fromEntries(
+  LOCALES.map((locale) => {
+    const list = pickSorted(topicContent, locale).map(({ key, meta, desc }): Topic => ({
+      key: key as TopicKey,
+      meta,
+      desc,
+    }))
+    const byKey = Object.fromEntries(list.map((topic) => [topic.key, topic])) as Record<
+      TopicKey,
+      Topic
+    >
+    return [locale, { list, byKey }]
+  })
+) as Record<Locale, LocaleTopics>
 
 // Locale-aware topics, in content order
 export const useTopics = (): Accessor<Topic[]> => {
   const i18n = useI18n()
-  return createMemo(
-    () =>
-      pickSorted(topicContent, i18n.locale()).flatMap(({ key, slug, meta, desc }) =>
-        isTopicKey(key) ? [{ key, slug, meta, desc }] : []
-      ),
-    { name: 'topics' }
-  )
+  return () => TOPICS[i18n.locale()].list
 }
 
 export const useTopic = (key: Accessor<TopicKey>): Accessor<Topic> => {
-  const topics = useTopics()
-  return createMemo(
-    () => {
-      const topic = topics().find((entry) => entry.key === key())
-      if (!topic) throw new Error(`Missing topic content for ${key()}`)
-      return topic
-    },
-    { name: 'topic' }
-  )
+  const i18n = useI18n()
+  return () => TOPICS[i18n.locale()].byKey[key()]
 }
