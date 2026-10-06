@@ -4,7 +4,7 @@ import type { Accessor } from 'solid-js'
 
 import { useI18n } from '@features/i18n'
 import type { UiKey } from '@features/i18n'
-import { isTopicKey, normalizeInput, useTopicEntries } from '@features/topics'
+import { isTopicKey, normalizeInput, splitKeywords, useTopicEntries } from '@features/topics'
 import type { TopicEntry, TopicKey } from '@features/topics'
 
 import { useCommandEntries } from './useCommandEntries'
@@ -38,7 +38,7 @@ const toCommand = (
             kind: 'topic',
             key: topic.key,
             meta: topic.meta,
-            desc: entry.short,
+            desc: topic.short ?? entry.short,
             keywords: topic.keywords,
           },
         ]
@@ -52,7 +52,7 @@ const toCommand = (
           key: entry.name,
           meta: t(action.meta),
           desc: entry.short,
-          keywords: entry.keywords.toLowerCase().split(/\s+/).filter(Boolean),
+          keywords: splitKeywords(entry.keywords),
         },
       ]
     : []

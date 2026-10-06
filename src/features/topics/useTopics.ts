@@ -5,11 +5,10 @@ import { LOCALES, pickSorted, useI18n } from '@features/i18n'
 import type { Locale } from '@features/i18n'
 
 import type { TopicKey } from './topic-keys'
+import { splitKeywords } from './topics'
 import type { Topic, TopicEntry } from './topics'
 
 type LocaleTopics = { list: Topic[]; byKey: Record<TopicKey, Topic>; entries: TopicEntry[] }
-
-const splitKeywords = (text: string) => text.toLowerCase().split(/\s+/).filter(Boolean)
 
 // Content is static and only the locale varies, so every locale's topics are built once at module load and
 // shared by all callers; the hooks below are plain lookups keyed by the reactive locale. The key cast is safe:

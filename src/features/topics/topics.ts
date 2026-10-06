@@ -15,6 +15,10 @@ export type TopicEntry = Topic & {
   keywords: string[]
 }
 
+// Lowercased whitespace-separated search keywords
+export const splitKeywords = (text: string): string[] =>
+  text.toLowerCase().split(/\s+/).filter(Boolean)
+
 export const isTopicKey = (value: string): value is TopicKey =>
   (TOPIC_KEYS as readonly string[]).includes(value)
 
