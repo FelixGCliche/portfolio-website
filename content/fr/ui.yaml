@@ -13,12 +13,12 @@ titlebar.openPalette: 'Ouvrir la palette de commandes'
 
 statusbar.available: 'disponible'
 statusbar.entries: '{count} lignes'
-statusbar.topic: 'session {name}'
+statusbar.topic: 'sujet {name}'
 
 sidebar.label: 'Panneau latéral'
 sidebar.toggle: 'Afficher ou masquer le panneau'
 sidebar.close: 'Fermer le panneau'
-sidebar.topics: 'sessions'
+sidebar.topics: 'sujets'
 sidebar.available: 'disponible'
 sidebar.where: 'où'
 sidebar.reply: 'réponse'
@@ -47,18 +47,18 @@ keyhints.sidebar: 'panneau'
 
 palette.label: 'Palette de commandes'
 palette.searchLabel: 'Rechercher des commandes'
-palette.placeholder: 'chercher sessions, actions, liens'
+palette.placeholder: 'chercher sujets, actions, liens'
 palette.placeholderRun: 'lancer une commande…'
 palette.listLabel: 'Commandes'
 palette.empty: 'Aucune commande correspondante'
-palette.group.topics: 'Sessions'
+palette.group.topics: 'Sujets'
 palette.group.actions: 'Actions'
 palette.group.links: 'Liens'
 palette.hint.navigate: 'naviguer'
 palette.hint.run: 'lancer'
 palette.hint.close: 'fermer'
 palette.action.toggleSidebar: 'Afficher ou masquer le panneau'
-palette.action.toggleSidebarHint: 'montrer ou cacher les sessions'
+palette.action.toggleSidebarHint: 'montrer ou cacher les sujets'
 palette.action.focusPrompt: "Aller à l'invite"
 palette.action.focusPromptHint: 'sauter à la ligne de commande'
 palette.action.clearPrompt: "Vider l'invite"
@@ -129,4 +129,5 @@ resume.section.education: 'Formation'
 resume.section.skills: 'Compétences'
 resume.profileBlurb: "Développeur full-stack curieux et passionné, amoureux du développement web. À l'aise pour bâtir et déployer des applications multiplateformes ; il résout les nouveaux problèmes en apprenant de nouvelles technologies pour livrer un travail de qualité."
 
-notFound.body: "Aucune session n'habite à cette adresse."
+placeholder.pending: 'Contenu provisoire — le contenu arrive dans une prochaine PR'
+notFound.body: "Aucun sujet n'habite à cette adresse."

@@ -1,7 +1,9 @@
+import { useI18n } from '@features/i18n'
 import { useTopic } from '@features/topics'
 import type { TopicKey } from '@features/topics'
 
 export const Placeholder = (props: { topic: TopicKey }) => {
+  const i18n = useI18n()
   const topic = useTopic(() => props.topic)
 
   return (
@@ -11,7 +13,7 @@ export const Placeholder = (props: { topic: TopicKey }) => {
         <span class="text-primary text-xs">{topic().meta}</span>
       </div>
       <p class="text-foreground max-w-[66ch] leading-[1.8] text-pretty">{topic().desc}</p>
-      <p class="text-muted-foreground text-xs">Placeholder — content lands in a later PR</p>
+      <p class="text-muted-foreground text-xs">{i18n.t('placeholder.pending')}</p>
     </>
   )
 }
