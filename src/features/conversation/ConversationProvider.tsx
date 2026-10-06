@@ -1,7 +1,7 @@
 import { createContext, createStore, useContext } from 'solid-js'
 import type { ParentProps } from 'solid-js'
 
-import { findTopicKey } from '@features/topics'
+import { resolveInput } from '@features/topics'
 import type { TopicKey } from '@features/topics'
 
 export type Message =
@@ -36,7 +36,7 @@ export const ConversationProvider = (props: ParentProps) => {
 
   const run = (input: string, options?: RunOptions): boolean => {
     const raw = input.trim()
-    const key = findTopicKey(raw)
+    const key = resolveInput(raw)
     if (!key) {
       options?.onError?.()
       return false

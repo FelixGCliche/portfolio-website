@@ -8,7 +8,7 @@ import { LOCALES, stringsFor, translate, useI18n } from '@features/i18n'
 import type { UiKey } from '@features/i18n'
 import { usePreferences } from '@features/preferences'
 import { EMAIL, GITHUB_URL } from '@features/profile'
-import { keyToParam, useTopics } from '@features/topics'
+import { keyToParam, useTopicEntries } from '@features/topics'
 
 export type CommandGroup = 'topics' | 'actions' | 'links'
 
@@ -101,7 +101,7 @@ export const useCommands = (): Accessor<CommandItem[]> => {
   const sidebar = useSidebar()
   const composer = useComposer()
   const preferences = usePreferences()
-  const topics = useTopics()
+  const topics = useTopicEntries()
   const entries = useCommandEntries()
 
   const actions: ActionDef[] = [
@@ -174,7 +174,8 @@ export const useCommands = (): Accessor<CommandItem[]> => {
         keywords: [
           ...keywordsFor('palette.keywords.topic'),
           topic.meta,
-          ...contentKeywords(topic.key),
+          ...(topic.short === undefined ? [] : [topic.short]),
+          ...topic.keywords,
         ],
         run: () => {
           void conversation.run(topic.key)
