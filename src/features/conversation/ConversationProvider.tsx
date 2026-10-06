@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/solid-router'
-import { createContext, createStore, untrack, useContext } from 'solid-js'
-import type { ParentProps } from 'solid-js'
+import { createContext, createMemo, createStore, untrack, useContext } from 'solid-js'
+import type { Accessor, ParentProps } from 'solid-js'
 
 import { useI18n } from '@features/i18n'
 import { topicRoute } from '@features/topics'
@@ -16,6 +16,8 @@ type ConversationState = {
 
 export type ConversationContextValue = {
   state: ConversationState
+  // True once the thread has at least one message
+  hasMessages: Accessor<boolean>
   // Echoes the topic as user input, replies with it and moves the URL to it
   run: (key: TopicKey) => void
   // Called when the URL's topic changes: replies unless run() already answered that navigation
@@ -36,6 +38,7 @@ export const ConversationProvider = (props: ParentProps) => {
     { messages: [] },
     { name: 'conversation' }
   )
+  const hasMessages = createMemo(() => state.messages.length > 0, { name: 'hasMessages' })
   let nextId = 0
   const createId = () => `m${nextId++}`
 
@@ -87,7 +90,7 @@ export const ConversationProvider = (props: ParentProps) => {
     goTo()
   }
 
-  const value: ConversationContextValue = { state, run, syncUrl, clear }
+  const value: ConversationContextValue = { state, hasMessages, run, syncUrl, clear }
 
   return <ConversationContext value={value}>{props.children}</ConversationContext>
 }

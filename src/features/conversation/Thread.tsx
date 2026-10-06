@@ -80,7 +80,7 @@ export const Thread = () => {
       aria-label={t('thread.label')}
       class={[
         'mx-auto flex w-full max-w-[700px] flex-col gap-6 px-4 sm:px-6',
-        { 'py-6': conversation.state.messages.length > 0 },
+        { 'py-6': conversation.hasMessages() },
       ]}
     >
       <For each={conversation.state.messages}>
