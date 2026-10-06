@@ -1,4 +1,4 @@
-import { createUniqueId, For, Show } from 'solid-js'
+import { createUniqueId, For } from 'solid-js'
 
 import { useComposer } from '@features/composer'
 import { useConversation } from '@features/conversation'
@@ -19,6 +19,9 @@ const CHIP_LABELS: Record<TopicKey, Extract<UiKey, `chips.${string}`>> = {
 
 const CHIP_CLASS =
   'border-border text-foreground hover:border-primary hover:text-primary hover:bg-muted focus-visible:ring-ring border px-[15px] py-2 text-[12.5px] whitespace-nowrap focus-visible:ring-2 focus-visible:outline-none'
+
+const SLIM_CHIP_CLASS =
+  'border-border text-muted-foreground hover:border-primary hover:text-primary focus-visible:ring-ring border px-[10px] py-1 text-[11.5px] whitespace-nowrap focus-visible:ring-2 focus-visible:outline-none md:px-[11px]'
 
 // Runs a topic from a chip and hands focus to the composer (skipped on mobile to avoid opening the soft keyboard)
 const useRunTopic = () => {
@@ -74,18 +77,49 @@ const HeroFull = (props: { titleId: string }) => {
   )
 }
 
-export const Hero = () => {
-  const conversation = useConversation()
-  const titleId = createUniqueId()
+const HeroSlim = (props: { nameId: string }) => {
+  const profile = useProfile()
 
   return (
-    <Show when={!conversation.hasMessages()}>
-      <section
-        aria-labelledby={titleId}
-        class="border-border border-b px-[18px] pt-6 pb-[22px] md:px-[38px] md:pt-[34px] md:pb-8"
+    <div class="flex flex-wrap items-baseline gap-x-[10px] gap-y-[6px] px-[14px] pt-[9px] pb-[10px] md:items-center md:gap-[18px] md:px-[38px] md:py-[13px]">
+      <h1
+        id={props.nameId}
+        class="text-foreground text-[12px] font-bold whitespace-nowrap md:text-[12.5px]"
       >
-        <HeroFull titleId={titleId} />
-      </section>
-    </Show>
+        {profile().name}
+      </h1>
+      <HeroChips
+        class="ml-auto flex flex-wrap gap-[6px] md:ml-0 md:gap-2"
+        chipClass={SLIM_CHIP_CLASS}
+      />
+    </div>
+  )
+}
+
+export const Hero = () => {
+  const conversation = useConversation()
+  const collapsed = conversation.hasMessages
+  const titleId = createUniqueId()
+  const nameId = createUniqueId()
+
+  return (
+    <section
+      data-state={collapsed() ? 'collapsed' : 'full'}
+      aria-labelledby={collapsed() ? nameId : titleId}
+      class="border-border data-[state=collapsed]:bg-card relative z-10 border-b data-[state=collapsed]:sticky data-[state=collapsed]:top-0"
+    >
+      <div class={{ grid: !collapsed(), hidden: collapsed() }} inert={collapsed()}>
+        <div class="min-h-0 overflow-hidden">
+          <div class="px-[18px] pt-6 pb-[22px] md:px-[38px] md:pt-[34px] md:pb-8">
+            <HeroFull titleId={titleId} />
+          </div>
+        </div>
+      </div>
+      <div class={{ grid: collapsed(), hidden: !collapsed() }} inert={!collapsed()}>
+        <div class="min-h-0 overflow-hidden">
+          <HeroSlim nameId={nameId} />
+        </div>
+      </div>
+    </section>
   )
 }
