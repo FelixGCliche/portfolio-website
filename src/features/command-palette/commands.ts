@@ -8,9 +8,9 @@ import { LOCALES, stringsFor, translate, useI18n } from '@features/i18n'
 import type { UiKey } from '@features/i18n'
 import { usePreferences } from '@features/preferences'
 import { EMAIL, GITHUB_URL } from '@features/profile'
-import { useSessions } from '@features/sessions'
+import { useTopics } from '@features/topics'
 
-export type CommandGroup = 'sessions' | 'actions' | 'links'
+export type CommandGroup = 'topics' | 'actions' | 'links'
 
 export type CommandItem = {
   id: string
@@ -21,10 +21,10 @@ export type CommandItem = {
   run: () => void
 }
 
-export const COMMAND_GROUPS: CommandGroup[] = ['sessions', 'actions', 'links']
+export const COMMAND_GROUPS: CommandGroup[] = ['topics', 'actions', 'links']
 
 export const COMMAND_GROUP_LABELS: Record<CommandGroup, UiKey> = {
-  sessions: 'palette.group.sessions',
+  topics: 'palette.group.topics',
   actions: 'palette.group.actions',
   links: 'palette.group.links',
 }
@@ -101,7 +101,7 @@ export const useCommands = (): Accessor<CommandItem[]> => {
   const sidebar = useSidebar()
   const composer = useComposer()
   const preferences = usePreferences()
-  const sessions = useSessions()
+  const topics = useTopics()
   const entries = useCommandEntries()
 
   const actions: ActionDef[] = [
@@ -166,18 +166,18 @@ export const useCommands = (): Accessor<CommandItem[]> => {
       )
       const contentKeywords = (name?: string) => (name ? (commandKeywords.get(name) ?? []) : [])
 
-      const sessionItems = sessions().map<CommandItem>((session) => ({
-        id: `session-${session.key.slice(1)}`,
-        group: 'sessions',
-        label: session.key,
-        hint: session.desc,
+      const topicItems = topics().map<CommandItem>((topic) => ({
+        id: `topic-${topic.key.slice(1)}`,
+        group: 'topics',
+        label: topic.key,
+        hint: topic.desc,
         keywords: [
-          ...keywordsFor('palette.keywords.session'),
-          session.meta,
-          ...contentKeywords(session.key),
+          ...keywordsFor('palette.keywords.topic'),
+          topic.meta,
+          ...contentKeywords(topic.key),
         ],
         run: () => {
-          void conversation.run(session.key)
+          void conversation.run(topic.key)
           composer.focus()
         },
       }))
@@ -205,7 +205,7 @@ export const useCommands = (): Accessor<CommandItem[]> => {
         run: () => openLink(link.href),
       }))
 
-      return [...sessionItems, ...actionItems, ...linkItems]
+      return [...topicItems, ...actionItems, ...linkItems]
     },
     { name: 'commandPaletteItems' }
   )

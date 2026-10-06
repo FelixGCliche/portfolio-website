@@ -7,7 +7,7 @@ export const Route = createFileRoute('/')({
   ssr: false,
   beforeLoad: () => {
     throw redirect({
-      to: '/$locale/{-$session}',
+      to: '/$locale/{-$topic}',
       params: { locale: detectLocale() },
       replace: true,
     })

@@ -13,7 +13,7 @@ import {
 import { useConversation } from '@features/conversation'
 import { useI18n } from '@features/i18n'
 import { useProfile } from '@features/profile'
-import { keyToParam, useSessions } from '@features/sessions'
+import { keyToParam, useTopics } from '@features/topics'
 
 const linkClass =
   'text-primary focus-visible:ring-ring inline-flex min-h-11 items-center hover:underline focus-visible:ring-2 focus-visible:outline-none md:min-h-0'
@@ -22,7 +22,7 @@ export const AppSidebar = () => {
   const sidebar = useSidebar()
   const conversation = useConversation()
   const i18n = useI18n()
-  const sessions = useSessions()
+  const topics = useTopics()
   const profile = useProfile()
 
   const closeDrawer = () => {
@@ -67,17 +67,17 @@ export const AppSidebar = () => {
       </SidebarHeader>
 
       <SidebarContent>
-        <nav aria-label={i18n.t('sidebar.sessions')}>
+        <nav aria-label={i18n.t('sidebar.topics')}>
           <p class="text-muted-foreground px-2 pb-2 text-[10.5px] tracking-[0.16em] uppercase">
-            {i18n.t('sidebar.sessions')}
+            {i18n.t('sidebar.topics')}
           </p>
           <SidebarMenu>
-            <For each={sessions()} keyed={(session) => session.key}>
-              {(session) => (
+            <For each={topics()} keyed={(topic) => topic.key}>
+              {(topic) => (
                 <SidebarMenuItem>
                   <SidebarMenuLink
-                    to="/$locale/{-$session}"
-                    params={{ locale: i18n.locale(), session: keyToParam(session().key) }}
+                    to="/$locale/{-$topic}"
+                    params={{ locale: i18n.locale(), topic: keyToParam(topic().key) }}
                     activeOptions={{ exact: true }}
                     onClick={(event: MouseEvent) => {
                       const plainClick =
@@ -88,7 +88,7 @@ export const AppSidebar = () => {
                         !event.altKey
                       if (plainClick) {
                         event.preventDefault()
-                        conversation.run(session().key)
+                        conversation.run(topic().key)
                       }
                       closeDrawer()
                     }}
@@ -96,14 +96,12 @@ export const AppSidebar = () => {
                   >
                     <span class="flex min-w-0 flex-1 flex-col gap-1">
                       <span class="flex items-baseline gap-2">
-                        <span class="text-primary truncate">{session().key}</span>
+                        <span class="text-primary truncate">{topic().key}</span>
                         <span class="text-muted-foreground ml-auto flex-none text-[10.5px]">
-                          {session().meta}
+                          {topic().meta}
                         </span>
                       </span>
-                      <span class="text-muted-foreground text-xs text-pretty">
-                        {session().desc}
-                      </span>
+                      <span class="text-muted-foreground text-xs text-pretty">{topic().desc}</span>
                     </span>
                   </SidebarMenuLink>
                 </SidebarMenuItem>

@@ -77,14 +77,14 @@ export const PreferencesProvider = (props: ParentProps) => {
     persist(THEME_STORAGE_KEY, next)
   }
 
-  // The URL is the source of truth: switch the locale segment, keeping session, search and hash.
+  // The URL is the source of truth: switch the locale segment, keeping topic, search and hash.
   const toggleLang = () => {
     const next: Locale = untrack(() => i18n.locale()) === 'en' ? 'fr' : 'en'
-    const session = untrack(() => (params() as { session?: string } | undefined)?.session)
+    const topic = untrack(() => (params() as { topic?: string } | undefined)?.topic)
     storeLocale(next)
     void navigate({
-      to: '/$locale/{-$session}',
-      params: { locale: next, session },
+      to: '/$locale/{-$topic}',
+      params: { locale: next, topic },
       search: true,
       hash: true,
     })

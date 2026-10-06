@@ -4,8 +4,8 @@ import type { Accessor } from 'solid-js'
 
 import { useI18n } from '@features/i18n'
 import type { UiKey } from '@features/i18n'
-import { isSessionKey, useSessions } from '@features/sessions'
-import type { Session, SessionKey } from '@features/sessions'
+import { isTopicKey, useTopics } from '@features/topics'
+import type { Topic, TopicKey } from '@features/topics'
 
 import { useCommandEntries } from './useCommandEntries'
 
@@ -14,7 +14,7 @@ type ActionKind = 'theme' | 'lang' | 'clear'
 type CommandText = { meta: string; desc: string; keywords: string[] }
 
 export type Command =
-  | ({ kind: 'session'; key: SessionKey } & CommandText)
+  | ({ kind: 'topic'; key: TopicKey } & CommandText)
   | ({ kind: ActionKind; key: string } & CommandText)
 
 const ACTIONS: Record<string, { kind: ActionKind; meta: UiKey }> = {
@@ -25,18 +25,14 @@ const ACTIONS: Record<string, { kind: ActionKind; meta: UiKey }> = {
 
 const MIN_KEYWORD_QUERY = 2
 
-const toCommand = (
-  entry: CommandEntry,
-  sessions: Session[],
-  t: (key: UiKey) => string
-): Command[] => {
+const toCommand = (entry: CommandEntry, topics: Topic[], t: (key: UiKey) => string): Command[] => {
   const text = {
     desc: entry.short,
     keywords: entry.keywords.toLowerCase().split(/\s+/).filter(Boolean),
   }
-  if (isSessionKey(entry.name)) {
-    const session = sessions.find((item) => item.key === entry.name)
-    return session ? [{ kind: 'session', key: session.key, meta: session.meta, ...text }] : []
+  if (isTopicKey(entry.name)) {
+    const topic = topics.find((item) => item.key === entry.name)
+    return topic ? [{ kind: 'topic', key: topic.key, meta: topic.meta, ...text }] : []
   }
   const action = ACTIONS[entry.name] as (typeof ACTIONS)[string] | undefined
   return action ? [{ kind: action.kind, key: entry.name, meta: t(action.meta), ...text }] : []
@@ -46,8 +42,8 @@ const toCommand = (
 export const useComposerCommands = (): Accessor<Command[]> => {
   const i18n = useI18n()
   const entries = useCommandEntries()
-  const sessions = useSessions()
-  return createMemo(() => entries().flatMap((entry) => toCommand(entry, sessions(), i18n.t)), {
+  const topics = useTopics()
+  return createMemo(() => entries().flatMap((entry) => toCommand(entry, topics(), i18n.t)), {
     name: 'composerCommands',
   })
 }
