@@ -78,7 +78,10 @@ export const Thread = () => {
       role="log"
       aria-live="polite"
       aria-label={t('thread.label')}
-      class="mx-auto flex w-full max-w-[700px] flex-col gap-6 px-4 py-6 sm:px-6"
+      class={[
+        'mx-auto flex w-full max-w-[700px] flex-col gap-6 px-4 sm:px-6',
+        { 'py-6': conversation.hasMessages() },
+      ]}
     >
       <For each={conversation.state.messages}>
         {(message) =>
