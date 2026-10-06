@@ -4,8 +4,8 @@ import type { Accessor } from 'solid-js'
 
 import { useI18n } from '@features/i18n'
 import type { UiKey } from '@features/i18n'
-import { isTopicKey, useTopics } from '@features/topics'
-import type { Topic, TopicKey } from '@features/topics'
+import { isTopicKey, normalizeInput, useTopicEntries } from '@features/topics'
+import type { TopicEntry, TopicKey } from '@features/topics'
 
 import { useCommandEntries } from './useCommandEntries'
 
@@ -25,24 +25,44 @@ const ACTIONS: Record<string, { kind: ActionKind; meta: UiKey }> = {
 
 const MIN_KEYWORD_QUERY = 2
 
-const toCommand = (entry: CommandEntry, topics: Topic[], t: (key: UiKey) => string): Command[] => {
-  const text = {
-    desc: entry.short,
-    keywords: entry.keywords.toLowerCase().split(/\s+/).filter(Boolean),
-  }
+const toCommand = (
+  entry: CommandEntry,
+  topics: TopicEntry[],
+  t: (key: UiKey) => string
+): Command[] => {
   if (isTopicKey(entry.name)) {
     const topic = topics.find((item) => item.key === entry.name)
-    return topic ? [{ kind: 'topic', key: topic.key, meta: topic.meta, ...text }] : []
+    return topic
+      ? [
+          {
+            kind: 'topic',
+            key: topic.key,
+            meta: topic.meta,
+            desc: entry.short,
+            keywords: topic.keywords,
+          },
+        ]
+      : []
   }
   const action = ACTIONS[entry.name] as (typeof ACTIONS)[string] | undefined
-  return action ? [{ kind: action.kind, key: entry.name, meta: t(action.meta), ...text }] : []
+  return action
+    ? [
+        {
+          kind: action.kind,
+          key: entry.name,
+          meta: t(action.meta),
+          desc: entry.short,
+          keywords: entry.keywords.toLowerCase().split(/\s+/).filter(Boolean),
+        },
+      ]
+    : []
 }
 
-// Locale-aware composer commands, in content order
+// Locale-aware composer commands, in command content order (topics and actions interleaved)
 export const useComposerCommands = (): Accessor<Command[]> => {
   const i18n = useI18n()
   const entries = useCommandEntries()
-  const topics = useTopics()
+  const topics = useTopicEntries()
   return createMemo(() => entries().flatMap((entry) => toCommand(entry, topics(), i18n.t)), {
     name: 'composerCommands',
   })
@@ -63,8 +83,6 @@ export const matchCommands = (query: string, commands: Command[]): Command[] => 
 }
 
 export const findCommand = (input: string, commands: Command[]): Command | undefined => {
-  const normalized = input.trim().toLowerCase()
-  if (!normalized) return undefined
-  const key = normalized.startsWith('/') ? normalized : `/${normalized}`
-  return commands.find((command) => command.key === key)
+  const key = normalizeInput(input)
+  return key ? commands.find((command) => command.key === key) : undefined
 }

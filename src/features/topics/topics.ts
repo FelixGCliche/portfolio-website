@@ -9,14 +9,26 @@ export type Topic = {
   desc: string
 }
 
+// A topic joined with its command content: the short description and lowercased search keywords
+export type TopicEntry = Topic & {
+  short?: string
+  keywords: string[]
+}
+
 export const isTopicKey = (value: string): value is TopicKey =>
   (TOPIC_KEYS as readonly string[]).includes(value)
 
-export const findTopicKey = (input: string): TopicKey | undefined => {
-  const normalized = input.trim().toLowerCase()
+// Typed input as a command name: trimmed, lowercased, with a leading '/'; undefined when blank
+export const normalizeInput = (text: string): string | undefined => {
+  const normalized = text.trim().toLowerCase()
   if (!normalized) return undefined
-  const key = normalized.startsWith('/') ? normalized : `/${normalized}`
-  return isTopicKey(key) ? key : undefined
+  return normalized.startsWith('/') ? normalized : `/${normalized}`
+}
+
+// Seam for a future natural-language router: maps free-form input to a topic
+export const resolveInput = (text: string): TopicKey | undefined => {
+  const key = normalizeInput(text)
+  return key && isTopicKey(key) ? key : undefined
 }
 
 export const keyToParam = (key: TopicKey): string => key.slice(1)
