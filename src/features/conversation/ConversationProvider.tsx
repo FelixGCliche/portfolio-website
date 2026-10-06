@@ -16,10 +16,10 @@ type ConversationState = {
 
 export type ConversationContextValue = {
   state: ConversationState
-  // Echoes the user's text (when given), replies with the topic and moves the URL to it
-  run: (key: TopicKey, echo?: string) => void
-  // Appends only the agent reply; used when the URL changes to a topic without user input
-  reply: (key: TopicKey) => void
+  // Echoes the topic as user input, replies with it and moves the URL to it
+  run: (key: TopicKey) => void
+  // Called when the URL's topic changes: replies unless run() already answered that navigation
+  syncUrl: (key?: TopicKey) => void
   // Empties the conversation and returns to the bare locale URL
   clear: () => void
 }
@@ -49,28 +49,45 @@ export const ConversationProvider = (props: ParentProps) => {
     })
   }
 
-  const reply = (key: TopicKey) => {
+  // Topics run() already answered whose URL change hasn't landed yet, and the topic the URL is at or heading to
+  const answered = new Set<TopicKey>()
+  let head: TopicKey | undefined
+
+  const run = (key: TopicKey) => {
     setState((draft) => {
-      draft.messages.push({ id: createId(), role: 'agent', topic: key })
+      draft.messages.push(
+        { id: createId(), role: 'user', text: key },
+        { id: createId(), role: 'agent', topic: key }
+      )
     })
+    if (key !== head) answered.add(key)
+    head = key
+    goTo(key)
   }
 
-  const run = (key: TopicKey, echo?: string) => {
+  const syncUrl = (key?: TopicKey) => {
+    if (!key) {
+      answered.clear()
+      head = undefined
+      return
+    }
+    if (answered.delete(key)) return
+    head = key
     setState((draft) => {
-      if (echo !== undefined) draft.messages.push({ id: createId(), role: 'user', text: echo })
       draft.messages.push({ id: createId(), role: 'agent', topic: key })
     })
-    goTo(key)
   }
 
   const clear = () => {
     setState((draft) => {
       draft.messages = []
     })
+    answered.clear()
+    head = undefined
     goTo()
   }
 
-  const value: ConversationContextValue = { state, run, reply, clear }
+  const value: ConversationContextValue = { state, run, syncUrl, clear }
 
   return <ConversationContext value={value}>{props.children}</ConversationContext>
 }

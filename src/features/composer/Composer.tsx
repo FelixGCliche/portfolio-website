@@ -91,7 +91,7 @@ export const Composer = () => {
 
     switch (command.kind) {
       case 'topic':
-        conversation.run(command.key, command.key)
+        conversation.run(command.key)
         break
       case 'theme':
         preferences.toggleTheme()
