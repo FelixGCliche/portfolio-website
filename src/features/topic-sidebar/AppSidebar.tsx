@@ -13,7 +13,7 @@ import {
 import { useConversation } from '@features/conversation'
 import { useI18n } from '@features/i18n'
 import { useProfile } from '@features/profile'
-import { keyToParam, useTopics } from '@features/topics'
+import { topicRoute, useTopics } from '@features/topics'
 
 const linkClass =
   'text-primary focus-visible:ring-ring inline-flex min-h-11 items-center hover:underline focus-visible:ring-2 focus-visible:outline-none md:min-h-0'
@@ -76,8 +76,7 @@ export const AppSidebar = () => {
               {(topic) => (
                 <SidebarMenuItem>
                   <SidebarMenuLink
-                    to="/$locale/{-$topic}"
-                    params={{ locale: i18n.locale(), topic: keyToParam(topic().key) }}
+                    {...topicRoute(i18n.locale(), topic().key)}
                     activeOptions={{ exact: true }}
                     onClick={(event: MouseEvent) => {
                       const plainClick =

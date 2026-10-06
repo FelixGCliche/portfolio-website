@@ -8,7 +8,7 @@ import { LOCALES, stringsFor, translate, useI18n } from '@features/i18n'
 import type { UiKey } from '@features/i18n'
 import { usePreferences } from '@features/preferences'
 import { EMAIL, GITHUB_URL } from '@features/profile'
-import { useTopics } from '@features/topics'
+import { keyToParam, useTopics } from '@features/topics'
 
 export type CommandGroup = 'topics' | 'actions' | 'links'
 
@@ -167,7 +167,7 @@ export const useCommands = (): Accessor<CommandItem[]> => {
       const contentKeywords = (name?: string) => (name ? (commandKeywords.get(name) ?? []) : [])
 
       const topicItems = topics().map<CommandItem>((topic) => ({
-        id: `topic-${topic.key.slice(1)}`,
+        id: `topic-${keyToParam(topic.key)}`,
         group: 'topics',
         label: topic.key,
         hint: topic.desc,
