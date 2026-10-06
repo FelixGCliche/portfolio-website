@@ -90,7 +90,7 @@ export const Composer = () => {
     }
 
     switch (command.kind) {
-      case 'session':
+      case 'topic':
         conversation.run(command.key)
         break
       case 'theme':

@@ -1,3 +1,3 @@
 import { Placeholder } from '../Placeholder'
 
-export const AboutResponse = () => <Placeholder session="/about" />
+export const AboutResponse = () => <Placeholder topic="/about" />

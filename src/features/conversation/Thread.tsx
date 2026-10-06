@@ -27,7 +27,7 @@ const UserRow = (props: { message: UserMessage }) => (
 
 const AgentRow = (props: { message: AgentMessage }) => (
   <div class={`${ROW_CLASS} flex-col gap-4 pt-3 pl-[26px]`}>
-    <Dynamic component={responses[props.message.session]} />
+    <Dynamic component={responses[props.message.topic]} />
   </div>
 )
 

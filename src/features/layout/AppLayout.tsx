@@ -6,7 +6,7 @@ import { ComposerProvider, Composer } from '@features/composer'
 import { ConversationProvider } from '@features/conversation'
 import { useI18n } from '@features/i18n'
 import { PreferencesProvider } from '@features/preferences'
-import { AppSidebar } from '@features/session-sidebar'
+import { AppSidebar } from '@features/topic-sidebar'
 
 import { StatusBar } from './StatusBar'
 import { Titlebar } from './Titlebar'

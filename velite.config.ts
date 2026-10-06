@@ -3,7 +3,7 @@ import { join } from 'node:path'
 
 import { defineCollection, defineConfig, s } from 'velite'
 
-import { SESSION_KEYS } from './src/features/sessions/session-keys'
+import { TOPIC_KEYS } from './src/features/topics/topic-keys'
 
 type Locale = 'en' | 'fr'
 
@@ -104,9 +104,9 @@ const education = defineCollection({
     })),
 })
 
-const sessions = defineCollection({
-  name: 'Session',
-  pattern: '*/sessions/*.yaml',
+const topics = defineCollection({
+  name: 'Topic',
+  pattern: '*/topics/*.yaml',
   schema: s
     .object({
       slug: s.string().regex(/^[a-z0-9-]+$/),
@@ -171,7 +171,7 @@ const parityIds = {
   education: singletonId,
   roles: slugId,
   skills: slugId,
-  sessions: slugId,
+  topics: slugId,
   commands: slugId,
   ui: uiKeyIds,
 }
@@ -207,18 +207,18 @@ const checkParity = (data: Record<keyof typeof parityIds, ParityItem[]>) => {
       ? []
       : [`ui: placeholder mismatch for key "${key}" (en {${enSlots}} vs fr {${frSlots}})`]
   })
-  const sessionKeys = data.sessions.flatMap((item) => {
+  const topicKeys = data.topics.flatMap((item) => {
     const key = item.key ?? ''
-    return (SESSION_KEYS as readonly string[]).includes(key)
+    return (TOPIC_KEYS as readonly string[]).includes(key)
       ? []
-      : [`sessions: ${item.locale} has key "${key}" not in SESSION_KEYS`]
+      : [`topics: ${item.locale} has key "${key}" not in TOPIC_KEYS`]
   })
   const absentKeys = locales.flatMap((locale) =>
-    SESSION_KEYS.filter(
-      (key) => !data.sessions.some((item) => item.locale === locale && item.key === key)
-    ).map((key) => `sessions: ${locale} missing SESSION_KEYS entry ${key}`)
+    TOPIC_KEYS.filter(
+      (key) => !data.topics.some((item) => item.locale === locale && item.key === key)
+    ).map((key) => `topics: ${locale} missing TOPIC_KEYS entry ${key}`)
   )
-  const errors = [...missing, ...mismatched, ...sessionKeys, ...absentKeys]
+  const errors = [...missing, ...mismatched, ...topicKeys, ...absentKeys]
   if (errors.length > 0)
     throw new Error(`Bilingual content parity check failed:\n  - ${errors.join('\n  - ')}`)
 }
@@ -251,5 +251,5 @@ export default defineConfig({
     name: '[name]-[hash:8].[ext]',
     clean: true,
   },
-  collections: { profile, about, roles, education, skills, sessions, commands, ui },
+  collections: { profile, about, roles, education, skills, topics, commands, ui },
 })

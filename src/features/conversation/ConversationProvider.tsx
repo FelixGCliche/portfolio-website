@@ -1,16 +1,16 @@
 import { createContext, createStore, useContext } from 'solid-js'
 import type { ParentProps } from 'solid-js'
 
-import { findSessionKey } from '@features/sessions'
-import type { SessionKey } from '@features/sessions'
+import { findTopicKey } from '@features/topics'
+import type { TopicKey } from '@features/topics'
 
 export type Message =
   | { id: string; role: 'user'; text: string }
-  | { id: string; role: 'agent'; session: SessionKey }
+  | { id: string; role: 'agent'; topic: TopicKey }
 
 type ConversationState = {
   messages: Message[]
-  active: SessionKey | ''
+  active: TopicKey | ''
 }
 
 type RunOptions = { silent?: boolean; onError?: () => void }
@@ -36,7 +36,7 @@ export const ConversationProvider = (props: ParentProps) => {
 
   const run = (input: string, options?: RunOptions): boolean => {
     const raw = input.trim()
-    const key = findSessionKey(raw)
+    const key = findTopicKey(raw)
     if (!key) {
       options?.onError?.()
       return false
@@ -44,7 +44,7 @@ export const ConversationProvider = (props: ParentProps) => {
 
     if (options?.silent && state.active === key) return true
 
-    const reply: Message = { id: createId(), role: 'agent', session: key }
+    const reply: Message = { id: createId(), role: 'agent', topic: key }
     const echo: Message[] = options?.silent ? [] : [{ id: createId(), role: 'user', text: raw }]
 
     setState((draft) => {

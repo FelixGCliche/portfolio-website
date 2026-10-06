@@ -3,34 +3,34 @@ import type { Accessor } from 'solid-js'
 
 import { useI18n } from '@features/i18n'
 import type { Locale } from '@features/i18n'
-import { keyToParam } from '@features/sessions'
-import type { SessionKey } from '@features/sessions'
+import { keyToParam } from '@features/topics'
+import type { TopicKey } from '@features/topics'
 
 import { useConversation } from './ConversationProvider'
 
-type SessionNavigate = (options: {
-  to: '/$locale/{-$session}'
-  params: { locale: Locale; session?: string }
+type TopicNavigate = (options: {
+  to: '/$locale/{-$topic}'
+  params: { locale: Locale; topic?: string }
   replace: boolean
 }) => unknown
 
-export const useSessionUrl = (session: Accessor<string | undefined>, navigate: SessionNavigate) => {
+export const useTopicUrl = (topic: Accessor<string | undefined>, navigate: TopicNavigate) => {
   const conversation = useConversation()
   const i18n = useI18n()
 
-  const syncUrl = (key: SessionKey | '') => {
+  const syncUrl = (key: TopicKey | '') => {
     untrack(
       () =>
         void navigate({
-          to: '/$locale/{-$session}',
-          params: { locale: i18n.locale(), session: key ? keyToParam(key) : undefined },
+          to: '/$locale/{-$topic}',
+          params: { locale: i18n.locale(), topic: key ? keyToParam(key) : undefined },
           replace: true,
         })
     )
   }
 
   createEffect(
-    () => session(),
+    () => topic(),
     (param) => {
       if (param) {
         conversation.run(param, { silent: true, onError: () => syncUrl('') })
@@ -38,7 +38,7 @@ export const useSessionUrl = (session: Accessor<string | undefined>, navigate: S
       }
       conversation.clearActive()
     },
-    { name: 'sessionUrlToConversation' }
+    { name: 'topicUrlToConversation' }
   )
 
   return { syncUrl }
