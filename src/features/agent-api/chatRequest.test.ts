@@ -144,3 +144,23 @@ describe('parseChatRequest', () => {
     expectError(body({ threadId: '' }), 'invalid_request')
   })
 })
+
+describe('parseChatRequest locale', () => {
+  const localeOf = (forwardedProps: unknown) => {
+    const result = parseChatRequest(body({ forwardedProps }))
+    return result.ok ? result.locale : undefined
+  }
+
+  test('reads a supported locale from forwardedProps', () => {
+    expect(localeOf({ locale: 'fr' })).toBe('fr')
+    expect(localeOf({ locale: 'en' })).toBe('en')
+  })
+
+  test('defaults to en when the locale is missing or unsupported', () => {
+    expect(localeOf({})).toBe('en')
+    expect(localeOf(undefined)).toBe('en')
+    expect(localeOf({ locale: 'de' })).toBe('en')
+    expect(localeOf({ locale: 'FR' })).toBe('en')
+    expect(localeOf({ locale: 42 })).toBe('en')
+  })
+})

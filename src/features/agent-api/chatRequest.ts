@@ -1,5 +1,9 @@
 import { z } from 'zod'
 
+// Deep import: the i18n barrel re-exports JSX providers that bun test cannot load and the server
+// route does not need.
+import { DEFAULT_LOCALE, isLocale, type Locale } from '@features/i18n/locales'
+
 import { INVALID_REQUEST_MESSAGE } from './errors'
 
 /** Most messages (history included) accepted in one request. */
@@ -94,8 +98,14 @@ export type ChatRequest = z.infer<ReturnType<typeof createChatRequestSchema>>
 
 export type ChatRequestErrorCode = 'invalid_json' | 'invalid_request'
 
+/** Reads the UI locale the client forwards in `forwardedProps.locale`, defaulting when absent or unknown. */
+export const localeFromRequest = (request: Pick<ChatRequest, 'forwardedProps'>): Locale => {
+  const locale = request.forwardedProps?.locale
+  return isLocale(locale) ? locale : DEFAULT_LOCALE
+}
+
 export type ChatRequestResult =
-  | { ok: true; data: ChatRequest }
+  | { ok: true; data: ChatRequest; locale: Locale }
   | { ok: false; status: 400; code: ChatRequestErrorCode; message: string }
 
 // Schemas are built once per tool list; the route always passes the same list.
@@ -142,5 +152,5 @@ export const parseChatRequest = (
     }
   }
 
-  return { ok: true, data: result.data }
+  return { ok: true, data: result.data, locale: localeFromRequest(result.data) }
 }

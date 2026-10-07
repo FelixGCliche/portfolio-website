@@ -9,9 +9,13 @@ import {
 import { createOpenRouterText } from '@tanstack/ai-openrouter'
 
 import { agentTools } from '@features/agent'
+// Deep import: the i18n barrel re-exports JSX providers that bun test cannot load and the server
+// route does not need.
+import type { Locale } from '@features/i18n/locales'
 
 import type { ChatRequest } from './chatRequest'
 import { errorResponse, INVALID_REQUEST_MESSAGE } from './errors'
+import { buildSystemPrompt } from './systemPrompt'
 
 /** Primary model: free tier, supports tool calling, solid in English and French. */
 export const AGENT_MODEL = 'google/gemma-4-31b-it:free'
@@ -24,10 +28,6 @@ export const AGENT_FALLBACK_MODELS = [
 export const MAX_AGENT_ITERATIONS = 5
 /** Most tokens the model may generate per turn. */
 export const MAX_COMPLETION_TOKENS = 1024
-
-const SYSTEM_PROMPT =
-  "You are the assistant on Felix Gagné-Cliche's portfolio website. Answer questions about Felix " +
-  'briefly and politely. If you do not know something, say so instead of guessing.'
 
 const UNAVAILABLE_MESSAGE = 'The assistant is unavailable right now. Please try again later.'
 
@@ -68,6 +68,7 @@ const withCleanErrors = async function* (stream: AsyncIterable<StreamChunk>, sig
 /** Runs the agent loop for a validated request and streams it back as Server-Sent Events. */
 export const createChatResponse = async (
   input: ChatRequest,
+  locale: Locale,
   apiKey: string,
   signal?: AbortSignal
 ): Promise<Response> => {
@@ -88,7 +89,7 @@ export const createChatResponse = async (
     const stream = chat({
       adapter: createOpenRouterText(AGENT_MODEL, apiKey),
       messages: params.messages,
-      systemPrompts: [SYSTEM_PROMPT],
+      systemPrompts: [buildSystemPrompt(locale)],
       tools: agentTools,
       agentLoopStrategy: maxIterations(MAX_AGENT_ITERATIONS),
       modelOptions: {
