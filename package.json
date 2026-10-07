@@ -8,14 +8,14 @@
     "start": "vite",
     "dev": "vite",
     "build": "velite build && vite build",
-    "serve": "vite preview",
+    "serve": "wrangler pages dev dist",
+    "preview": "vite preview",
     "check": "velite build && tsc --noEmit && oxlint && oxfmt",
     "check:type": "velite build && tsc --noEmit",
     "check:lint": "oxlint",
     "check:format": "oxfmt --check",
     "fix:lint": "oxlint --fix",
-    "fix:format": "oxfmt",
-    "prepare": "lefthook install"
+    "fix:format": "oxfmt"
   },
   "dependencies": {
     "@solidjs/web": "^2.0.0-rc.4",
