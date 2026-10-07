@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import { about, education, profile, roles, skills, topics } from '@content'
 
+import { agentTools } from '@features/agent'
 import { LOCALES } from '@features/i18n/locales'
 
 import { buildSystemPrompt, htmlToText, type PromptContent, systemPromptFor } from './systemPrompt'
@@ -89,6 +90,13 @@ describe('buildSystemPrompt', () => {
     const [role] = roles.filter((item) => item.locale === 'en')
     const prompt = buildSystemPrompt('en', { ...content, roles: [{ ...role, end: null }] })
     expect(prompt).toContain(`(${role.start} to present)`)
+  })
+})
+
+describe('agent tools', () => {
+  test('are named in the system prompt', () => {
+    const prompt = buildSystemPrompt('en')
+    for (const tool of agentTools) expect(prompt).toContain(tool.name)
   })
 })
 
