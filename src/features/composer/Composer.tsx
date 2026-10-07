@@ -1,10 +1,12 @@
 import { formatForDisplay } from '@tanstack/hotkeys'
 import { createMemo, createSignal, For, Show } from 'solid-js'
 
+import { useAgent } from '@features/agent'
 import { useConversation } from '@features/conversation'
 import { useI18n } from '@features/i18n'
 import type { UiKey } from '@features/i18n'
 import { usePreferences } from '@features/preferences'
+import { resolveInput } from '@features/topics'
 import { useHotkey } from '@hooks'
 
 import { BlockCaret } from './BlockCaret'
@@ -19,11 +21,15 @@ const KEY_HINTS: { key: string; label: UiKey }[] = [
   { key: 'esc', label: 'keyhints.clear' },
 ]
 
+const BUTTON_CLASS =
+  'border-border text-foreground hover:text-primary hover:border-primary focus-visible:ring-ring size-11 flex-none border focus-visible:ring-2 focus-visible:outline-none md:h-6 md:w-7'
+
 export const Composer = () => {
   // Client-only app: the platform is known at render time
   const paletteLabel = formatForDisplay('Mod+K')
 
   const conversation = useConversation()
+  const agent = useAgent()
   const preferences = usePreferences()
   const { t } = useI18n()
   const commands = useComposerCommands()
@@ -32,6 +38,9 @@ export const Composer = () => {
   // The unknown command that failed, rendered through t() so the message follows the locale
   const [error, setError] = createSignal('', { name: 'promptError' })
   const errorMessage = () => (error() ? t('composer.commandNotFound', { command: error() }) : '')
+  // True from a question until a command runs or the composer is cleared: gates the retry offer
+  const [asked, setAsked] = createSignal(false, { name: 'promptAsked' })
+  const canRetry = () => asked() && agent.hasError() && !agent.isLoading()
   const [focused, setFocused] = createSignal(false, { name: 'promptFocused' })
   const [dismissed, setDismissed] = createSignal(false, { name: 'suggestionsDismissed' })
   const [active, setActive] = createSignal(0, { name: 'suggestionActive' })
@@ -80,15 +89,31 @@ export const Composer = () => {
     setDismissed(true)
   }
 
+  const settle = (raw: string) => {
+    history.push(raw)
+    setValue('')
+    setNavigated(false)
+    setError('')
+  }
+
   const handleSubmit = (input: string) => {
-    const raw = input.trim()
-    if (!raw) return
-    const command = findCommand(raw, commands())
-    if (!command) {
-      setError(raw)
+    // The input is read-only while a reply streams; Enter must not queue another question
+    if (agent.isLoading()) return
+    const resolved = resolveInput(input, (raw) => findCommand(raw, commands()))
+    if (resolved.kind === 'empty') return
+    if (resolved.kind === 'unknown') {
+      setError(resolved.raw)
+      return
+    }
+    if (resolved.kind === 'ask') {
+      agent.ask(resolved.raw)
+      setAsked(true)
+      settle(resolved.raw)
       return
     }
 
+    const { command, raw } = resolved
+    setAsked(false)
     switch (command.kind) {
       case 'topic':
         conversation.run(command.key)
@@ -108,10 +133,17 @@ export const Composer = () => {
       }
     }
 
-    history.push(raw)
-    setValue('')
-    setNavigated(false)
-    setError('')
+    settle(raw)
+  }
+
+  const stop = () => {
+    agent.stop()
+    focus()
+  }
+
+  const retry = () => {
+    agent.retry()
+    focus()
   }
 
   const hotkeyOptions = { target: input, preventDefault: false, ignoreInputs: false }
@@ -180,16 +212,22 @@ export const Composer = () => {
   useHotkey(
     'Escape',
     (event) => {
+      if (agent.isLoading()) {
+        event.preventDefault()
+        agent.stop()
+        return
+      }
       if (open()) {
         event.preventDefault()
         setDismissed(true)
         return
       }
       history.reset()
-      if (!value() && !error()) return
+      if (!value() && !error() && !canRetry()) return
       event.preventDefault()
       setValue('')
       setError('')
+      setAsked(false)
     },
     hotkeyOptions
   )
@@ -228,7 +266,9 @@ export const Composer = () => {
             id="promptInput"
             name="command"
             type="text"
-            placeholder={t('composer.placeholder')}
+            placeholder={t('composer.placeholderAsk')}
+            readonly={agent.isLoading()}
+            aria-busy={agent.isLoading() ? 'true' : undefined}
             autocomplete="off"
             spellcheck={false}
             autocapitalize="off"
@@ -253,21 +293,39 @@ export const Composer = () => {
           />
           <BlockCaret input={input()} />
         </div>
-        <button
-          type="submit"
-          aria-label={t('composer.send')}
-          class="border-border text-foreground hover:text-primary hover:border-primary focus-visible:ring-ring size-11 flex-none border focus-visible:ring-2 focus-visible:outline-none md:h-6 md:w-7"
+        <Show
+          when={agent.isLoading()}
+          fallback={
+            <button type="submit" aria-label={t('composer.send')} class={BUTTON_CLASS}>
+              <span aria-hidden="true">↵</span>
+            </button>
+          }
         >
-          <span aria-hidden="true">↵</span>
-        </button>
+          <button type="button" aria-label={t('composer.stop')} class={BUTTON_CLASS} onClick={stop}>
+            <span aria-hidden="true">■</span>
+          </button>
+        </Show>
       </div>
       <p
         id="promptError"
         role="status"
         aria-live="polite"
-        class={['text-destructive m-0 text-xs break-all', { 'pt-2': !!error() }]}
+        class={[
+          'text-destructive m-0 flex items-center gap-3 text-xs break-all',
+          { 'pt-2': !!error() || canRetry() },
+        ]}
       >
         {errorMessage()}
+        <Show when={!error() && canRetry()}>
+          <span>{t('composer.askFailed')}</span>
+          <button
+            type="button"
+            onClick={retry}
+            class="border-border text-foreground hover:text-primary hover:border-primary focus-visible:ring-ring min-h-11 flex-none border px-2 focus-visible:ring-2 focus-visible:outline-none md:min-h-6"
+          >
+            {t('composer.retry')}
+          </button>
+        </Show>
       </p>
       <ul class="text-muted-foreground m-0 hidden list-none flex-wrap gap-x-5 gap-y-1 p-0 pt-2.5 text-[11px] md:flex">
         <li class="whitespace-nowrap">
