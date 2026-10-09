@@ -11,6 +11,14 @@ const SCROLLER_SELECTOR = '[data-scroller]'
 const PIN_THRESHOLD = 80
 const ROW_CLASS = 'animate-rise flex motion-reduce:animate-none'
 
+// Distinct per status so a status change alone registers as growth for auto-scroll.
+const STATUS_WEIGHT: Record<AgentTextMessage['status'], number> = {
+  pending: 0,
+  streaming: 1,
+  done: 2,
+  error: 3,
+}
+
 const distanceFromBottom = (el: HTMLElement) => el.scrollHeight - el.scrollTop - el.clientHeight
 
 const UserRow = (props: { message: UserMessage }) => (
@@ -104,12 +112,14 @@ export const Thread = () => {
       for (let i = prev?.count ?? messages.length; i < messages.length; i++) {
         if (messages[i].role === 'user') fromUser = true
       }
-      // A streaming reply grows in place: track its size so a pinned thread follows it.
-      const last = messages.at(-1)
-      const size =
-        last?.role === 'agent' && last.kind === 'text'
-          ? last.parts.reduce((total, part) => total + part.length, 0) + last.status.length
-          : 0
+      // Streaming replies grow in place: track their total size so a pinned thread follows them,
+      // even when a topic row lands after the streaming reply.
+      let size = 0
+      for (const message of messages) {
+        if (message.role !== 'agent' || message.kind !== 'text') continue
+        size += message.parts.reduce((total, part) => total + part.length, 0)
+        size += STATUS_WEIGHT[message.status]
+      }
       return { count: messages.length, fromUser, size }
     },
     (next, prev) => {

@@ -117,8 +117,12 @@ export const ConversationProvider = (props: ParentProps) => {
     })
     answered.clear()
     head = undefined
-    for (const listener of clearListeners) listener()
-    goTo()
+    // A failing listener must not leave the URL on the cleared topic.
+    try {
+      for (const listener of clearListeners) listener()
+    } finally {
+      goTo()
+    }
   }
 
   const onClear = (listener: () => void) => {

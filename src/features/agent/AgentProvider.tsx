@@ -35,6 +35,8 @@ export const AgentProvider = (props: ParentProps) => {
 
   const [turn, setTurn] = createSignal<Turn | undefined>(undefined, { name: 'agentTurn' })
   let nextTurn = 0
+  // Signal writes are batched, so ask() reads the latest turn from here instead of turn().
+  let latestTurn: Turn | undefined
 
   const chat = useAgentChat({
     // Topic navigation goes through run() so its answered/head de-dupe sees it; the agent's reply
@@ -77,6 +79,7 @@ export const AgentProvider = (props: ParentProps) => {
 
   onSettled(() =>
     conversation.onClear(() => {
+      latestTurn = undefined
       setTurn(undefined)
       chat.clear()
     })
@@ -86,7 +89,7 @@ export const AgentProvider = (props: ParentProps) => {
     const content = text.trim()
     if (!content) return
     // A new question interrupts the previous one: settle its reply with whatever text it got.
-    const previous = untrack(() => turn())
+    const previous = latestTurn
     if (previous) {
       conversation.updateReply(
         previous.replyId,
@@ -99,7 +102,8 @@ export const AgentProvider = (props: ParentProps) => {
     }
     const replyId = conversation.ask(content)
     const chatId = `agent-turn-${nextTurn++}`
-    setTurn({ chatId, replyId })
+    latestTurn = { chatId, replyId }
+    setTurn(latestTurn)
     void chat.sendMessage({ content, id: chatId }, { whenBusy: 'interrupt' })
   }
 

@@ -72,6 +72,7 @@ export const PreferencesProvider = (props: ParentProps) => {
   )
 
   const setTheme = (next: Theme) => {
+    if (next === untrack(() => theme())) return
     setThemeValue(next)
     persist(THEME_STORAGE_KEY, next)
   }
