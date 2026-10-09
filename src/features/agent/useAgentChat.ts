@@ -1,10 +1,5 @@
 import { ChatClient, fetchServerSentEvents } from '@tanstack/ai-client'
-import type {
-  ChatClientState,
-  MultimodalContent,
-  SendMessageOptions,
-  UIMessage,
-} from '@tanstack/ai-client'
+import type { MultimodalContent, SendMessageOptions, UIMessage } from '@tanstack/ai-client'
 import type { AnyClientTool } from '@tanstack/ai/client'
 import { createSignal, onCleanup, onSettled } from 'solid-js'
 
@@ -32,30 +27,25 @@ export const useAgentChat = <const TTools extends ReadonlyArray<AnyClientTool>>(
     equals: false,
   })
   const [isLoading, setIsLoading] = createSignal(false, { name: 'agentIsLoading' })
-  const [status, setStatus] = createSignal<ChatClientState>('ready', { name: 'agentStatus' })
   const [error, setError] = createSignal<Error | undefined>(undefined, { name: 'agentError' })
 
   let client: ChatClient<TTools> | undefined
   let body: Record<string, unknown> = options.body ?? {}
 
   onSettled(() => {
+    // Callbacks after teardown (stop/dispose) or from a replaced client are ignored.
+    const live =
+      <T>(set: (value: T) => void) =>
+      (value: T) => {
+        if (client === instance) set(value)
+      }
     const instance: ChatClient<TTools> = new ChatClient<TTools>({
       connection: fetchServerSentEvents(options.url ?? CHAT_ENDPOINT),
       tools: options.tools,
       forwardedProps: body,
-      // Callbacks after teardown (stop/dispose) or from a replaced client are ignored.
-      onMessagesChange: (next) => {
-        if (client === instance) setMessages(next)
-      },
-      onLoadingChange: (next) => {
-        if (client === instance) setIsLoading(next)
-      },
-      onStatusChange: (next) => {
-        if (client === instance) setStatus(next)
-      },
-      onErrorChange: (next) => {
-        if (client === instance) setError(next)
-      },
+      onMessagesChange: live(setMessages),
+      onLoadingChange: live(setIsLoading),
+      onErrorChange: live(setError),
     })
     client = instance
     instance.attach()
@@ -92,7 +82,5 @@ export const useAgentChat = <const TTools extends ReadonlyArray<AnyClientTool>>(
     client?.updateOptions({ forwardedProps: next })
   }
 
-  return { messages, isLoading, status, error, sendMessage, reload, stop, clear, updateBody }
+  return { messages, isLoading, error, sendMessage, reload, stop, clear, updateBody }
 }
-
-export type AgentChat = ReturnType<typeof useAgentChat>

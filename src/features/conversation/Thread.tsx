@@ -77,13 +77,12 @@ const TextRow = (props: { message: AgentTextMessage }) => {
 }
 
 const AgentRow = (props: { message: AgentMessage }) => (
-  <>
-    {props.message.kind === 'topic' ? (
-      <TopicRow message={props.message} />
-    ) : (
-      <TextRow message={props.message} />
-    )}
-  </>
+  <Show
+    when={props.message.kind === 'text' && (props.message as AgentTextMessage)}
+    fallback={<TopicRow message={props.message as AgentTopicMessage} />}
+  >
+    {(message) => <TextRow message={message()} />}
+  </Show>
 )
 
 export const Thread = () => {

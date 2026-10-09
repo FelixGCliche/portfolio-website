@@ -93,8 +93,14 @@ export const ConversationProvider = (props: ParentProps) => {
     setState((draft) => {
       const message = draft.messages.find((item) => item.id === id)
       if (message?.role !== 'agent' || message.kind !== 'text') return
-      message.parts = reply.parts
-      message.status = reply.status
+      // Streaming rewrites the reply on every chunk: skip writes that change nothing.
+      if (
+        message.status === reply.status &&
+        message.parts.length === reply.parts.length &&
+        message.parts.every((part, i) => part === reply.parts[i])
+      )
+        return
+      Object.assign(message, reply)
     })
   }
 

@@ -53,6 +53,8 @@ export const AgentProvider = (props: ParentProps) => {
     body: { locale: untrack(() => i18n.locale()) },
   })
 
+  const hasError = () => chat.error() !== undefined
+
   // The server reads the reply language from forwardedProps.locale.
   createEffect(
     () => i18n.locale(),
@@ -67,7 +69,7 @@ export const AgentProvider = (props: ParentProps) => {
       if (!current) return undefined
       const reply = mapTurnReply(chat.messages(), current.chatId, {
         isLoading: chat.isLoading(),
-        hasError: chat.error() !== undefined,
+        hasError: hasError(),
       })
       return { id: current.replyId, reply }
     },
@@ -96,7 +98,7 @@ export const AgentProvider = (props: ParentProps) => {
         mapTurnReply(
           untrack(() => chat.messages()),
           previous.chatId,
-          { isLoading: false, hasError: untrack(() => chat.error() !== undefined) }
+          { isLoading: false, hasError: untrack(hasError) }
         )
       )
     }
@@ -112,7 +114,7 @@ export const AgentProvider = (props: ParentProps) => {
     retry: () => void chat.reload(),
     stop: chat.stop,
     isLoading: chat.isLoading,
-    hasError: () => chat.error() !== undefined,
+    hasError,
   }
 
   return <AgentContext value={value}>{props.children}</AgentContext>
