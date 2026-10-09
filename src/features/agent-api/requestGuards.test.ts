@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
-import { isAllowedOrigin, readBodyWithLimit } from './requestGuards'
+import { isAllowedOrigin, isRateLimited, readBodyWithLimit } from './requestGuards'
 
 const CHAT_URL = 'https://example.com/api/chat'
 
@@ -22,7 +22,7 @@ describe('readBodyWithLimit', () => {
 
   test('rejects a declared Content-Length over the limit', async () => {
     const result = await readBodyWithLimit(post('x', { 'content-length': '100' }), 16)
-    expect(result).toEqual({ ok: false, status: 413, code: 'payload_too_large' })
+    expect(result).toMatchObject({ ok: false, status: 413, code: 'payload_too_large' })
   })
 
   test('rejects an invalid Content-Length', async () => {
@@ -31,13 +31,13 @@ describe('readBodyWithLimit', () => {
       // Request normally sets Content-Length itself; override it to simulate a hostile client.
       Object.defineProperty(request, 'headers', { value: new Headers({ 'content-length': value }) })
       const result = await readBodyWithLimit(request, 16)
-      expect(result).toEqual({ ok: false, status: 400, code: 'invalid_request' })
+      expect(result).toMatchObject({ ok: false, status: 400, code: 'invalid_request' })
     }
   })
 
   test('enforces the limit while streaming when Content-Length is missing', async () => {
     const result = await readBodyWithLimit(post(streamOf(['a'.repeat(10), 'b'.repeat(10)])), 16)
-    expect(result).toEqual({ ok: false, status: 413, code: 'payload_too_large' })
+    expect(result).toMatchObject({ ok: false, status: 413, code: 'payload_too_large' })
   })
 
   test('decodes multi-byte characters split across chunks', async () => {
@@ -72,5 +72,39 @@ describe('isAllowedOrigin', () => {
     expect(isAllowedOrigin(request({}), true)).toBe(true)
     expect(isAllowedOrigin(request({ origin: 'http://localhost:5173' }), true)).toBe(true)
     expect(isAllowedOrigin(request({ origin: 'https://evil.test' }), true)).toBe(false)
+  })
+})
+
+describe('isRateLimited', () => {
+  const request = (headers: Record<string, string> = { 'cf-connecting-ip': '1.2.3.4' }) =>
+    new Request(CHAT_URL, { method: 'POST', headers })
+  const limiter = (limit: () => Promise<{ success: boolean }>) => ({ limit })
+
+  test('reports the limiter verdict', async () => {
+    expect(
+      await isRateLimited(
+        request(),
+        limiter(async () => ({ success: false }))
+      )
+    ).toBe(true)
+    expect(
+      await isRateLimited(
+        request(),
+        limiter(async () => ({ success: true }))
+      )
+    ).toBe(false)
+  })
+
+  test('lets the request through without a binding, an IP or a working limiter', async () => {
+    const failing = limiter(() => Promise.reject(new Error('down')))
+    const originalError = console.error
+    console.error = () => undefined
+    try {
+      expect(await isRateLimited(request(), undefined)).toBe(false)
+      expect(await isRateLimited(request({}), failing)).toBe(false)
+      expect(await isRateLimited(request(), failing)).toBe(false)
+    } finally {
+      console.error = originalError
+    }
   })
 })

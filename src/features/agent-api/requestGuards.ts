@@ -1,8 +1,25 @@
-import { MAX_BODY_BYTES } from './chatRequest'
+import { INVALID_REQUEST_MESSAGE, type RequestError } from './errors'
 
-export type BodyReadResult =
-  | { ok: true; text: string }
-  | { ok: false; status: 400 | 413; code: 'invalid_request' | 'payload_too_large' }
+/** Largest accepted request body, in bytes. */
+export const MAX_BODY_BYTES = 64 * 1024
+
+export const PAYLOAD_TOO_LARGE_MESSAGE = 'The conversation is too long. Please start a new one.'
+
+export type BodyReadResult = { ok: true; text: string } | ({ ok: false } & RequestError)
+
+const invalidRequest = {
+  ok: false,
+  status: 400,
+  code: 'invalid_request',
+  message: INVALID_REQUEST_MESSAGE,
+} as const
+
+const payloadTooLarge = {
+  ok: false,
+  status: 413,
+  code: 'payload_too_large',
+  message: PAYLOAD_TOO_LARGE_MESSAGE,
+} as const
 
 /**
  * Reads a request body as text, enforcing `maxBytes` while streaming so a missing or understated
@@ -14,12 +31,8 @@ export const readBodyWithLimit = async (
 ): Promise<BodyReadResult> => {
   const contentLength = request.headers.get('content-length')
   if (contentLength !== null) {
-    if (!/^\d+$/.test(contentLength.trim())) {
-      return { ok: false, status: 400, code: 'invalid_request' }
-    }
-    if (Number(contentLength) > maxBytes) {
-      return { ok: false, status: 413, code: 'payload_too_large' }
-    }
+    if (!/^\d+$/.test(contentLength.trim())) return invalidRequest
+    if (Number(contentLength) > maxBytes) return payloadTooLarge
   }
 
   if (!request.body) return { ok: true, text: '' }
@@ -34,7 +47,7 @@ export const readBodyWithLimit = async (
     received += value.byteLength
     if (received > maxBytes) {
       await reader.cancel().catch(() => undefined)
-      return { ok: false, status: 413, code: 'payload_too_large' }
+      return payloadTooLarge
     }
     text += decoder.decode(value, { stream: true })
   }
@@ -67,4 +80,24 @@ export const isAllowedOrigin = (request: Request, dev: boolean) => {
   if (!source) return false
   if (source === new URL(request.url).origin) return true
   return dev && LOCAL_HOSTNAMES.has(new URL(source).hostname)
+}
+
+/** The Workers rate limiting binding declared in wrangler.jsonc. */
+export type RateLimiter = { limit: (options: { key: string }) => Promise<{ success: boolean }> }
+
+/**
+ * Best-effort per-IP limit through the Workers rate limiting binding. Its counters are per Cloudflare
+ * location and eventually consistent, so this caps abuse rather than enforcing an exact quota; a
+ * missing binding or a limiter failure lets the request through.
+ */
+export const isRateLimited = async (request: Request, limiter: RateLimiter | undefined) => {
+  const ip = request.headers.get('cf-connecting-ip')
+  if (!limiter || !ip) return false
+  try {
+    const { success } = await limiter.limit({ key: ip })
+    return !success
+  } catch (error) {
+    console.error('[agent] rate limiter failed', error)
+    return false
+  }
 }

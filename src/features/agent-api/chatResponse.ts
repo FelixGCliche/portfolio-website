@@ -10,7 +10,8 @@ import { createOpenRouterText } from '@tanstack/ai-openrouter'
 
 import { agentTools } from '@features/agent'
 
-import type { ChatRequest, ChatRequestErrorCode } from './chatRequest'
+import type { ChatRequest } from './chatRequest'
+import { errorResponse, INVALID_REQUEST_MESSAGE } from './errors'
 
 /** Primary model: free tier, supports tool calling, solid in English and French. */
 export const AGENT_MODEL = 'google/gemma-4-31b-it:free'
@@ -29,16 +30,6 @@ const SYSTEM_PROMPT =
   'briefly and politely. If you do not know something, say so instead of guessing.'
 
 const UNAVAILABLE_MESSAGE = 'The assistant is unavailable right now. Please try again later.'
-
-export type ErrorCode =
-  | ChatRequestErrorCode
-  | 'forbidden_origin'
-  | 'rate_limited'
-  | 'missing_api_key'
-  | 'upstream_error'
-
-export const errorResponse = (status: number, code: ErrorCode, message: string) =>
-  Response.json({ error: { code, message } }, { status })
 
 /** Names of the tools the model may call, used to validate tool calls replayed by the client. */
 export const agentToolNames: readonly string[] = agentTools.map((tool) => tool.name)
@@ -84,7 +75,7 @@ export const createChatResponse = async (
   try {
     params = await chatParamsFromRequestBody(input)
   } catch {
-    return errorResponse(400, 'invalid_request', 'The request is not a valid chat message.')
+    return errorResponse(400, 'invalid_request', INVALID_REQUEST_MESSAGE)
   }
 
   // Forward the client disconnect, including one that happened before this point.
