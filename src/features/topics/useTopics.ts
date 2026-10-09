@@ -3,8 +3,8 @@ import type { Accessor } from 'solid-js'
 
 import { LOCALES, pickSorted, useI18n } from '@features/i18n'
 import type { Locale } from '@features/i18n'
+import type { TopicKey } from '@features/topic-keys'
 
-import type { TopicKey } from './topic-keys'
 import { splitKeywords } from './topics'
 import type { Topic, TopicEntry } from './topics'
 

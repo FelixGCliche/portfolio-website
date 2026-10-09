@@ -3,7 +3,7 @@ import { join } from 'node:path'
 
 import { defineCollection, defineConfig, s } from 'velite'
 
-import { TOPIC_KEYS } from './src/features/topics/topic-keys'
+import { TOPIC_KEYS } from './src/features/topic-keys'
 
 type Locale = 'en' | 'fr'
 
