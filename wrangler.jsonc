@@ -4,7 +4,11 @@
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/solid-start/server-entry",
-  // Best-effort per-IP limit for /api/chat (see src/features/agent-api/requestGuards.ts).
+  "observability": { "enabled": true },
+  "assets": {
+    "directory": "dist/client",
+    "not_found_handling": "single-page-application",
+  },
   "ratelimits": [
     {
       "name": "CHAT_RATE_LIMITER",
