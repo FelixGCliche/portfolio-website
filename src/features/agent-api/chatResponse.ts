@@ -8,7 +8,7 @@ import {
 } from '@tanstack/ai'
 import { createOpenRouterText } from '@tanstack/ai-openrouter'
 
-import { agentTools } from '@features/agent'
+import { agentTools } from '@features/agent-tools'
 
 import { type ChatRequest, localeFromRequest } from './chatRequest'
 import { errorResponse, INVALID_REQUEST_MESSAGE } from './errors'

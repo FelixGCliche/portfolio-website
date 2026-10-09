@@ -1,7 +1,7 @@
 import * as content from '@content'
 import type { About, Education, Profile, Role, Skill, Topic } from '@content'
 
-import { agentTools } from '@features/agent'
+import { agentTools } from '@features/agent-tools'
 import {
   DEFAULT_LOCALE,
   type Locale,

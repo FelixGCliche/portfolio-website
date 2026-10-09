@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import { about, education, profile, roles, skills, topics } from '@content'
 
-import { agentTools } from '@features/agent'
+import { agentTools } from '@features/agent-tools'
 import { LOCALE_NAMES, LOCALES } from '@features/locales'
 import { TOPIC_KEYS } from '@features/topic-keys'
 
