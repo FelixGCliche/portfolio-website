@@ -18,63 +18,23 @@ export type PromptContent = {
 
 const LANGUAGE_NAMES: Record<Locale, string> = { en: 'English', fr: 'French' }
 
-// Case-sensitive, as in HTML (`&Eacute;` is É, `&eacute;` is é). Covers markup escapes, French
-// letters and common typography; anything else is left as written.
+// Markup escapes plus common French typography. Velite emits accented letters as literal characters
+// (or numeric references, decoded below), so named letter entities are not needed; anything else
+// is left as written.
 const ENTITIES: Record<string, string> = {
   amp: '&',
   lt: '<',
   gt: '>',
   quot: '"',
   apos: "'",
-  nbsp: ' ',
-  shy: '',
-  copy: '©',
-  reg: '®',
-  trade: '™',
-  deg: '°',
-  euro: '€',
-  middot: '·',
-  bull: '•',
+  nbsp: ' ',
   laquo: '«',
   raquo: '»',
   lsquo: '‘',
   rsquo: '’',
-  ldquo: '“',
-  rdquo: '”',
   hellip: '…',
   ndash: '–',
   mdash: '—',
-  agrave: 'à',
-  Agrave: 'À',
-  acirc: 'â',
-  Acirc: 'Â',
-  aelig: 'æ',
-  AElig: 'Æ',
-  ccedil: 'ç',
-  Ccedil: 'Ç',
-  eacute: 'é',
-  Eacute: 'É',
-  egrave: 'è',
-  Egrave: 'È',
-  ecirc: 'ê',
-  Ecirc: 'Ê',
-  euml: 'ë',
-  Euml: 'Ë',
-  icirc: 'î',
-  Icirc: 'Î',
-  iuml: 'ï',
-  Iuml: 'Ï',
-  ocirc: 'ô',
-  Ocirc: 'Ô',
-  oelig: 'œ',
-  OElig: 'Œ',
-  ugrave: 'ù',
-  Ugrave: 'Ù',
-  ucirc: 'û',
-  Ucirc: 'Û',
-  uuml: 'ü',
-  Uuml: 'Ü',
-  yuml: 'ÿ',
 }
 
 const MAX_CODE_POINT = 0x10ffff
@@ -99,10 +59,8 @@ export const htmlToText = (html: string): string =>
     .filter(Boolean)
     .join('\n')
 
-const section = (title: string, lines: string[]): string[] => {
-  const body = lines.filter((line) => line.trim().length > 0)
-  return body.length > 0 ? ['', `## ${title}`, ...body] : []
-}
+const section = (title: string, lines: string[]): string[] =>
+  lines.length > 0 ? ['', `## ${title}`, ...lines] : []
 
 // Only contact details the site already shows publicly (sidebar, command palette) are listed; the
 // phone number is deliberately left out.
@@ -158,7 +116,8 @@ export const buildSystemPrompt = (locale: Locale, source: PromptContent = conten
     '',
     '# Portfolio content',
     ...section('Profile', profileLines(profile)),
-    ...section('About', [htmlToText(about.body)]),
+    // The About body is the only section line that can be empty.
+    ...section('About', [htmlToText(about.body)].filter(Boolean)),
     ...section(
       'Work experience (most recent first)',
       pickSorted(source.roles, locale).flatMap(roleLines)
@@ -170,14 +129,8 @@ export const buildSystemPrompt = (locale: Locale, source: PromptContent = conten
 }
 
 // Content is static, so each locale's prompt is built once and reused across requests.
-const promptCache = new Map<Locale, string>()
+const promptCache: Partial<Record<Locale, string>> = {}
 
 /** The system prompt for `locale` built from the bundled portfolio content, memoized per locale. */
-export const systemPromptFor = (locale: Locale): string => {
-  let prompt = promptCache.get(locale)
-  if (prompt === undefined) {
-    prompt = buildSystemPrompt(locale)
-    promptCache.set(locale, prompt)
-  }
-  return prompt
-}
+export const systemPromptFor = (locale: Locale): string =>
+  (promptCache[locale] ??= buildSystemPrompt(locale))

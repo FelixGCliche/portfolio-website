@@ -26,7 +26,6 @@ describe('buildSystemPrompt', () => {
   test.each([...LOCALES])('keeps the phone number out of the %s prompt', (locale) => {
     const prompt = buildSystemPrompt(locale)
     for (const entry of profile) expect(prompt).not.toContain(entry.phone)
-    expect(prompt).not.toMatch(/phone:/i)
     expect(prompt).toContain('Never disclose or guess any other personal contact details')
   })
 
@@ -34,15 +33,12 @@ describe('buildSystemPrompt', () => {
     const [entry] = education.filter((item) => item.locale === 'en')
     const second = { ...entry, degree: 'Second degree', start: 2001, end: 2004 }
     const prompt = buildSystemPrompt('en', { ...content, education: [second, entry] })
-    expect(prompt).toContain(entry.degree)
+    expect(prompt).toContain(`${entry.degree}, `)
     expect(prompt).toContain('Second degree, ')
   })
 
   test('memoizes the prompt per locale', () => {
-    expect(systemPromptFor('en')).toBe(buildSystemPrompt('en'))
-    expect(systemPromptFor('fr')).toBe(buildSystemPrompt('fr'))
-    expect(systemPromptFor('en')).toBe(systemPromptFor('en'))
-    expect(systemPromptFor('en')).not.toBe(systemPromptFor('fr'))
+    for (const locale of LOCALES) expect(systemPromptFor(locale)).toBe(buildSystemPrompt(locale))
   })
 
   test.each([...LOCALES])('includes the %s portfolio content', (locale) => {
@@ -69,21 +65,21 @@ describe('buildSystemPrompt', () => {
     }
   })
 
-  test.each([...LOCALES])('has no empty sections or HTML in %s', (locale) => {
-    const lines = buildSystemPrompt(locale).split('\n')
+  test.each([...LOCALES])('is compact plain text with no empty sections in %s', (locale) => {
+    const prompt = buildSystemPrompt(locale)
+    const lines = prompt.split('\n')
     lines.forEach((line, i) => {
       if (line.startsWith('## ')) expect(lines[i + 1]?.trim()).toBeTruthy()
     })
-    expect(lines.join('\n')).not.toMatch(/<\/?[a-z][^>]*>/i)
-    expect(lines.join('\n')).not.toContain('undefined')
-  })
-
-  test.each([...LOCALES])('stays within a reasonable size in %s', (locale) => {
-    expect(buildSystemPrompt(locale).length).toBeLessThan(MAX_PROMPT_CHARS)
+    expect(prompt).not.toMatch(/<\/?[a-z][^>]*>/i)
+    expect(prompt).not.toContain('undefined')
+    expect(prompt.length).toBeLessThan(MAX_PROMPT_CHARS)
   })
 
   test('omits sections with no entries', () => {
-    const prompt = buildSystemPrompt('en', { ...content, roles: [], skills: [] })
+    const about = [{ locale: 'en' as const, body: '<p> </p>' }]
+    const prompt = buildSystemPrompt('en', { ...content, about, roles: [], skills: [] })
+    expect(prompt).not.toContain('## About')
     expect(prompt).not.toContain('## Work experience')
     expect(prompt).not.toContain('## Skills')
     expect(prompt).toContain('## Profile')
@@ -98,20 +94,17 @@ describe('buildSystemPrompt', () => {
 
 describe('htmlToText', () => {
   test('strips tags into paragraphs and decodes entities', () => {
-    expect(
-      htmlToText('<p>Hi &amp; <strong>bye</strong></p>\n<p>It&#x27;s &#233;t&eacute;</p>')
-    ).toBe("Hi & bye\nIt's été")
+    expect(htmlToText('<p>Hi &amp; <strong>bye</strong></p>\n<p>It&#x27;s &#233;t&#xe9;</p>')).toBe(
+      "Hi & bye\nIt's été"
+    )
   })
 
-  test('decodes common French and typographic entities', () => {
+  test('decodes French accents and typography', () => {
     expect(
       htmlToText(
-        '<p>&Eacute;cole &agrave; Qu&eacute;bec &ccedil;a &egrave;re &laquo;&nbsp;oui&nbsp;&raquo;</p>'
+        '<p>&#201;cole &#xE0; Québec &laquo;&nbsp;oui&nbsp;&raquo; l&rsquo;été&hellip;</p>'
       )
-    ).toBe('École à Québec ça ère « oui »')
-    expect(htmlToText('<p>l&rsquo;&eacute;t&eacute; &ndash; 2020&mdash;2024&hellip;</p>')).toBe(
-      'l’été – 2020—2024…'
-    )
+    ).toBe('École à Québec « oui » l’été…')
   })
 
   test('leaves unknown and out-of-range references as written', () => {

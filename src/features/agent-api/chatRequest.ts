@@ -99,7 +99,7 @@ export type ChatRequest = z.infer<ReturnType<typeof createChatRequestSchema>>
 export type ChatRequestErrorCode = 'invalid_json' | 'invalid_request'
 
 /** Reads the UI locale the client forwards in `forwardedProps.locale`, defaulting when absent or unknown. */
-export const localeFromRequest = (request: Pick<ChatRequest, 'forwardedProps'>): Locale => {
+export const localeFromRequest = (request: ChatRequest): Locale => {
   const locale = request.forwardedProps?.locale
   return isLocale(locale) ? locale : DEFAULT_LOCALE
 }
