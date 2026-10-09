@@ -1,8 +1,6 @@
 import { z } from 'zod'
 
-// Deep import: the i18n barrel re-exports JSX providers that bun test cannot load and the server
-// route does not need.
-import { DEFAULT_LOCALE, isLocale, type Locale } from '@features/i18n/locales'
+import { DEFAULT_LOCALE, isLocale, type Locale } from '@features/locales'
 
 import { INVALID_REQUEST_MESSAGE } from './errors'
 

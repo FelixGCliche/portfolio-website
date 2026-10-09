@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, isLocale, LOCALE_STORAGE_KEY, type Locale } from './locales'
+import { DEFAULT_LOCALE, isLocale, LOCALE_STORAGE_KEY, type Locale } from '@features/locales'
 
 const readStoredLocale = (): Locale | undefined => {
   try {

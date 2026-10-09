@@ -2,7 +2,9 @@ import { describe, expect, test } from 'bun:test'
 
 import { about, education, profile, roles, skills, topics } from '@content'
 
-import { LOCALES } from '@features/i18n/locales'
+import { agentTools } from '@features/agent-tools'
+import { LOCALE_NAMES, LOCALES } from '@features/locales'
+import { TOPIC_KEYS } from '@features/topic-keys'
 
 import { buildSystemPrompt, htmlToText, type PromptContent, systemPromptFor } from './systemPrompt'
 
@@ -89,6 +91,23 @@ describe('buildSystemPrompt', () => {
     const [role] = roles.filter((item) => item.locale === 'en')
     const prompt = buildSystemPrompt('en', { ...content, roles: [{ ...role, end: null }] })
     expect(prompt).toContain(`(${role.start} to present)`)
+  })
+})
+
+describe('agent tools', () => {
+  test.each([...LOCALES])('are listed from their definitions in the %s prompt', (locale) => {
+    const prompt = buildSystemPrompt(locale)
+    for (const tool of agentTools) expect(prompt).toContain(`- ${tool.name}: ${tool.description}`)
+  })
+
+  test('lists every supported locale with its name', () => {
+    const prompt = buildSystemPrompt('en')
+    for (const locale of LOCALES) expect(prompt).toContain(`${LOCALE_NAMES[locale]} (${locale})`)
+  })
+
+  test('takes topic keys from the shared constants', () => {
+    const prompt = buildSystemPrompt('en')
+    expect(prompt).toContain(`e.g. ${TOPIC_KEYS[0]}`)
   })
 })
 

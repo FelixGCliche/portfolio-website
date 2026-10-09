@@ -2,8 +2,9 @@ import { useParams } from '@tanstack/solid-router'
 import { createContext, createEffect, createMemo, useContext } from 'solid-js'
 import type { Accessor, ParentProps } from 'solid-js'
 
+import { isLocale, type Locale } from '@features/locales'
+
 import { detectLocale, storeLocale } from './detectLocale'
-import { isLocale, type Locale } from './locales'
 import { stringsFor, translate, type TranslateVars, type UiKey } from './translate'
 
 export type I18nContextValue = {
