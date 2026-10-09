@@ -81,6 +81,9 @@ palette.keywords.email: 'courriel contact écrire'
 
 thread.label: 'Conversation'
 
+agent.thinking: 'réflexion…'
+agent.error: 'L’assistant n’est pas disponible pour le moment. Réessaie dans un instant.'
+
 hero.chipsLabel: 'Raccourcis'
 
 chips.about: 'qui je suis'

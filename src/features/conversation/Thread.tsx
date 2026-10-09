@@ -1,20 +1,25 @@
 import { Dynamic } from '@solidjs/web'
-import { createEffect, For, onSettled } from 'solid-js'
+import { createEffect, For, Match, onSettled, Show, Switch } from 'solid-js'
 
 import { useI18n } from '@features/i18n'
 
 import { useConversation } from './ConversationProvider'
-import type { Message } from './ConversationProvider'
+import type { AgentMessage, AgentTextMessage, AgentTopicMessage, UserMessage } from './messages'
 import { responses } from './responses'
 
 const SCROLLER_SELECTOR = '[data-scroller]'
 const PIN_THRESHOLD = 80
 const ROW_CLASS = 'animate-rise flex motion-reduce:animate-none'
 
-const distanceFromBottom = (el: HTMLElement) => el.scrollHeight - el.scrollTop - el.clientHeight
+// Distinct per status so a status change alone registers as growth for auto-scroll.
+const STATUS_WEIGHT: Record<AgentTextMessage['status'], number> = {
+  pending: 0,
+  streaming: 1,
+  done: 2,
+  error: 3,
+}
 
-type UserMessage = Extract<Message, { role: 'user' }>
-type AgentMessage = Extract<Message, { role: 'agent' }>
+const distanceFromBottom = (el: HTMLElement) => el.scrollHeight - el.scrollTop - el.clientHeight
 
 const UserRow = (props: { message: UserMessage }) => (
   <div class={`${ROW_CLASS} gap-3 font-medium`}>
@@ -25,10 +30,59 @@ const UserRow = (props: { message: UserMessage }) => (
   </div>
 )
 
-const AgentRow = (props: { message: AgentMessage }) => (
-  <div class={`${ROW_CLASS} flex-col gap-4 pt-3 pl-[26px]`}>
+const AGENT_ROW_CLASS = `${ROW_CLASS} flex-col gap-4 pt-3 pl-[26px]`
+
+const TopicRow = (props: { message: AgentTopicMessage }) => (
+  <div class={AGENT_ROW_CLASS}>
     <Dynamic component={responses[props.message.topic]} />
   </div>
+)
+
+// A streamed agent reply. Upstream error details are never shown, only a friendly message.
+const TextRow = (props: { message: AgentTextMessage }) => {
+  const { t } = useI18n()
+
+  return (
+    <Show when={props.message.status !== 'done' || props.message.parts.length > 0}>
+      <div
+        class={AGENT_ROW_CLASS}
+        aria-busy={
+          props.message.status === 'pending' || props.message.status === 'streaming'
+            ? 'true'
+            : undefined
+        }
+      >
+        <For each={props.message.parts} keyed={false}>
+          {(part) => (
+            <p class="text-foreground max-w-[66ch] leading-[1.8] text-pretty whitespace-pre-wrap">
+              {part()}
+            </p>
+          )}
+        </For>
+        <Switch>
+          <Match when={props.message.status === 'pending'}>
+            <p class="text-muted-foreground animate-pulse text-xs motion-reduce:animate-none">
+              {t('agent.thinking')}
+            </p>
+          </Match>
+          <Match when={props.message.status === 'error'}>
+            <p class="text-destructive text-xs" role="alert">
+              {t('agent.error')}
+            </p>
+          </Match>
+        </Switch>
+      </div>
+    </Show>
+  )
+}
+
+const AgentRow = (props: { message: AgentMessage }) => (
+  <Show
+    when={props.message.kind === 'text' && (props.message as AgentTextMessage)}
+    fallback={<TopicRow message={props.message as AgentTopicMessage} />}
+  >
+    {(message) => <TextRow message={message()} />}
+  </Show>
 )
 
 export const Thread = () => {
@@ -51,17 +105,27 @@ export const Thread = () => {
   })
 
   createEffect(
-    (prev?: { count: number; fromUser: boolean }) => {
+    (prev?: { count: number; fromUser: boolean; size: number }) => {
       const messages = conversation.state.messages
       let fromUser = false
       for (let i = prev?.count ?? messages.length; i < messages.length; i++) {
         if (messages[i].role === 'user') fromUser = true
       }
-      return { count: messages.length, fromUser }
+      // Streaming replies grow in place: track their total size so a pinned thread follows them,
+      // even when a topic row lands after the streaming reply.
+      let size = 0
+      for (const message of messages) {
+        if (message.role !== 'agent' || message.kind !== 'text') continue
+        size += message.parts.reduce((total, part) => total + part.length, 0)
+        size += STATUS_WEIGHT[message.status]
+      }
+      return { count: messages.length, fromUser, size }
     },
     (next, prev) => {
-      if (!prev || next.count <= prev.count) return
-      if (!pinned && !next.fromUser) return
+      if (!prev) return
+      const added = next.count > prev.count
+      if (!added && (next.count < prev.count || next.size === prev.size)) return
+      if (!pinned && !(added && next.fromUser)) return
       const el = scroller()
       if (!el) return
       pinned = true

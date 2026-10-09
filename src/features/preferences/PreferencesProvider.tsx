@@ -14,6 +14,8 @@ export type PreferencesContextValue = {
   lang: Accessor<Locale>
   toggleTheme: () => void
   toggleLang: () => void
+  setTheme: (theme: Theme) => void
+  setLocale: (locale: Locale) => void
 }
 
 export const PreferencesContext = createContext<PreferencesContextValue>()
@@ -33,17 +35,17 @@ export const PreferencesProvider = (props: ParentProps) => {
   const i18n = useI18n()
   const navigate = useNavigate()
   const params = useParams({ strict: false, shouldThrow: false })
-  const [theme, setTheme] = createSignal<Theme>(DEFAULT_THEME, { name: 'preferencesTheme' })
+  const [theme, setThemeValue] = createSignal<Theme>(DEFAULT_THEME, { name: 'preferencesTheme' })
   const [synced, setSynced] = createSignal(false, { name: 'preferencesSynced' })
 
   onSettled(() => {
     // THEME_INIT_SCRIPT already resolved stored/OS preferences onto <html> before first paint
-    setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light')
+    setThemeValue(document.documentElement.classList.contains('dark') ? 'dark' : 'light')
     setSynced(true)
 
     // Live theme sync across tabs; values come from another tab, so they are applied without re-persisting
     const onStorage = (event: StorageEvent) => {
-      if (event.key === THEME_STORAGE_KEY && isTheme(event.newValue)) setTheme(event.newValue)
+      if (event.key === THEME_STORAGE_KEY && isTheme(event.newValue)) setThemeValue(event.newValue)
     }
 
     window.addEventListener('storage', onStorage)
@@ -69,15 +71,17 @@ export const PreferencesProvider = (props: ParentProps) => {
     { name: 'preferencesLangEffect' }
   )
 
-  const toggleTheme = () => {
-    const next: Theme = theme() === 'dark' ? 'light' : 'dark'
-    setTheme(next)
+  const setTheme = (next: Theme) => {
+    if (next === untrack(() => theme())) return
+    setThemeValue(next)
     persist(THEME_STORAGE_KEY, next)
   }
 
+  const toggleTheme = () => setTheme(untrack(() => theme()) === 'dark' ? 'light' : 'dark')
+
   // The URL is the source of truth: switch the locale segment, keeping topic, search and hash.
-  const toggleLang = () => {
-    const next: Locale = untrack(() => i18n.locale()) === 'en' ? 'fr' : 'en'
+  const setLocale = (next: Locale) => {
+    if (next === untrack(() => i18n.locale())) return
     const topic = untrack(() => params()?.topic)
     storeLocale(next)
     void navigate({
@@ -87,7 +91,16 @@ export const PreferencesProvider = (props: ParentProps) => {
     })
   }
 
-  const value: PreferencesContextValue = { theme, lang: i18n.locale, toggleTheme, toggleLang }
+  const toggleLang = () => setLocale(untrack(() => i18n.locale()) === 'en' ? 'fr' : 'en')
+
+  const value: PreferencesContextValue = {
+    theme,
+    lang: i18n.locale,
+    toggleTheme,
+    toggleLang,
+    setTheme,
+    setLocale,
+  }
 
   return <PreferencesContext value={value}>{props.children}</PreferencesContext>
 }
