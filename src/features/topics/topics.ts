@@ -29,10 +29,24 @@ export const normalizeInput = (text: string): string | undefined => {
   return normalized.startsWith('/') ? normalized : `/${normalized}`
 }
 
-// Seam for a future natural-language router: maps free-form input to a topic
-export const resolveInput = (text: string): TopicKey | undefined => {
-  const key = normalizeInput(text)
-  return key && isTopicKey(key) ? key : undefined
+// What submitted composer input means: a known command, an unknown '/command', or a question for the agent
+export type ResolvedInput<C> =
+  | { kind: 'empty' }
+  | { kind: 'command'; command: C; raw: string }
+  | { kind: 'unknown'; raw: string }
+  | { kind: 'ask'; raw: string }
+
+// Known commands win (bare names like 'about' included); other '/'-prefixed input is an unknown command;
+// any remaining free text goes to the agent
+export const resolveInput = <C>(
+  text: string,
+  find: (input: string) => C | undefined
+): ResolvedInput<C> => {
+  const raw = text.trim()
+  if (!raw) return { kind: 'empty' }
+  const command = find(raw)
+  if (command !== undefined) return { kind: 'command', command, raw }
+  return raw.startsWith('/') ? { kind: 'unknown', raw } : { kind: 'ask', raw }
 }
 
 export const keyToParam = (key: TopicKey): string => key.slice(1)
