@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import {
   type ChatRequestErrorCode,
+  localeFromRequest,
   MAX_HISTORY_MESSAGE_CHARS,
   MAX_MESSAGES,
   MAX_USER_MESSAGE_CHARS,
@@ -145,10 +146,10 @@ describe('parseChatRequest', () => {
   })
 })
 
-describe('parseChatRequest locale', () => {
+describe('localeFromRequest', () => {
   const localeOf = (forwardedProps: unknown) => {
     const result = parseChatRequest(body({ forwardedProps }))
-    return result.ok ? result.locale : undefined
+    return result.ok ? localeFromRequest(result.data) : undefined
   }
 
   test('reads a supported locale from forwardedProps', () => {

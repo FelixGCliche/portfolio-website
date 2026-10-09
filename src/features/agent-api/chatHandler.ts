@@ -48,5 +48,5 @@ export const handleChatRequest = async (
   const parsed = parseChatRequest(body.text, agentToolNames)
   if (!parsed.ok) return errorResponse(parsed.status, parsed.code, parsed.message)
 
-  return createChatResponse(parsed.data, parsed.locale, apiKey, request.signal)
+  return createChatResponse(parsed.data, apiKey, request.signal)
 }

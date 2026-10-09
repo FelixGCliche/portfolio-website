@@ -105,7 +105,7 @@ export const localeFromRequest = (request: Pick<ChatRequest, 'forwardedProps'>):
 }
 
 export type ChatRequestResult =
-  | { ok: true; data: ChatRequest; locale: Locale }
+  | { ok: true; data: ChatRequest }
   | { ok: false; status: 400; code: ChatRequestErrorCode; message: string }
 
 // Schemas are built once per tool list; the route always passes the same list.
@@ -152,5 +152,5 @@ export const parseChatRequest = (
     }
   }
 
-  return { ok: true, data: result.data, locale: localeFromRequest(result.data) }
+  return { ok: true, data: result.data }
 }

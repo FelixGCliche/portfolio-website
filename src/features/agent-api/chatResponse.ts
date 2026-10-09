@@ -9,13 +9,10 @@ import {
 import { createOpenRouterText } from '@tanstack/ai-openrouter'
 
 import { agentTools } from '@features/agent'
-// Deep import: the i18n barrel re-exports JSX providers that bun test cannot load and the server
-// route does not need.
-import type { Locale } from '@features/i18n/locales'
 
-import type { ChatRequest } from './chatRequest'
+import { type ChatRequest, localeFromRequest } from './chatRequest'
 import { errorResponse, INVALID_REQUEST_MESSAGE } from './errors'
-import { buildSystemPrompt } from './systemPrompt'
+import { systemPromptFor } from './systemPrompt'
 
 /** Primary model: free tier, supports tool calling, solid in English and French. */
 export const AGENT_MODEL = 'google/gemma-4-31b-it:free'
@@ -68,7 +65,6 @@ const withCleanErrors = async function* (stream: AsyncIterable<StreamChunk>, sig
 /** Runs the agent loop for a validated request and streams it back as Server-Sent Events. */
 export const createChatResponse = async (
   input: ChatRequest,
-  locale: Locale,
   apiKey: string,
   signal?: AbortSignal
 ): Promise<Response> => {
@@ -89,7 +85,7 @@ export const createChatResponse = async (
     const stream = chat({
       adapter: createOpenRouterText(AGENT_MODEL, apiKey),
       messages: params.messages,
-      systemPrompts: [buildSystemPrompt(locale)],
+      systemPrompts: [systemPromptFor(localeFromRequest(input))],
       tools: agentTools,
       agentLoopStrategy: maxIterations(MAX_AGENT_ITERATIONS),
       modelOptions: {
