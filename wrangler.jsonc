@@ -16,4 +16,13 @@
       "simple": { "limit": 10, "period": 60 },
     },
   ],
+  "previews": {
+    "ratelimits": [
+      {
+        "name": "CHAT_RATE_LIMITER",
+        "namespace_id": "2001",
+        "simple": { "limit": 10, "period": 60 },
+      },
+    ],
+  },
 }
