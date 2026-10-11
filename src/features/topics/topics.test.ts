@@ -1,13 +1,11 @@
 import { describe, expect, test } from 'bun:test'
 
-import { normalizeInput, resolveInput } from './topics'
+import { resolveInput } from './topics'
 
 const COMMANDS = ['/about', '/theme', '/clear']
 
-const find = (input: string) => {
-  const key = normalizeInput(input)
-  return COMMANDS.find((command) => command === key)
-}
+// Exact key lookup: resolveInput is responsible for normalizing what it passes in
+const find = (key: string) => COMMANDS.find((command) => command === key)
 
 describe('resolveInput', () => {
   test.each(['', '   ', '\n\t'])('treats blank input %p as empty', (text) => {
@@ -22,17 +20,16 @@ describe('resolveInput', () => {
     })
   })
 
-  test('resolves a bare or mixed-case command name', () => {
-    expect(resolveInput('About', find)).toEqual({
-      kind: 'command',
-      command: '/about',
-      raw: 'About',
-    })
+  test('resolves a mixed-case slash command', () => {
     expect(resolveInput('/THEME', find)).toEqual({
       kind: 'command',
       command: '/theme',
       raw: '/THEME',
     })
+  })
+
+  test.each(['clear', 'About', 'theme'])('sends the bare command word %p to the agent', (text) => {
+    expect(resolveInput(text, find)).toEqual({ kind: 'ask', raw: text })
   })
 
   test('flags an unknown slash command', () => {
@@ -48,12 +45,16 @@ describe('resolveInput', () => {
     expect(resolveInput('hello', find)).toEqual({ kind: 'ask', raw: 'hello' })
   })
 
-  test('never consults the finder for blank input', () => {
-    let calls = 0
-    resolveInput('  ', (input) => {
-      calls++
-      return find(input)
-    })
-    expect(calls).toBe(0)
+  test('passes the finder only normalized slash keys', () => {
+    const seen: string[] = []
+    const spy = (key: string) => {
+      seen.push(key)
+      return find(key)
+    }
+    resolveInput('  ', spy)
+    resolveInput('clear', spy)
+    resolveInput('what is this?', spy)
+    resolveInput('  /About ', spy)
+    expect(seen).toEqual(['/about'])
   })
 })

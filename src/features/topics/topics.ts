@@ -36,17 +36,18 @@ export type ResolvedInput<C> =
   | { kind: 'unknown'; raw: string }
   | { kind: 'ask'; raw: string }
 
-// Known commands win (bare names like 'about' included); other '/'-prefixed input is an unknown command;
-// any remaining free text goes to the agent
+// Only '/'-prefixed input is a command: the finder receives its normalized key (e.g. '/about') and
+// never bare words, so a question like 'clear' or 'about' always goes to the agent
 export const resolveInput = <C>(
   text: string,
-  find: (input: string) => C | undefined
+  find: (key: string) => C | undefined
 ): ResolvedInput<C> => {
   const raw = text.trim()
   if (!raw) return { kind: 'empty' }
-  const command = find(raw)
-  if (command !== undefined) return { kind: 'command', command, raw }
-  return raw.startsWith('/') ? { kind: 'unknown', raw } : { kind: 'ask', raw }
+  if (!raw.startsWith('/')) return { kind: 'ask', raw }
+  const key = normalizeInput(raw)
+  const command = key === undefined ? undefined : find(key)
+  return command === undefined ? { kind: 'unknown', raw } : { kind: 'command', command, raw }
 }
 
 export const keyToParam = (key: TopicKey): string => key.slice(1)

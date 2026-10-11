@@ -1,5 +1,5 @@
 import { formatForDisplay } from '@tanstack/hotkeys'
-import { createMemo, createSignal, For, Show } from 'solid-js'
+import { createMemo, createSignal, For, onSettled, Show } from 'solid-js'
 
 import { useAgent } from '@features/agent'
 import { useConversation } from '@features/conversation'
@@ -38,9 +38,14 @@ export const Composer = () => {
   // The unknown command that failed, rendered through t() so the message follows the locale
   const [error, setError] = createSignal('', { name: 'promptError' })
   const errorMessage = () => (error() ? t('composer.commandNotFound', { command: error() }) : '')
-  // True from a question until a command runs or the composer is cleared: gates the retry offer
+  // True from a question until a command runs, the composer is cleared or the thread is cleared:
+  // gates the retry offer
   const [asked, setAsked] = createSignal(false, { name: 'promptAsked' })
   const canRetry = () => asked() && agent.hasError() && !agent.isLoading()
+  // A question submitted while a reply streams: kept in the input, with a hint until the reply ends
+  const [blocked, setBlocked] = createSignal(false, { name: 'promptBlocked' })
+  const isBlocked = () => blocked() && agent.isLoading()
+  const statusMessage = () => errorMessage() || (isBlocked() ? t('composer.busy') : '')
   const [focused, setFocused] = createSignal(false, { name: 'promptFocused' })
   const [dismissed, setDismissed] = createSignal(false, { name: 'suggestionsDismissed' })
   const [active, setActive] = createSignal(0, { name: 'suggestionActive' })
@@ -89,23 +94,30 @@ export const Composer = () => {
     setDismissed(true)
   }
 
+  // The thread can be cleared from outside the composer (palette, hotkey): drop the stale retry offer
+  onSettled(() => conversation.onClear(() => setAsked(false)))
+
   const settle = (raw: string) => {
     history.push(raw)
     setValue('')
     setNavigated(false)
     setError('')
+    setBlocked(false)
   }
 
   const handleSubmit = (input: string) => {
-    // The input is read-only while a reply streams; Enter must not queue another question
-    if (agent.isLoading()) return
-    const resolved = resolveInput(input, (raw) => findCommand(raw, commands()))
+    const resolved = resolveInput(input, (key) => findCommand(key, commands()))
     if (resolved.kind === 'empty') return
     if (resolved.kind === 'unknown') {
       setError(resolved.raw)
       return
     }
     if (resolved.kind === 'ask') {
+      // Commands still run mid-stream, but a question waits for the reply: keep the text and say why
+      if (agent.isLoading()) {
+        setBlocked(true)
+        return
+      }
       agent.ask(resolved.raw)
       setAsked(true)
       settle(resolved.raw)
@@ -227,6 +239,7 @@ export const Composer = () => {
       event.preventDefault()
       setValue('')
       setError('')
+      setBlocked(false)
       setAsked(false)
     },
     hotkeyOptions
@@ -267,7 +280,6 @@ export const Composer = () => {
             name="command"
             type="text"
             placeholder={t('composer.placeholderAsk')}
-            readonly={agent.isLoading()}
             aria-busy={agent.isLoading() ? 'true' : undefined}
             autocomplete="off"
             spellcheck={false}
@@ -283,6 +295,7 @@ export const Composer = () => {
             onInput={(event) => {
               setValue(event.currentTarget.value)
               setError('')
+              setBlocked(false)
               setActive(0)
               setNavigated(false)
               setDismissed(false)
@@ -293,31 +306,31 @@ export const Composer = () => {
           />
           <BlockCaret input={input()} />
         </div>
-        <Show
-          when={agent.isLoading()}
-          fallback={
-            <button type="submit" aria-label={t('composer.send')} class={BUTTON_CLASS}>
-              <span aria-hidden="true">↵</span>
-            </button>
-          }
+        {/* One element for send and stop, so focus survives the reply ending on its own */}
+        <button
+          type={agent.isLoading() ? 'button' : 'submit'}
+          aria-label={agent.isLoading() ? t('composer.stop') : t('composer.send')}
+          class={BUTTON_CLASS}
+          onClick={(event) => {
+            if (!agent.isLoading()) return
+            // Stopping flips the type back to submit: never let this click submit the form
+            event.preventDefault()
+            stop()
+          }}
         >
-          <button type="button" aria-label={t('composer.stop')} class={BUTTON_CLASS} onClick={stop}>
-            <span aria-hidden="true">■</span>
-          </button>
-        </Show>
+          <span aria-hidden="true">{agent.isLoading() ? '■' : '↵'}</span>
+        </button>
       </div>
-      <p
-        id="promptError"
-        role="status"
-        aria-live="polite"
-        class={[
-          'text-destructive m-0 flex items-center gap-3 text-xs break-all',
-          { 'pt-2': !!error() || canRetry() },
-        ]}
-      >
-        {errorMessage()}
-        <Show when={!error() && canRetry()}>
-          <span>{t('composer.askFailed')}</span>
+      <div class={['flex items-center gap-3 text-xs', { 'pt-2': !!statusMessage() || canRetry() }]}>
+        <p
+          id="promptError"
+          role="status"
+          aria-live="polite"
+          class="text-destructive m-0 min-w-0 break-all"
+        >
+          {statusMessage() || (canRetry() ? t('composer.askFailed') : '')}
+        </p>
+        <Show when={!statusMessage() && canRetry()}>
           <button
             type="button"
             onClick={retry}
@@ -326,7 +339,7 @@ export const Composer = () => {
             {t('composer.retry')}
           </button>
         </Show>
-      </p>
+      </div>
       <ul class="text-muted-foreground m-0 hidden list-none flex-wrap gap-x-5 gap-y-1 p-0 pt-2.5 text-[11px] md:flex">
         <li class="whitespace-nowrap">
           <kbd class="text-foreground">{paletteLabel}</kbd> {t('keyhints.palette')}
