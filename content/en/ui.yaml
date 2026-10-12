@@ -81,6 +81,9 @@ palette.keywords.email: 'mail contact write'
 
 thread.label: 'Conversation'
 
+agent.thinking: 'thinking…'
+agent.error: 'The assistant is unavailable right now. Please try again in a moment.'
+
 hero.chipsLabel: 'Quick actions'
 
 chips.about: 'who I am'
