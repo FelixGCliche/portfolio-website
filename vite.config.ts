@@ -1,6 +1,7 @@
+import { cloudflare } from '@cloudflare/vite-plugin'
 import solid from '@solidjs/vite-plugin'
 import tailwindcss from '@tailwindcss/vite'
-import { tanstackRouter } from '@tanstack/router-plugin/vite'
+import { tanstackStart } from '@tanstack/solid-start/plugin/vite'
 import { build as buildContent } from 'velite'
 import { defineConfig } from 'vite'
 
@@ -19,9 +20,10 @@ export default defineConfig(async ({ command, isPreview }) => {
 
   return {
     plugins: [
+      cloudflare({ viteEnvironment: { name: 'ssr' } }),
       tailwindcss(),
-      tanstackRouter({ target: 'solid', autoCodeSplitting: true }),
-      solid({ start: true, diagnostics: true }), // add `ssr: true` for streaming SSR
+      tanstackStart(), // must come before solid(); code-splits routes by default
+      solid({ ssr: true, diagnostics: true }),
     ],
     resolve: {
       tsconfigPaths: true,

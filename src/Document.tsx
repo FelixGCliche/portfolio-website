@@ -1,4 +1,4 @@
-import { HydrationScript } from '@solidjs/web'
+import { HeadContent, Scripts } from '@tanstack/solid-router'
 import type { ParentProps } from 'solid-js'
 
 import { DEFAULT_LOCALE, stringsFor, translate } from '@features/i18n'
@@ -22,9 +22,12 @@ const Document = (props: ParentProps) => (
       <title>{translate(DEFAULT_STRINGS, 'document.title')}</title>
       {/* oxlint-disable-next-line solid/no-innerhtml -- static constant, no user input */}
       <script innerHTML={THEME_INIT_SCRIPT} />
-      <HydrationScript />
+      <HeadContent />
     </head>
-    <body>{props.children}</body>
+    <body>
+      {props.children}
+      <Scripts />
+    </body>
   </html>
 )
 

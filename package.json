@@ -8,7 +8,7 @@
     "start": "vite",
     "dev": "vite",
     "build": "velite build && vite build",
-    "serve": "wrangler pages dev dist",
+    "serve": "wrangler dev",
     "preview": "vite preview",
     "check": "velite build && tsc --noEmit && oxlint && oxfmt",
     "check:type": "velite build && tsc --noEmit",
@@ -18,17 +18,18 @@
     "fix:format": "oxfmt"
   },
   "dependencies": {
-    "@solidjs/web": "^2.0.0-rc.4",
+    "@solidjs/web": "2.0.0-rc.8",
     "@tanstack/hotkeys": "0.9.0",
-    "@tanstack/solid-router": "2.0.0-rc.4",
-    "solid-js": "^2.0.0-rc.4",
+    "@tanstack/solid-router": "2.0.0-rc.8",
+    "@tanstack/solid-start": "2.0.0-rc.8",
+    "solid-js": "2.0.0-rc.8",
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@solidjs/diagnostics": "^2.0.0-rc.4",
+    "@cloudflare/vite-plugin": "1.63.0",
+    "@solidjs/diagnostics": "2.0.0-rc.8",
     "@solidjs/vite-plugin": "^3.0.0-next.35",
     "@tailwindcss/vite": "^4.3.3",
-    "@tanstack/router-plugin": "^1.168.40",
     "@types/bun": "^1.4.2",
     "eslint-plugin-solid": "~0.17.0",
     "oxfmt": "^0.66.0",
@@ -36,6 +37,10 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.2",
     "velite": "^0.4.0",
-    "vite": "^8.1.5"
+    "vite": "^8.1.5",
+    "wrangler": "4.148.0"
+  },
+  "overrides": {
+    "@solidjs/signals": "2.0.0-rc.8"
   }
 }
