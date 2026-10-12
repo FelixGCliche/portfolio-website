@@ -1,12 +1,16 @@
 import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY, LOCALES, stringsFor, translate } from '@features/i18n'
+import type { Theme } from '@features/themes'
 
 export const THEME_STORAGE_KEY = 'theme'
 export const THEME_COLOR_META_ID = 'theme-color'
 
-export const DEFAULT_THEME = 'dark'
+export const DEFAULT_THEME: Theme = 'dark'
 
 // Nord0 (dark background) and Nord4 (light background, matches theme.css light --background)
-export const THEME_COLORS = { dark: '#2E3440', light: '#D8DEE9' } as const
+export const THEME_COLORS = { dark: '#2E3440', light: '#D8DEE9' } as const satisfies Record<
+  Theme,
+  string
+>
 
 // Per-locale document titles, applied by THEME_INIT_SCRIPT so the tab title matches `lang` from the start
 const LOCALE_TITLES = Object.fromEntries(

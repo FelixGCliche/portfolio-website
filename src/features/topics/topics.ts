@@ -1,5 +1,5 @@
-import { TOPIC_KEYS } from './topic-keys'
-import type { TopicKey } from './topic-keys'
+import { TOPIC_KEYS } from '@features/topic-keys'
+import type { TopicKey } from '@features/topic-keys'
 
 // Topic identity (TOPIC_KEYS) is static: route guards and other non-reactive callers need it synchronously.
 // The human text (meta, desc) is locale-dependent and read through useTopics()/useTopic().

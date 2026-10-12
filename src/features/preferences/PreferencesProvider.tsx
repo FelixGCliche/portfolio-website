@@ -4,11 +4,10 @@ import type { Accessor, ParentProps } from 'solid-js'
 
 import { storeLocale, useI18n } from '@features/i18n'
 import type { Locale } from '@features/i18n'
+import { isTheme, type Theme } from '@features/themes'
 import { paramToKey, topicRoute } from '@features/topics'
 
 import { DEFAULT_THEME, THEME_COLOR_META_ID, THEME_COLORS, THEME_STORAGE_KEY } from './constants'
-
-export type Theme = 'dark' | 'light'
 
 export type PreferencesContextValue = {
   theme: Accessor<Theme>
@@ -20,8 +19,6 @@ export type PreferencesContextValue = {
 export const PreferencesContext = createContext<PreferencesContextValue>()
 
 export const usePreferences = () => useContext(PreferencesContext)
-
-const isTheme = (value: unknown): value is Theme => value === 'dark' || value === 'light'
 
 const persist = (key: string, value: string) => {
   try {

@@ -1,7 +1,7 @@
 import { ui } from '@content'
 import type { UiKey } from '@content/ui-keys'
 
-import { DEFAULT_LOCALE, type Locale } from './locales'
+import { DEFAULT_LOCALE, type Locale } from '@features/locales'
 
 export type { UiKey }
 
