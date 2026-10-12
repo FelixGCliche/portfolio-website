@@ -21,8 +21,12 @@ const KEY_HINTS: { key: string; label: UiKey }[] = [
   { key: 'esc', label: 'keyhints.clear' },
 ]
 
-const BUTTON_CLASS =
-  'border-border text-foreground hover:text-primary hover:border-primary focus-visible:ring-ring size-11 flex-none border focus-visible:ring-2 focus-visible:outline-none md:h-6 md:w-7'
+const BUTTON_BASE_CLASS =
+  'border-border text-foreground hover:text-primary hover:border-primary focus-visible:ring-ring flex-none border focus-visible:ring-2 focus-visible:outline-none'
+
+const SEND_BUTTON_CLASS = `${BUTTON_BASE_CLASS} size-11 md:h-6 md:w-7`
+
+const RETRY_BUTTON_CLASS = `${BUTTON_BASE_CLASS} min-h-11 px-2 md:min-h-6`
 
 export const Composer = () => {
   // Client-only app: the platform is known at render time
@@ -41,11 +45,21 @@ export const Composer = () => {
   // True from a question until a command runs, the composer is cleared or the thread is cleared:
   // gates the retry offer
   const [asked, setAsked] = createSignal(false, { name: 'promptAsked' })
-  const canRetry = () => asked() && agent.hasError() && !agent.isLoading()
+  const loading = () => agent.isLoading()
+  const canRetry = () => asked() && agent.hasError() && !loading()
   // A question submitted while a reply streams: kept in the input, with a hint until the reply ends
   const [blocked, setBlocked] = createSignal(false, { name: 'promptBlocked' })
-  const isBlocked = () => blocked() && agent.isLoading()
-  const statusMessage = () => errorMessage() || (isBlocked() ? t('composer.busy') : '')
+  const isBlocked = () => blocked() && loading()
+  const clearStatus = () => {
+    setError('')
+    setBlocked(false)
+  }
+  // One line, by precedence: command error, busy hint, then the failed-question retry offer
+  const status = () =>
+    errorMessage() ||
+    (isBlocked() ? t('composer.busy') : '') ||
+    (canRetry() ? t('composer.askFailed') : '')
+  const showRetry = () => canRetry() && !errorMessage() && !isBlocked()
   const [focused, setFocused] = createSignal(false, { name: 'promptFocused' })
   const [dismissed, setDismissed] = createSignal(false, { name: 'suggestionsDismissed' })
   const [active, setActive] = createSignal(0, { name: 'suggestionActive' })
@@ -101,8 +115,7 @@ export const Composer = () => {
     history.push(raw)
     setValue('')
     setNavigated(false)
-    setError('')
-    setBlocked(false)
+    clearStatus()
   }
 
   const handleSubmit = (input: string) => {
@@ -114,7 +127,7 @@ export const Composer = () => {
     }
     if (resolved.kind === 'ask') {
       // Commands still run mid-stream, but a question waits for the reply: keep the text and say why
-      if (agent.isLoading()) {
+      if (loading()) {
         setBlocked(true)
         return
       }
@@ -146,16 +159,6 @@ export const Composer = () => {
     }
 
     settle(raw)
-  }
-
-  const stop = () => {
-    agent.stop()
-    focus()
-  }
-
-  const retry = () => {
-    agent.retry()
-    focus()
   }
 
   const hotkeyOptions = { target: input, preventDefault: false, ignoreInputs: false }
@@ -224,7 +227,7 @@ export const Composer = () => {
   useHotkey(
     'Escape',
     (event) => {
-      if (agent.isLoading()) {
+      if (loading()) {
         event.preventDefault()
         agent.stop()
         return
@@ -238,8 +241,7 @@ export const Composer = () => {
       if (!value() && !error() && !canRetry()) return
       event.preventDefault()
       setValue('')
-      setError('')
-      setBlocked(false)
+      clearStatus()
       setAsked(false)
     },
     hotkeyOptions
@@ -280,7 +282,7 @@ export const Composer = () => {
             name="command"
             type="text"
             placeholder={t('composer.placeholderAsk')}
-            aria-busy={agent.isLoading() ? 'true' : undefined}
+            aria-busy={loading() ? 'true' : undefined}
             autocomplete="off"
             spellcheck={false}
             autocapitalize="off"
@@ -294,8 +296,7 @@ export const Composer = () => {
             aria-activedescendant={activeOptionId()}
             onInput={(event) => {
               setValue(event.currentTarget.value)
-              setError('')
-              setBlocked(false)
+              clearStatus()
               setActive(0)
               setNavigated(false)
               setDismissed(false)
@@ -308,33 +309,37 @@ export const Composer = () => {
         </div>
         {/* One element for send and stop, so focus survives the reply ending on its own */}
         <button
-          type={agent.isLoading() ? 'button' : 'submit'}
-          aria-label={agent.isLoading() ? t('composer.stop') : t('composer.send')}
-          class={BUTTON_CLASS}
+          type={loading() ? 'button' : 'submit'}
+          aria-label={loading() ? t('composer.stop') : t('composer.send')}
+          class={SEND_BUTTON_CLASS}
           onClick={(event) => {
-            if (!agent.isLoading()) return
+            if (!loading()) return
             // Stopping flips the type back to submit: never let this click submit the form
             event.preventDefault()
-            stop()
+            agent.stop()
+            focus()
           }}
         >
-          <span aria-hidden="true">{agent.isLoading() ? '■' : '↵'}</span>
+          <span aria-hidden="true">{loading() ? '■' : '↵'}</span>
         </button>
       </div>
-      <div class={['flex items-center gap-3 text-xs', { 'pt-2': !!statusMessage() || canRetry() }]}>
+      <div class={['flex items-center gap-3 text-xs', { 'pt-2': !!status() }]}>
         <p
           id="promptError"
           role="status"
           aria-live="polite"
           class="text-destructive m-0 min-w-0 break-all"
         >
-          {statusMessage() || (canRetry() ? t('composer.askFailed') : '')}
+          {status()}
         </p>
-        <Show when={!statusMessage() && canRetry()}>
+        <Show when={showRetry()}>
           <button
             type="button"
-            onClick={retry}
-            class="border-border text-foreground hover:text-primary hover:border-primary focus-visible:ring-ring min-h-11 flex-none border px-2 focus-visible:ring-2 focus-visible:outline-none md:min-h-6"
+            onClick={() => {
+              agent.retry()
+              focus()
+            }}
+            class={RETRY_BUTTON_CLASS}
           >
             {t('composer.retry')}
           </button>

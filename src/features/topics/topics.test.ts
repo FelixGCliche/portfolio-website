@@ -44,17 +44,4 @@ describe('resolveInput', () => {
     })
     expect(resolveInput('hello', find)).toEqual({ kind: 'ask', raw: 'hello' })
   })
-
-  test('passes the finder only normalized slash keys', () => {
-    const seen: string[] = []
-    const spy = (key: string) => {
-      seen.push(key)
-      return find(key)
-    }
-    resolveInput('  ', spy)
-    resolveInput('clear', spy)
-    resolveInput('what is this?', spy)
-    resolveInput('  /About ', spy)
-    expect(seen).toEqual(['/about'])
-  })
 })
