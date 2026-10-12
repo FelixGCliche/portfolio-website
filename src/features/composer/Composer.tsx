@@ -1,10 +1,12 @@
 import { formatForDisplay } from '@tanstack/hotkeys'
-import { createMemo, createSignal, For, Show } from 'solid-js'
+import { createMemo, createSignal, For, onSettled, Show } from 'solid-js'
 
+import { useAgent } from '@features/agent'
 import { useConversation } from '@features/conversation'
 import { useI18n } from '@features/i18n'
 import type { UiKey } from '@features/i18n'
 import { usePreferences } from '@features/preferences'
+import { resolveInput } from '@features/topics'
 import { useHotkey } from '@hooks'
 
 import { BlockCaret } from './BlockCaret'
@@ -19,11 +21,19 @@ const KEY_HINTS: { key: string; label: UiKey }[] = [
   { key: 'esc', label: 'keyhints.clear' },
 ]
 
+const BUTTON_BASE_CLASS =
+  'border-border text-foreground hover:text-primary hover:border-primary focus-visible:ring-ring flex-none border focus-visible:ring-2 focus-visible:outline-none'
+
+const SEND_BUTTON_CLASS = `${BUTTON_BASE_CLASS} size-11 md:h-6 md:w-7`
+
+const RETRY_BUTTON_CLASS = `${BUTTON_BASE_CLASS} min-h-11 px-2 md:min-h-6`
+
 export const Composer = () => {
   // Client-only app: the platform is known at render time
   const paletteLabel = formatForDisplay('Mod+K')
 
   const conversation = useConversation()
+  const agent = useAgent()
   const preferences = usePreferences()
   const { t } = useI18n()
   const commands = useComposerCommands()
@@ -32,6 +42,24 @@ export const Composer = () => {
   // The unknown command that failed, rendered through t() so the message follows the locale
   const [error, setError] = createSignal('', { name: 'promptError' })
   const errorMessage = () => (error() ? t('composer.commandNotFound', { command: error() }) : '')
+  // True from a question until a command runs, the composer is cleared or the thread is cleared:
+  // gates the retry offer
+  const [asked, setAsked] = createSignal(false, { name: 'promptAsked' })
+  const loading = () => agent.isLoading()
+  const canRetry = () => asked() && agent.hasError() && !loading()
+  // A question submitted while a reply streams: kept in the input, with a hint until the reply ends
+  const [blocked, setBlocked] = createSignal(false, { name: 'promptBlocked' })
+  const isBlocked = () => blocked() && loading()
+  const clearStatus = () => {
+    setError('')
+    setBlocked(false)
+  }
+  // One line, by precedence: command error, busy hint, then the failed-question retry offer
+  const status = () =>
+    errorMessage() ||
+    (isBlocked() ? t('composer.busy') : '') ||
+    (canRetry() ? t('composer.askFailed') : '')
+  const showRetry = () => canRetry() && !errorMessage() && !isBlocked()
   const [focused, setFocused] = createSignal(false, { name: 'promptFocused' })
   const [dismissed, setDismissed] = createSignal(false, { name: 'suggestionsDismissed' })
   const [active, setActive] = createSignal(0, { name: 'suggestionActive' })
@@ -80,15 +108,37 @@ export const Composer = () => {
     setDismissed(true)
   }
 
+  // The thread can be cleared from outside the composer (palette, hotkey): drop the stale retry offer
+  onSettled(() => conversation.onClear(() => setAsked(false)))
+
+  const settle = (raw: string) => {
+    history.push(raw)
+    setValue('')
+    setNavigated(false)
+    clearStatus()
+  }
+
   const handleSubmit = (input: string) => {
-    const raw = input.trim()
-    if (!raw) return
-    const command = findCommand(raw, commands())
-    if (!command) {
-      setError(raw)
+    const resolved = resolveInput(input, (key) => findCommand(key, commands()))
+    if (resolved.kind === 'empty') return
+    if (resolved.kind === 'unknown') {
+      setError(resolved.raw)
+      return
+    }
+    if (resolved.kind === 'ask') {
+      // Commands still run mid-stream, but a question waits for the reply: keep the text and say why
+      if (loading()) {
+        setBlocked(true)
+        return
+      }
+      agent.ask(resolved.raw)
+      setAsked(true)
+      settle(resolved.raw)
       return
     }
 
+    const { command, raw } = resolved
+    setAsked(false)
     switch (command.kind) {
       case 'topic':
         conversation.run(command.key)
@@ -108,10 +158,7 @@ export const Composer = () => {
       }
     }
 
-    history.push(raw)
-    setValue('')
-    setNavigated(false)
-    setError('')
+    settle(raw)
   }
 
   const hotkeyOptions = { target: input, preventDefault: false, ignoreInputs: false }
@@ -180,16 +227,22 @@ export const Composer = () => {
   useHotkey(
     'Escape',
     (event) => {
+      if (loading()) {
+        event.preventDefault()
+        agent.stop()
+        return
+      }
       if (open()) {
         event.preventDefault()
         setDismissed(true)
         return
       }
       history.reset()
-      if (!value() && !error()) return
+      if (!value() && !error() && !canRetry()) return
       event.preventDefault()
       setValue('')
-      setError('')
+      clearStatus()
+      setAsked(false)
     },
     hotkeyOptions
   )
@@ -228,7 +281,8 @@ export const Composer = () => {
             id="promptInput"
             name="command"
             type="text"
-            placeholder={t('composer.placeholder')}
+            placeholder={t('composer.placeholderAsk')}
+            aria-busy={loading() ? 'true' : undefined}
             autocomplete="off"
             spellcheck={false}
             autocapitalize="off"
@@ -242,7 +296,7 @@ export const Composer = () => {
             aria-activedescendant={activeOptionId()}
             onInput={(event) => {
               setValue(event.currentTarget.value)
-              setError('')
+              clearStatus()
               setActive(0)
               setNavigated(false)
               setDismissed(false)
@@ -253,22 +307,44 @@ export const Composer = () => {
           />
           <BlockCaret input={input()} />
         </div>
+        {/* One element for send and stop, so focus survives the reply ending on its own */}
         <button
-          type="submit"
-          aria-label={t('composer.send')}
-          class="border-border text-foreground hover:text-primary hover:border-primary focus-visible:ring-ring size-11 flex-none border focus-visible:ring-2 focus-visible:outline-none md:h-6 md:w-7"
+          type={loading() ? 'button' : 'submit'}
+          aria-label={loading() ? t('composer.stop') : t('composer.send')}
+          class={SEND_BUTTON_CLASS}
+          onClick={(event) => {
+            if (!loading()) return
+            // Stopping flips the type back to submit: never let this click submit the form
+            event.preventDefault()
+            agent.stop()
+            focus()
+          }}
         >
-          <span aria-hidden="true">↵</span>
+          <span aria-hidden="true">{loading() ? '■' : '↵'}</span>
         </button>
       </div>
-      <p
-        id="promptError"
-        role="status"
-        aria-live="polite"
-        class={['text-destructive m-0 text-xs break-all', { 'pt-2': !!error() }]}
-      >
-        {errorMessage()}
-      </p>
+      <div class={['flex items-center gap-3 text-xs', { 'pt-2': !!status() }]}>
+        <p
+          id="promptError"
+          role="status"
+          aria-live="polite"
+          class="text-destructive m-0 min-w-0 break-all"
+        >
+          {status()}
+        </p>
+        <Show when={showRetry()}>
+          <button
+            type="button"
+            onClick={() => {
+              agent.retry()
+              focus()
+            }}
+            class={RETRY_BUTTON_CLASS}
+          >
+            {t('composer.retry')}
+          </button>
+        </Show>
+      </div>
       <ul class="text-muted-foreground m-0 hidden list-none flex-wrap gap-x-5 gap-y-1 p-0 pt-2.5 text-[11px] md:flex">
         <li class="whitespace-nowrap">
           <kbd class="text-foreground">{paletteLabel}</kbd> {t('keyhints.palette')}
