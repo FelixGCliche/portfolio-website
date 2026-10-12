@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import {
   type ChatRequestErrorCode,
+  localeFromRequest,
   MAX_HISTORY_MESSAGE_CHARS,
   MAX_MESSAGES,
   MAX_USER_MESSAGE_CHARS,
@@ -142,5 +143,21 @@ describe('parseChatRequest', () => {
 
   test('rejects missing thread or run ids', () => {
     expectError(body({ threadId: '' }), 'invalid_request')
+  })
+})
+
+describe('localeFromRequest', () => {
+  const localeOf = (forwardedProps: unknown) => {
+    const result = parseChatRequest(body({ forwardedProps }))
+    return result.ok ? localeFromRequest(result.data) : undefined
+  }
+
+  test('reads a supported locale from forwardedProps', () => {
+    expect(localeOf({ locale: 'fr' })).toBe('fr')
+  })
+
+  test('defaults to en when the locale is missing or unsupported', () => {
+    expect(localeOf(undefined)).toBe('en')
+    expect(localeOf({ locale: 'de' })).toBe('en')
   })
 })

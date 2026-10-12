@@ -10,8 +10,9 @@ import { createOpenRouterText } from '@tanstack/ai-openrouter'
 
 import { agentTools } from '@features/agent'
 
-import type { ChatRequest } from './chatRequest'
+import { type ChatRequest, localeFromRequest } from './chatRequest'
 import { errorResponse, INVALID_REQUEST_MESSAGE } from './errors'
+import { systemPromptFor } from './systemPrompt'
 
 /** Primary model: free tier, supports tool calling, solid in English and French. */
 export const AGENT_MODEL = 'google/gemma-4-31b-it:free'
@@ -24,10 +25,6 @@ export const AGENT_FALLBACK_MODELS = [
 export const MAX_AGENT_ITERATIONS = 5
 /** Most tokens the model may generate per turn. */
 export const MAX_COMPLETION_TOKENS = 1024
-
-const SYSTEM_PROMPT =
-  "You are the assistant on Felix Gagné-Cliche's portfolio website. Answer questions about Felix " +
-  'briefly and politely. If you do not know something, say so instead of guessing.'
 
 const UNAVAILABLE_MESSAGE = 'The assistant is unavailable right now. Please try again later.'
 
@@ -88,7 +85,7 @@ export const createChatResponse = async (
     const stream = chat({
       adapter: createOpenRouterText(AGENT_MODEL, apiKey),
       messages: params.messages,
-      systemPrompts: [SYSTEM_PROMPT],
+      systemPrompts: [systemPromptFor(localeFromRequest(input))],
       tools: agentTools,
       agentLoopStrategy: maxIterations(MAX_AGENT_ITERATIONS),
       modelOptions: {
