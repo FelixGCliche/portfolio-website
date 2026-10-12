@@ -52,3 +52,37 @@ Runs typecheck, lint, and format check — the same checks enforced by the preco
 - `bun run fix:lint` / `fix:format` — auto-fix lint or format issues
 
 This project was created with the [Solid CLI](https://github.com/solidjs-community/solid-cli)
+
+## Agent
+
+The site includes a chat agent that answers questions about the portfolio. The UI posts the conversation to `POST /api/chat`, a TanStack Start server route running on Cloudflare Workers (`src/routes/api/chat.ts`). The route hands the request to `handleChatRequest` (`src/features/agent-api/`), which checks the origin, rate limit and size, validates the conversation, then streams a reply from [OpenRouter](https://openrouter.ai) through `@tanstack/ai`. The agent is grounded in the portfolio content and has UI tools for changing topic, theme, and language, defined in `src/features/agent-tools/` and run in the browser.
+
+- Primary model: `google/gemma-4-31b-it:free`
+- Fallbacks, tried in order by OpenRouter: `nvidia/nemotron-3-super-120b-a12b:free`, `google/gemma-4-26b-a4b-it:free`
+- Limits per request: 5 model turns (tool round-trips included), 1024 completion tokens per turn, 64 KiB body, 40 messages, 2000 characters per user message
+
+### Local setup
+
+1. Copy `.dev.vars.example` to `.dev.vars` (git-ignored)
+2. Set `OPENROUTER_API_KEY` in `.dev.vars` (create a key at [openrouter.ai/keys](https://openrouter.ai/keys))
+3. Run `bun run dev`
+
+Without a key, `/api/chat` returns a `missing_api_key` error.
+
+### Deploy
+
+1. Store the key as a Worker secret: `bunx wrangler secret put OPENROUTER_API_KEY`
+2. Build: `bun run build`
+3. Deploy: `bunx wrangler deploy`
+
+The Worker is named `portfolio-website` (see `wrangler.jsonc`).
+
+### Tests
+
+- `bun test` runs the unit tests
+- `bun run check` runs typecheck, lint, and format check
+
+### Known limitations
+
+- Free OpenRouter models are rate limited; busy periods can cause slow or failed replies even with fallbacks
+- Tool calling quality varies between models, so UI tools may occasionally be skipped or misused
