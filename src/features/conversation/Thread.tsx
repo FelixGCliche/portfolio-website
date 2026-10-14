@@ -1,7 +1,11 @@
 import { Dynamic } from '@solidjs/web'
+import { useRouter } from '@tanstack/solid-router'
 import { createEffect, For, Match, onSettled, Show, Switch } from 'solid-js'
 
 import { useI18n } from '@features/i18n'
+import { BlockActionsProvider, PromptLine } from '@features/response-blocks'
+import { isTopicKey, topicRoute } from '@features/topics'
+import type { TopicKey } from '@features/topics'
 
 import { useConversation } from './ConversationProvider'
 import type { AgentMessage, AgentTextMessage, AgentTopicMessage, UserMessage } from './messages'
@@ -21,13 +25,13 @@ const STATUS_WEIGHT: Record<AgentTextMessage['status'], number> = {
 
 const distanceFromBottom = (el: HTMLElement) => el.scrollHeight - el.scrollTop - el.clientHeight
 
+// Only topic commands type themselves out; free text appears at once
 const UserRow = (props: { message: UserMessage }) => (
-  <div class={`${ROW_CLASS} gap-3 font-medium`}>
-    <span class="text-success flex-none" aria-hidden="true">
-      ›
-    </span>
-    <p class="min-w-0 break-words">{props.message.text}</p>
-  </div>
+  <PromptLine
+    class={ROW_CLASS}
+    text={props.message.text}
+    animate={isTopicKey(props.message.text)}
+  />
 )
 
 const AGENT_ROW_CLASS = `${ROW_CLASS} flex-col gap-4 pt-3 pl-[26px]`
@@ -86,8 +90,11 @@ const AgentRow = (props: { message: AgentMessage }) => (
 )
 
 export const Thread = () => {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const conversation = useConversation()
+  const router = useRouter()
+  const runTopic = (key: TopicKey) => conversation.run(key)
+  const topicHref = (key: TopicKey) => router.buildLocation(topicRoute(locale(), key)).href
   let threadEl: HTMLDivElement | undefined
   let pinned = true
 
@@ -147,11 +154,13 @@ export const Thread = () => {
         { 'py-6': conversation.hasMessages() },
       ]}
     >
-      <For each={conversation.state.messages}>
-        {(message) =>
-          message.role === 'user' ? <UserRow message={message} /> : <AgentRow message={message} />
-        }
-      </For>
+      <BlockActionsProvider runTopic={runTopic} topicHref={topicHref}>
+        <For each={conversation.state.messages}>
+          {(message) =>
+            message.role === 'user' ? <UserRow message={message} /> : <AgentRow message={message} />
+          }
+        </For>
+      </BlockActionsProvider>
     </div>
   )
 }

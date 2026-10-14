@@ -84,6 +84,11 @@ palette.keywords.email: 'mail contact write'
 
 thread.label: 'Conversation'
 
+blocks.next: 'Next:'
+blocks.copy: 'Copy'
+blocks.copied: 'Copied'
+blocks.opensNewTab: '(opens in a new tab)'
+
 agent.thinking: 'thinking…'
 agent.error: 'The assistant is unavailable right now. Please try again in a moment.'
 
