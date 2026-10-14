@@ -1,10 +1,10 @@
 import { Dynamic } from '@solidjs/web'
 import { useRouter } from '@tanstack/solid-router'
-import { createEffect, For, Match, onSettled, Show, Switch } from 'solid-js'
+import { createEffect, For, Match, onSettled, Show, Switch, untrack } from 'solid-js'
 
 import { useI18n } from '@features/i18n'
 import { BlockActionsProvider, PromptLine } from '@features/response-blocks'
-import { isTopicKey, topicRoute } from '@features/topics'
+import { topicRoute } from '@features/topics'
 import type { TopicKey } from '@features/topics'
 
 import { useConversation } from './ConversationProvider'
@@ -25,13 +25,8 @@ const STATUS_WEIGHT: Record<AgentTextMessage['status'], number> = {
 
 const distanceFromBottom = (el: HTMLElement) => el.scrollHeight - el.scrollTop - el.clientHeight
 
-// Only topic commands type themselves out; free text appears at once
 const UserRow = (props: { message: UserMessage }) => (
-  <PromptLine
-    class={ROW_CLASS}
-    text={props.message.text}
-    animate={isTopicKey(props.message.text)}
-  />
+  <PromptLine class={ROW_CLASS} text={props.message.text} />
 )
 
 const AGENT_ROW_CLASS = `${ROW_CLASS} flex-col gap-4 pt-3 pl-[26px]`
@@ -93,8 +88,24 @@ export const Thread = () => {
   const { t, locale } = useI18n()
   const conversation = useConversation()
   const router = useRouter()
-  const runTopic = (key: TopicKey) => conversation.run(key)
-  const topicHref = (key: TopicKey) => router.buildLocation(topicRoute(locale(), key)).href
+  // Re-running the topic the thread already ends on would only duplicate its reply
+  const runTopic = (key: TopicKey) => {
+    const last = untrack(() => conversation.state.messages.at(-1))
+    if (last?.role === 'agent' && last.kind === 'topic' && last.topic === key) return
+    conversation.run(key)
+  }
+  // Hrefs cached per locale and topic; reading locale() keeps callers reactive to language changes
+  const hrefs = new Map<string, string>()
+  const topicHref = (key: TopicKey) => {
+    const lang = locale()
+    const id = `${lang}:${key}`
+    let href = hrefs.get(id)
+    if (href === undefined) {
+      href = router.buildLocation(topicRoute(lang, key)).href
+      hrefs.set(id, href)
+    }
+    return href
+  }
   let threadEl: HTMLDivElement | undefined
   let pinned = true
 

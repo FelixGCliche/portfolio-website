@@ -87,6 +87,7 @@ thread.label: 'Conversation'
 blocks.next: 'Ensuite :'
 blocks.copy: 'Copier'
 blocks.copied: 'Copié'
+blocks.copyFailed: 'Échec de la copie'
 blocks.opensNewTab: '(s’ouvre dans un nouvel onglet)'
 
 agent.thinking: 'réflexion…'

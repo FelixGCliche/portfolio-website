@@ -87,6 +87,7 @@ thread.label: 'Conversation'
 blocks.next: 'Next:'
 blocks.copy: 'Copy'
 blocks.copied: 'Copied'
+blocks.copyFailed: 'Copy failed'
 blocks.opensNewTab: '(opens in a new tab)'
 
 agent.thinking: 'thinking…'

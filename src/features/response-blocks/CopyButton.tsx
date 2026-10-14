@@ -47,41 +47,66 @@ export type CopyButtonProps = {
 
 export const CopyButton = (props: CopyButtonProps) => {
   const { t } = useI18n()
-  const [copied, setCopied] = createSignal(false, { name: 'copyButtonCopied' })
+  const [status, setStatus] = createSignal<'idle' | 'copied' | 'failed'>('idle', {
+    name: 'copyButtonStatus',
+  })
   let resetTimer: ReturnType<typeof setTimeout> | undefined
+  let disposed = false
 
-  onCleanup(() => clearTimeout(resetTimer))
+  onCleanup(() => {
+    disposed = true
+    clearTimeout(resetTimer)
+  })
+
+  const report = (next: 'copied' | 'failed') => {
+    if (disposed) return
+    setStatus(next)
+    clearTimeout(resetTimer)
+    resetTimer = setTimeout(() => {
+      if (!disposed) setStatus('idle')
+    }, COPIED_MS)
+  }
 
   const copy = async () => {
     const clipboard = typeof navigator === 'undefined' ? undefined : navigator.clipboard
-    if (!clipboard) return
-    const text = typeof props.value === 'function' ? props.value() : props.value
-    try {
-      await clipboard.writeText(text)
-    } catch {
+    if (!clipboard) {
+      report('failed')
       return
     }
-    setCopied(true)
-    clearTimeout(resetTimer)
-    resetTimer = setTimeout(() => setCopied(false), COPIED_MS)
+    try {
+      const text = typeof props.value === 'function' ? props.value() : props.value
+      await clipboard.writeText(text)
+    } catch {
+      report('failed')
+      return
+    }
+    report('copied')
   }
 
+  const message = () =>
+    status() === 'copied' ? t('blocks.copied') : status() === 'failed' ? t('blocks.copyFailed') : ''
+
   return (
-    <Button
-      variant="outline"
-      size={props.label ? 'sm' : 'icon'}
-      aria-label={props.label ? undefined : (props.ariaLabel ?? t('blocks.copy'))}
-      onClick={() => void copy()}
-    >
-      <Show when={copied()} fallback={<CopyIcon />}>
-        <CheckIcon />
-      </Show>
-      <Show when={props.label}>
-        <span>{copied() ? t('blocks.copied') : props.label}</span>
-      </Show>
-      <span class="sr-only" aria-live="polite">
-        {copied() ? t('blocks.copied') : ''}
+    <span class="inline-flex">
+      <Button
+        variant="outline"
+        size={props.label ? 'sm' : 'icon'}
+        aria-label={props.label ? undefined : (props.ariaLabel ?? t('blocks.copy'))}
+        onClick={() => void copy()}
+      >
+        <Show when={status() === 'copied'} fallback={<CopyIcon />}>
+          <CheckIcon />
+        </Show>
+        <Show when={props.label}>
+          <span aria-hidden={status() === 'idle' ? undefined : 'true'}>
+            {message() || props.label}
+          </span>
+        </Show>
+      </Button>
+      {/* Stable live region outside the button so the status is announced exactly once */}
+      <span class="sr-only" role="status" aria-live="polite">
+        {message()}
       </span>
-    </Button>
+    </span>
   )
 }

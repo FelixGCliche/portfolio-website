@@ -9,19 +9,15 @@ export type TimelineItemProps = ParentProps<{
   range: string
   // A role still held: only it gets the accent dot
   current?: boolean
-  // The final entry: no connector and no bottom spacing
-  last?: boolean
 }>
 
 export const TimelineItem = (props: TimelineItemProps) => (
-  <li class="grid grid-cols-[14px_minmax(0,1fr)] gap-x-3.5">
+  <li class="group grid grid-cols-[14px_minmax(0,1fr)] gap-x-3.5">
     <div class="flex flex-col items-center" aria-hidden="true">
       <span class={['mt-2 size-[9px] flex-none', props.current ? 'bg-primary' : 'bg-border']} />
-      <Show when={!props.last}>
-        <span class="bg-border mt-1 min-h-3 w-px flex-1" />
-      </Show>
+      <span class="bg-border mt-1 min-h-3 w-px flex-1 group-last:hidden" />
     </div>
-    <div class={['flex min-w-0 flex-col gap-2', { 'pb-[30px]': !props.last }]}>
+    <div class="flex min-w-0 flex-col gap-2 pb-[30px] group-last:pb-0">
       <div class="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
         <span class="text-foreground text-[15px] font-bold">{props.title}</span>
         <Show when={props.company}>
