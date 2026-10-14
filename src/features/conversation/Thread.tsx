@@ -4,13 +4,20 @@ import { createEffect, For, Match, onSettled, Show, Switch, untrack } from 'soli
 
 import { useI18n } from '@features/i18n'
 import { Markdown } from '@features/markdown'
+import { Blocks } from '@features/reply-blocks'
 import { BlockActionsProvider, PromptLine } from '@features/response-blocks'
 import { responses } from '@features/topic-responses'
 import { topicRoute } from '@features/topics'
 import type { TopicKey } from '@features/topics'
 
 import { useConversation } from './ConversationProvider'
-import type { AgentMessage, AgentTextMessage, AgentTopicMessage, UserMessage } from './messages'
+import type {
+  AgentMessage,
+  AgentTextMessage,
+  AgentTopicMessage,
+  ReplyPart,
+  UserMessage,
+} from './messages'
 
 const SCROLLER_SELECTOR = '[data-scroller]'
 const PIN_THRESHOLD = 80
@@ -23,6 +30,15 @@ const STATUS_WEIGHT: Record<AgentTextMessage['status'], number> = {
   done: 2,
   error: 3,
 }
+
+// Rough rendered size of a reply part, so streamed text and blocks both register as growth.
+const partSize = (part: ReplyPart) =>
+  part.kind === 'text'
+    ? part.text.length
+    : JSON.stringify(part.blocks).length + Number(part.complete)
+
+const partOf = <K extends ReplyPart['kind']>(part: ReplyPart, kind: K) =>
+  part.kind === kind ? (part as Extract<ReplyPart, { kind: K }>) : undefined
 
 const distanceFromBottom = (el: HTMLElement) => el.scrollHeight - el.scrollTop - el.clientHeight
 
@@ -53,7 +69,16 @@ const TextRow = (props: { message: AgentTextMessage }) => {
         }
       >
         <For each={props.message.parts} keyed={false}>
-          {(part) => <Markdown text={part()} />}
+          {(part) => (
+            <Switch>
+              <Match when={partOf(part(), 'text')}>
+                {(text) => <Markdown text={text().text} />}
+              </Match>
+              <Match when={partOf(part(), 'blocks')}>
+                {(blocks) => <Blocks blocks={blocks().blocks} />}
+              </Match>
+            </Switch>
+          )}
         </For>
         <Switch>
           <Match when={props.message.status === 'pending'}>
@@ -131,7 +156,7 @@ export const Thread = () => {
       let size = 0
       for (const message of messages) {
         if (message.role !== 'agent' || message.kind !== 'text') continue
-        size += message.parts.reduce((total, part) => total + part.length, 0)
+        size += message.parts.reduce((total, part) => total + partSize(part), 0)
         size += STATUS_WEIGHT[message.status]
       }
       return { count: messages.length, fromUser, size }

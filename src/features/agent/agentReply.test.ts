@@ -2,6 +2,9 @@ import { describe, expect, test } from 'bun:test'
 
 import type { UIMessage } from '@tanstack/ai-client'
 
+import type { Block } from '@features/block-schema'
+import type { ReplyPart } from '@features/conversation'
+
 import { mapTurnReply, replyParts, turnMessages } from './agentReply'
 
 const user = (id: string, content: string): UIMessage => ({
@@ -31,6 +34,36 @@ const toolCall: UIMessage = {
 }
 
 const idle = { isLoading: false, hasError: false }
+const loading = { isLoading: true, hasError: false }
+
+const text = (value: string): ReplyPart => ({ kind: 'text', text: value })
+const blocksPart = (id: string, blocks: Block[], complete = true): ReplyPart => ({
+  kind: 'blocks',
+  id,
+  blocks,
+  complete,
+})
+
+const heading: Block = { type: 'heading', label: 'Experience' }
+const tags: Block = { type: 'tags', items: ['TypeScript', 'Rust'] }
+
+type CallState = 'awaiting-input' | 'input-streaming' | 'input-complete' | 'complete'
+
+const blocksCall = (id: string, args: string, state: CallState = 'input-complete') => ({
+  type: 'tool-call' as const,
+  id,
+  name: 'render_blocks',
+  arguments: args,
+  state,
+})
+
+const message = (id: string, parts: UIMessage['parts']): UIMessage => ({
+  id,
+  role: 'assistant',
+  parts,
+})
+
+const fullArgs = JSON.stringify({ blocks: [heading, tags] })
 
 describe('turnMessages', () => {
   test('returns the messages between the user message and the next one', () => {
@@ -46,9 +79,9 @@ describe('turnMessages', () => {
 })
 
 describe('replyParts', () => {
-  test('keeps non-blank assistant text parts and drops tool calls', () => {
+  test('keeps non-blank assistant text parts and drops other tool calls', () => {
     const messages = [assistant('a1', ' Sure ', '  '), toolCall, assistant('a2', 'Here it is.')]
-    expect(replyParts(messages)).toEqual(['Sure', 'Here it is.'])
+    expect(replyParts(messages)).toEqual([text('Sure'), text('Here it is.')])
   })
 
   test('ignores user and thinking content', () => {
@@ -58,6 +91,57 @@ describe('replyParts', () => {
       parts: [{ type: 'thinking', content: 'secret plan' }],
     }
     expect(replyParts([user('u1', 'hi'), thinking])).toEqual([])
+  })
+
+  test('interleaves text and blocks in order', () => {
+    const messages = [
+      message('a1', [
+        { type: 'text', content: 'Here you go:' },
+        blocksCall('call-1', fullArgs),
+        {
+          type: 'tool-result',
+          toolCallId: 'call-1',
+          content: '{"status":"rendered","count":2}',
+          state: 'complete',
+        },
+        { type: 'text', content: 'Anything else?' },
+      ]),
+    ]
+    expect(replyParts(messages)).toEqual([
+      text('Here you go:'),
+      blocksPart('call-1', [heading, tags]),
+      text('Anything else?'),
+    ])
+  })
+
+  test('reads parsed input when the call carries it', () => {
+    const messages = [message('a1', [{ ...blocksCall('call-1', ''), input: { blocks: [tags] } }])]
+    expect(replyParts(messages)).toEqual([blocksPart('call-1', [tags])])
+  })
+
+  test('shows only finished blocks while the arguments stream in', () => {
+    const partial = `{"blocks":[${JSON.stringify(heading)},{"type":"tags","items":["Type`
+    expect(replyParts([message('a1', [blocksCall('call-1', partial, 'input-streaming')])])).toEqual(
+      [blocksPart('call-1', [heading], false)]
+    )
+  })
+
+  test('drops invalid blocks and omits calls without any valid block', () => {
+    const args = JSON.stringify({ blocks: [{ type: 'nope' }, tags] })
+    expect(replyParts([message('a1', [blocksCall('call-1', args)])])).toEqual([
+      blocksPart('call-1', [tags]),
+    ])
+    const streaming = `{"blocks":[{"type":"head`
+    expect(
+      replyParts([
+        message('a1', [
+          blocksCall('call-1', '', 'awaiting-input'),
+          blocksCall('call-2', streaming, 'input-streaming'),
+          blocksCall('call-3', '{"blocks":[]}'),
+          blocksCall('call-4', 'not json'),
+        ]),
+      ])
+    ).toEqual([])
   })
 })
 
@@ -77,14 +161,14 @@ describe('mapTurnReply', () => {
   test('is streaming while loading with text', () => {
     const messages = [user('u1', 'hi'), assistant('a1', 'Hel')]
     expect(mapTurnReply(messages, 'u1', { isLoading: true, hasError: false })).toEqual({
-      parts: ['Hel'],
+      parts: [text('Hel')],
       status: 'streaming',
     })
   })
 
   test('is done once the stream settles, even for tool-only replies', () => {
     expect(mapTurnReply([user('u1', 'hi'), assistant('a1', 'Hello!')], 'u1', idle)).toEqual({
-      parts: ['Hello!'],
+      parts: [text('Hello!')],
       status: 'done',
     })
     expect(mapTurnReply([user('u1', 'show work'), toolCall], 'u1', idle)).toEqual({
@@ -96,7 +180,7 @@ describe('mapTurnReply', () => {
   test('is an error when the stream failed, keeping any partial text', () => {
     const messages = [user('u1', 'hi'), assistant('a1', 'Partial')]
     expect(mapTurnReply(messages, 'u1', { isLoading: false, hasError: true })).toEqual({
-      parts: ['Partial'],
+      parts: [text('Partial')],
       status: 'error',
     })
   })
@@ -108,7 +192,31 @@ describe('mapTurnReply', () => {
       user('u2', 'second'),
       assistant('a2', 'Two'),
     ]
-    expect(mapTurnReply(messages, 'u1', idle).parts).toEqual(['One'])
-    expect(mapTurnReply(messages, 'u2', idle).parts).toEqual(['Two'])
+    expect(mapTurnReply(messages, 'u1', idle).parts).toEqual([text('One')])
+    expect(mapTurnReply(messages, 'u2', idle).parts).toEqual([text('Two')])
+  })
+
+  test('follows a blocks-only reply from pending to done', () => {
+    const turn = (parts: UIMessage['parts']) => [user('u1', 'career'), message('a1', parts)]
+    const partial = `{"blocks":[${JSON.stringify(heading)},{"type":"ta`
+    const done = blocksPart('call-1', [heading, tags])
+
+    expect(mapTurnReply(turn([blocksCall('call-1', '', 'awaiting-input')]), 'u1', loading)).toEqual(
+      { parts: [], status: 'pending' }
+    )
+    expect(
+      mapTurnReply(turn([blocksCall('call-1', partial, 'input-streaming')]), 'u1', loading)
+    ).toEqual({
+      parts: [blocksPart('call-1', [heading], false)],
+      status: 'streaming',
+    })
+    expect(mapTurnReply(turn([blocksCall('call-1', fullArgs)]), 'u1', loading)).toEqual({
+      parts: [done],
+      status: 'streaming',
+    })
+    expect(mapTurnReply(turn([blocksCall('call-1', fullArgs, 'complete')]), 'u1', idle)).toEqual({
+      parts: [done],
+      status: 'done',
+    })
   })
 })

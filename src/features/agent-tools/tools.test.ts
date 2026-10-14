@@ -5,7 +5,16 @@ import { type Theme, THEMES } from '@features/themes'
 import { TOPIC_KEYS } from '@features/topic-keys'
 
 import { createClientTools } from './clientTools'
-import { agentTools, setLanguageTool, setThemeTool, showTopicTool } from './tools'
+import {
+  agentTools,
+  renderBlocksServerTool,
+  renderBlocksTool,
+  setLanguageTool,
+  setThemeTool,
+  showTopicTool,
+} from './tools'
+
+const uiTools = [showTopicTool, setThemeTool, setLanguageTool]
 
 type SetupOptions = { theme?: Theme; locale?: Locale; requestId?: string }
 
@@ -32,9 +41,38 @@ const callUntyped = (tool: { execute?: (args: never) => unknown }, args: unknown
   tool.execute?.(args as never)
 
 describe('agentTools', () => {
-  test('exposes definitions only, so the client runs them', () => {
-    expect(agentTools.map((tool) => tool.name)).toEqual(['show_topic', 'set_theme', 'set_language'])
-    for (const tool of agentTools) expect(tool.execute).toBeUndefined()
+  test('lists the UI tools and render_blocks', () => {
+    expect(agentTools.map((tool) => tool.name)).toEqual([
+      'show_topic',
+      'set_theme',
+      'set_language',
+      'render_blocks',
+    ])
+  })
+
+  test('exposes the UI tools as definitions only, so the client runs them', () => {
+    for (const tool of uiTools) {
+      expect(agentTools).toContain(tool)
+      expect(tool.execute).toBeUndefined()
+    }
+  })
+
+  test('runs render_blocks on the server as a no-op', async () => {
+    expect(agentTools).toContain(renderBlocksServerTool)
+    expect(renderBlocksServerTool.__toolSide).toBe('server')
+    const blocks = [
+      { type: 'heading' as const, label: 'Experience' },
+      { type: 'tags' as const, items: ['TypeScript'] },
+    ]
+    expect(await renderBlocksServerTool.execute?.({ blocks })).toEqual({
+      status: 'rendered',
+      count: 2,
+    })
+  })
+
+  test('render_blocks describes when to use each block type', () => {
+    for (const word of ['table', 'keyValue', 'timeline', 'toolRows', 'links', 'next', 'phone'])
+      expect(renderBlocksTool.description).toContain(word)
   })
 
   test('describe their allowed values from the shared constants', () => {
@@ -73,8 +111,13 @@ describe('createClientTools', () => {
   test('builds client tools for every definition', () => {
     const { showTopic, setTheme, setLanguage } = setup()
     expect([showTopic, setTheme, setLanguage].map((tool) => [tool.name, tool.__toolSide])).toEqual(
-      agentTools.map((tool) => [tool.name, 'client'])
+      uiTools.map((tool) => [tool.name, 'client'])
     )
+  })
+
+  test('leaves render_blocks to the server', () => {
+    const { actions } = setup()
+    expect(createClientTools(actions).map((tool) => tool.name)).not.toContain('render_blocks')
   })
 
   test('show_topic runs the topic', async () => {
