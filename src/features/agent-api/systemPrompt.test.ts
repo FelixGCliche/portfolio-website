@@ -68,6 +68,12 @@ describe('buildSystemPrompt', () => {
     expect(prompt).toContain('- render_blocks: ')
   })
 
+  test('limits render_blocks to a single call per reply', () => {
+    const prompt = buildSystemPrompt('en')
+    expect(prompt).toContain('Call it exactly once per reply')
+    expect(prompt).toContain('Call this tool at most once per reply')
+  })
+
   test('memoizes the prompt per locale', () => {
     for (const locale of LOCALES) expect(systemPromptFor(locale)).toBe(buildSystemPrompt(locale))
   })
