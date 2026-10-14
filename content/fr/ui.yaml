@@ -106,40 +106,43 @@ replies.langSwitchedFr: "On passe en français. Les prochaines réponses suivent
 replies.fallback: "Là, je n'ai rien de bon à dire. Ce portfolio est scripté : il connaît une poignée de commandes, pas plus."
 replies.fallbackCommand: 'Je ne fais pas de vraie conversation — mais ça, je peux répondre. Voici {command} :'
 
-contact.intro: 'Le plus simple : un courriel. Je réponds dans la journée, et volontiers à une question technique précise.'
-contact.copyEmail: 'copier le courriel'
-contact.copied: 'copié ✓'
-contact.writeEmail: 'écrire un courriel'
-contact.seeResume: 'voir le CV'
-contact.label.email: 'courriel'
-contact.label.phone: 'téléphone'
-contact.label.where: 'où'
-contact.label.status: 'statut'
+about.header: 'about.md'
+about.meta: 'whoami'
+about.name: 'nom'
+about.role: 'rôle'
+about.location: 'lieu'
+about.status: 'statut'
+about.next: 'Disponible pour travailler à {location}. Ensuite :'
 
-work.intro: 'Quatre postes, deux mondes : le web et le jeu. Voici la version courte, puis les détails.'
-work.timeline: 'parcours'
-work.header.when: 'PÉRIODE'
-work.header.where: 'ENDROIT'
-work.header.role: 'RÔLE'
+contact.header: 'contact'
+contact.title: 'Tu as quelque chose qui doit tenir en production ?'
+contact.intro: 'Je suis disponible pour travailler à Québec et à distance. Dis-moi ce que tu construis, ce qui bloque, et pour quand il te le faut.'
+contact.to: 'à'
+contact.subjectLabel: 'objet'
+contact.subject: 'Construisons quelque chose'
+contact.copyEmail: "Copier l'adresse courriel"
+contact.emailMe: 'Écris-moi'
+contact.elsewhere: 'ailleurs'
+
+work.header: 'git log --career'
+work.newestFirst: "plus récent d'abord"
+work.months: '{count} mois'
 work.present: 'présent'
-work.education: 'formation'
 
-skills.intro: "Rien ici que je n'ai pas utilisé pour livrer quelque chose. Les deux premières lignes, c'est là où je suis le plus rapide."
-skills.label: 'compétences'
-skills.header.area: 'DOMAINE'
-skills.header.tools: 'OUTILS'
-skills.note: "le côté design vient des études en jeu vidéo — pratique quand il n'y a pas de designer dans la pièce"
+skills.header: 'boîte à outils'
+skills.areas: '{count} domaines'
+skills.tools: '{count} outils'
+skills.tool: '{count} outil'
 
-resume.toolLabel: 'lecture de resume.pdf'
-resume.intro: 'Voici le CV en texte — la version téléchargeable dit la même chose.'
-resume.copyMarkdown: 'copier en markdown'
-resume.copied: 'CV copié en markdown.'
-resume.download: 'télécharger le PDF'
-resume.section.profile: 'Profil'
-resume.section.experience: 'Expérience'
-resume.section.education: 'Formation'
-resume.section.skills: 'Compétences'
+resume.download: 'Télécharger le CV (PDF)'
+resume.copyMarkdown: 'Copier en Markdown'
+resume.summary: 'résumé'
+resume.fullDetails: 'Tous les détails dans {command}'
+resume.byArea: 'par domaine'
+resume.section.profile: 'profil'
+resume.section.experience: 'expérience'
+resume.section.education: 'formation'
+resume.section.skills: 'compétences'
 resume.profileBlurb: "Développeur full-stack curieux et passionné, amoureux du développement web. À l'aise pour bâtir et déployer des applications multiplateformes ; il résout les nouveaux problèmes en apprenant de nouvelles technologies pour livrer un travail de qualité."
 
-placeholder.pending: 'Contenu provisoire — le contenu arrive dans une prochaine PR'
 notFound.body: "Aucun sujet n'habite à cette adresse."
