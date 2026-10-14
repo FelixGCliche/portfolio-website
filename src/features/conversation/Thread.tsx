@@ -4,12 +4,12 @@ import { createEffect, For, Match, onSettled, Show, Switch, untrack } from 'soli
 
 import { useI18n } from '@features/i18n'
 import { BlockActionsProvider, PromptLine } from '@features/response-blocks'
+import { responses } from '@features/topic-responses'
 import { topicRoute } from '@features/topics'
 import type { TopicKey } from '@features/topics'
 
 import { useConversation } from './ConversationProvider'
 import type { AgentMessage, AgentTextMessage, AgentTopicMessage, UserMessage } from './messages'
-import { responses } from './responses'
 
 const SCROLLER_SELECTOR = '[data-scroller]'
 const PIN_THRESHOLD = 80
