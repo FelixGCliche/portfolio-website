@@ -23,13 +23,12 @@ export const WorkResponse = () => {
       <PanelHeader label={t('work.header')} meta={t('work.newestFirst')} />
       <Timeline>
         <For each={roles()}>
-          {(role, index) => (
+          {(role) => (
             <TimelineItem
               title={role.title}
               company={role.company}
               range={formatRange(role.start, role.end, t('work.present'))}
               current={role.end === null}
-              last={index() === roles().length - 1}
             >
               <div class="flex items-center gap-2.5">
                 <Tag>{t('work.months', { count: monthsBetween(role.start, role.end) })}</Tag>
