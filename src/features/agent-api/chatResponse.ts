@@ -24,7 +24,7 @@ export const AGENT_FALLBACK_MODELS = [
 /** Most model turns (tool round-trips included) per request. */
 export const MAX_AGENT_ITERATIONS = 5
 /** Most tokens the model may generate per turn. */
-export const MAX_COMPLETION_TOKENS = 1024
+export const MAX_COMPLETION_TOKENS = 2048
 
 const UNAVAILABLE_MESSAGE = 'The assistant is unavailable right now. Please try again later.'
 

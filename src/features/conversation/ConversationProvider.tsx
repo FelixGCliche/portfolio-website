@@ -6,7 +6,7 @@ import { useI18n } from '@features/i18n'
 import { topicRoute } from '@features/topics'
 import type { TopicKey } from '@features/topics'
 
-import type { AgentReply, Message } from './messages'
+import { type AgentReply, blockEqual, type Message, replyPartEqual } from './messages'
 
 type ConversationState = {
   messages: Message[]
@@ -89,18 +89,34 @@ export const ConversationProvider = (props: ParentProps) => {
     return id
   }
 
+  // Streaming rewrites the reply on every chunk: only parts (and blocks) that changed are written,
+  // index by index, so rendered parts update in place instead of remounting and re-animating.
   const updateReply = (id: string, reply: AgentReply) => {
     setState((draft) => {
       const message = draft.messages.find((item) => item.id === id)
       if (message?.role !== 'agent' || message.kind !== 'text') return
-      // Streaming rewrites the reply on every chunk: skip writes that change nothing.
-      if (
-        message.status === reply.status &&
-        message.parts.length === reply.parts.length &&
-        message.parts.every((part, i) => part === reply.parts[i])
-      )
-        return
-      Object.assign(message, reply)
+      const parts = message.parts
+      reply.parts.forEach((next, i) => {
+        const current = parts[i]
+        if (current && replyPartEqual(current, next)) return
+        if (current?.kind === 'text' && next.kind === 'text') {
+          current.text = next.text
+          return
+        }
+        // The same render_blocks call growing: write only its changed blocks.
+        if (current?.kind === 'blocks' && next.kind === 'blocks' && current.id === next.id) {
+          next.blocks.forEach((block, j) => {
+            if (!current.blocks[j] || !blockEqual(current.blocks[j], block))
+              current.blocks[j] = block
+          })
+          if (current.blocks.length > next.blocks.length) current.blocks.splice(next.blocks.length)
+          if (current.complete !== next.complete) current.complete = next.complete
+          return
+        }
+        parts[i] = next
+      })
+      if (parts.length > reply.parts.length) parts.splice(reply.parts.length)
+      if (message.status !== reply.status) message.status = reply.status
     })
   }
 
