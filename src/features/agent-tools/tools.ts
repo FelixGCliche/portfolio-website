@@ -47,7 +47,7 @@ export const setLanguageTool = toolDefinition({
 export const renderBlocksTool = toolDefinition({
   name: 'render_blocks',
   description: [
-    `Show up to ${MAX_BLOCKS} rich UI blocks inline in your reply, in order. Use it for structured answers instead of long markdown:`,
+    `Show up to ${MAX_BLOCKS} rich UI blocks inline in your reply, in order. Call this tool at most once per reply and put all the blocks you need in that one call; never call it again, and never send test or placeholder blocks. Use it for structured answers instead of long markdown:`,
     'a table to compare things (e.g. two roles side by side);',
     'keyValue for quick facts (location, status, years of experience);',
     'timeline for roles or education over time;',
