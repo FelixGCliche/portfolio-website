@@ -12,6 +12,14 @@ export const MAX_USER_MESSAGE_CHARS = 2000
 export const MAX_HISTORY_MESSAGE_CHARS = 8000
 /** Longest accepted JSON arguments string for a single tool call, in characters. */
 export const MAX_TOOL_ARGUMENTS_CHARS = 2000
+/** Per-tool overrides of {@link MAX_TOOL_ARGUMENTS_CHARS} for tools with larger arguments. */
+export const TOOL_ARGUMENTS_CHARS_BY_TOOL: Readonly<Record<string, number>> = {
+  render_blocks: 6000,
+}
+
+/** Longest accepted JSON arguments string for a call to the tool named `name`, in characters. */
+export const maxToolArgumentsChars = (name: string): number =>
+  TOOL_ARGUMENTS_CHARS_BY_TOOL[name] ?? MAX_TOOL_ARGUMENTS_CHARS
 
 const idSchema = z.string().min(1).max(128)
 
@@ -50,11 +58,20 @@ export const createChatRequestSchema = (toolNames: readonly string[] = []) => {
         z.object({
           id: idSchema,
           type: z.literal('function'),
-          function: z.object({
-            // With no tools registered, no tool call can be genuine.
-            name: z.string().refine((name) => toolNames.includes(name)),
-            arguments: z.string().max(MAX_TOOL_ARGUMENTS_CHARS),
-          }),
+          function: z
+            .object({
+              // With no tools registered, no tool call can be genuine.
+              name: z.string().refine((name) => toolNames.includes(name)),
+              // Bounded by the largest per-tool limit here, then by the call's own tool below.
+              arguments: z
+                .string()
+                .max(
+                  Math.max(MAX_TOOL_ARGUMENTS_CHARS, ...Object.values(TOOL_ARGUMENTS_CHARS_BY_TOOL))
+                ),
+            })
+            .refine((call) => call.arguments.length <= maxToolArgumentsChars(call.name), {
+              message: 'Tool call arguments are too long.',
+            }),
         })
       )
       .max(8)

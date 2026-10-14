@@ -5,7 +5,9 @@ import {
   localeFromRequest,
   MAX_HISTORY_MESSAGE_CHARS,
   MAX_MESSAGES,
+  MAX_TOOL_ARGUMENTS_CHARS,
   MAX_USER_MESSAGE_CHARS,
+  maxToolArgumentsChars,
   parseChatRequest,
 } from './chatRequest'
 
@@ -84,6 +86,40 @@ describe('parseChatRequest', () => {
       { id: 't1', role: 'tool', toolCallId: 'c1', content: '{"theme":"dark"}' },
     ]
     expect(parseChatRequest(body({ messages }), ['set_theme']).ok).toBe(true)
+  })
+
+  describe('tool call arguments', () => {
+    const call = (name: string, length: number) => ({
+      id: 'c1',
+      type: 'function',
+      // A JSON string literal of `length` characters in total.
+      function: { name, arguments: JSON.stringify('a'.repeat(length - 2)) },
+    })
+    const accepts = (name: string, length: number) =>
+      parseChatRequest(
+        body({
+          messages: [
+            userMessage('hi'),
+            { id: 'a1', role: 'assistant', toolCalls: [call(name, length)] },
+            { id: 't1', role: 'tool', toolCallId: 'c1', content: '{}' },
+          ],
+        }),
+        ['render_blocks', 'set_theme']
+      ).ok
+
+    test('allows render_blocks a larger limit', () => {
+      expect(maxToolArgumentsChars('render_blocks')).toBe(6000)
+      expect(accepts('render_blocks', 5000)).toBe(true)
+      expect(accepts('render_blocks', 6000)).toBe(true)
+      expect(accepts('render_blocks', 7000)).toBe(false)
+    })
+
+    test('caps other tools at MAX_TOOL_ARGUMENTS_CHARS', () => {
+      expect(maxToolArgumentsChars('set_theme')).toBe(MAX_TOOL_ARGUMENTS_CHARS)
+      expect(accepts('set_theme', MAX_TOOL_ARGUMENTS_CHARS)).toBe(true)
+      expect(accepts('set_theme', MAX_TOOL_ARGUMENTS_CHARS + 1)).toBe(false)
+      expect(accepts('set_theme', 5000)).toBe(false)
+    })
   })
 
   test('rejects tool calls to unknown tools', () => {
