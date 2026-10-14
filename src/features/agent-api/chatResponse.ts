@@ -2,7 +2,6 @@ import {
   chat,
   chatParamsFromRequestBody,
   EventType,
-  maxIterations,
   type StreamChunk,
   toServerSentEventsResponse,
 } from '@tanstack/ai'
@@ -12,6 +11,7 @@ import { agentTools } from '@features/agent-tools'
 
 import { type ChatRequest, localeFromRequest } from './chatRequest'
 import { errorResponse, INVALID_REQUEST_MESSAGE } from './errors'
+import { createAgentLoopStrategy } from './loopStrategy'
 import { systemPromptFor } from './systemPrompt'
 
 /** Primary model: free tier, supports tool calling, solid in English and French. */
@@ -87,7 +87,7 @@ export const createChatResponse = async (
       messages: params.messages,
       systemPrompts: [systemPromptFor(localeFromRequest(input))],
       tools: agentTools,
-      agentLoopStrategy: maxIterations(MAX_AGENT_ITERATIONS),
+      agentLoopStrategy: createAgentLoopStrategy(MAX_AGENT_ITERATIONS),
       modelOptions: {
         models: [...AGENT_FALLBACK_MODELS],
         maxCompletionTokens: MAX_COMPLETION_TOKENS,
