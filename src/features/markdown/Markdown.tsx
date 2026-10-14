@@ -23,7 +23,7 @@ const Inlines = (props: { inlines: MdInline[] }) => (
 
 const Inline = (props: { node: MdInline }) => (
   <Switch>
-    <Match when={props.node.type === 'text' && props.node}>{(node) => node().text}</Match>
+    <Match when={props.node.type === 'text' && props.node}>{(node) => <>{node().text}</>}</Match>
     <Match when={props.node.type === 'strong' && props.node}>
       {(node) => (
         <strong class="text-foreground font-bold">
