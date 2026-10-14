@@ -3,6 +3,7 @@ import { useRouter } from '@tanstack/solid-router'
 import { createEffect, For, Match, onSettled, Show, Switch, untrack } from 'solid-js'
 
 import { useI18n } from '@features/i18n'
+import { Markdown } from '@features/markdown'
 import { BlockActionsProvider, PromptLine } from '@features/response-blocks'
 import { topicRoute } from '@features/topics'
 import type { TopicKey } from '@features/topics'
@@ -52,11 +53,7 @@ const TextRow = (props: { message: AgentTextMessage }) => {
         }
       >
         <For each={props.message.parts} keyed={false}>
-          {(part) => (
-            <p class="text-foreground max-w-[66ch] leading-[1.8] text-pretty whitespace-pre-wrap">
-              {part()}
-            </p>
-          )}
+          {(part) => <Markdown text={part()} />}
         </For>
         <Switch>
           <Match when={props.message.status === 'pending'}>
