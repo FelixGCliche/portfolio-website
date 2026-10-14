@@ -85,13 +85,12 @@ const ToolRowsBlock = (props: BlockProps<'toolRows'>) => (
 const TimelineBlock = (props: BlockProps<'timeline'>) => (
   <Timeline>
     <For each={props.block.items} keyed={false}>
-      {(item, index) => (
+      {(item) => (
         <TimelineItem
           title={item().title}
           company={item().company}
           range={item().range}
           current={item().current}
-          last={index === props.block.items.length - 1}
         >
           <Show when={item().bullets?.length}>
             <div class="text-secondary-foreground">
