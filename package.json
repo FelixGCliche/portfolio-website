@@ -26,7 +26,10 @@
     "@tanstack/hotkeys": "0.9.0",
     "@tanstack/solid-router": "2.0.0-rc.8",
     "@tanstack/solid-start": "2.0.0-rc.8",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "solid-js": "2.0.0-rc.8",
+    "tailwind-merge": "^3.7.0",
     "zod": "^4.5.4"
   },
   "devDependencies": {
