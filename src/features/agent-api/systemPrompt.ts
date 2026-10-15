@@ -21,6 +21,25 @@ export type PromptContent = {
   education: Education[]
 }
 
+// Markdown that could break the prompt's own `##` section structure or smuggle markup to the model
+const HTML_COMMENT = /<!--[\s\S]*?(?:-->|$)/g
+const HTML_TAG = /<\/?[a-z][^>]*>/gi
+const LINK = /!?\[([^\]]*)\]\([^)]*\)/g
+const HEADING = /^[ \t]*#{1,6}[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*$/gm
+
+/**
+ * Flattens content markdown (the About body) to plain prose for the prompt: heading markers, link
+ * targets and HTML are dropped, while paragraphs, lists and emphasis text are kept.
+ */
+export const toPromptText = (markdown: string): string =>
+  markdown
+    .replace(HTML_COMMENT, '')
+    .replace(HTML_TAG, '')
+    .replace(LINK, '$1')
+    .replace(HEADING, '$1')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+
 const section = (title: string, lines: string[]): string[] =>
   lines.length > 0 ? ['', `## ${title}`, ...lines] : []
 
@@ -81,8 +100,8 @@ export const buildSystemPrompt = (locale: Locale, source: PromptContent = conten
     '',
     '# Portfolio content',
     ...section('Profile', profileLines(profile)),
-    // The About body (raw markdown) is the only section line that can be empty.
-    ...section('About', [about.body.trim()].filter(Boolean)),
+    // The About body (markdown, flattened to prose) is the only section line that can be empty.
+    ...section('About', [toPromptText(about.body)].filter(Boolean)),
     ...section(
       'Work experience (most recent first)',
       pickSorted(source.roles, locale).flatMap(roleLines)
