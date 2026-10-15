@@ -47,7 +47,7 @@ const blocksPart = (id: string, blocks: Block[], complete = true): ReplyPart => 
 const heading: Block = { type: 'heading', label: 'Experience' }
 const tags: Block = { type: 'tags', items: ['TypeScript', 'Rust'] }
 
-type CallState = 'awaiting-input' | 'input-streaming' | 'input-complete' | 'complete'
+type CallState = 'awaiting-input' | 'input-streaming' | 'input-complete' | 'complete' | 'error'
 
 const blocksCall = (id: string, args: string, state: CallState = 'input-complete') => ({
   type: 'tool-call' as const,
@@ -142,6 +142,36 @@ describe('replyParts', () => {
         ]),
       ])
     ).toEqual([])
+  })
+
+  test('omits calls that errored or that the server rejected', () => {
+    expect(replyParts([message('a1', [blocksCall('call-1', fullArgs, 'error')])])).toEqual([])
+    const rejected = (result: UIMessage['parts'][number]) =>
+      replyParts([message('a1', [blocksCall('call-1', fullArgs, 'complete'), result])])
+    expect(
+      rejected({ type: 'tool-result', toolCallId: 'call-1', content: 'bad', state: 'error' })
+    ).toEqual([])
+    expect(
+      rejected({
+        type: 'tool-result',
+        toolCallId: 'call-1',
+        content: '{"error":"Too many blocks"}',
+        state: 'complete',
+      })
+    ).toEqual([])
+    expect(
+      rejected({ type: 'tool-result', toolCallId: 'other', content: 'bad', state: 'error' })
+    ).toEqual([blocksPart('call-1', [heading, tags])])
+  })
+
+  test('completes a call the stream ended in, dropping a cut-off last block', () => {
+    const partial = `{"blocks":[${JSON.stringify(heading)},{"type":"tags","items":["Type`
+    expect(
+      replyParts([message('a1', [blocksCall('call-1', partial, 'input-streaming')])], true)
+    ).toEqual([blocksPart('call-1', [heading])])
+    expect(
+      replyParts([message('a1', [blocksCall('call-1', fullArgs, 'input-streaming')])], true)
+    ).toEqual([blocksPart('call-1', [heading, tags])])
   })
 })
 
