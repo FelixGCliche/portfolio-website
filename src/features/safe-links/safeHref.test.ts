@@ -29,6 +29,7 @@ describe('isSafeHref', () => {
     'https://www.linkedin.com/in/someone',
     `mailto:${email}`,
     `mailto:${email.toUpperCase()}`,
+    `mailto:${encodeURIComponent(email)}`,
     `mailto:${email}?subject=Hello%20there`,
     `mailto:${email}?subject=Hi&body=Text`,
   ])('accepts %s', (href) => {
@@ -70,6 +71,7 @@ describe('isSafeHref', () => {
     `mailto:${email}?bcc=evil@else.com`,
     `mailto:${email}?subject=Hi&to=evil@else.com`,
     'mailto:',
+    'mailto:%zz',
     'https://',
   ])('rejects %p', (href) => {
     expect(isSafeHref(href)).toBe(false)

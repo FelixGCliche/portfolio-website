@@ -7,7 +7,7 @@ import { useConversation } from '@features/conversation'
 import { LOCALES, stringsFor, translate, useI18n } from '@features/i18n'
 import type { UiKey } from '@features/i18n'
 import { usePreferences } from '@features/preferences'
-import { EMAIL, GITHUB_URL } from '@features/profile'
+import { displayUrl, EMAIL, GITHUB_URL } from '@features/profile'
 import { keyToParam, useTopicEntries } from '@features/topics'
 
 export type CommandGroup = 'topics' | 'actions' | 'links'
@@ -67,7 +67,7 @@ const LINKS: LinkDef[] = [
   {
     id: 'github',
     label: { literal: 'GitHub' },
-    hint: GITHUB_URL.replace(/^https?:\/\//, ''),
+    hint: displayUrl(GITHUB_URL),
     href: GITHUB_URL,
     keywords: 'palette.keywords.github',
   },

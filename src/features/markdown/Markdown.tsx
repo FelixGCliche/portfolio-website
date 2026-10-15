@@ -11,6 +11,7 @@ import {
   parseMarkdown,
 } from '@features/markdown-ast'
 import { LINK_CLASS, NextLink, opensNewTab, Prose, ProseParagraph } from '@features/response-blocks'
+import type { ProseParagraphProps } from '@features/response-blocks'
 
 /** `node` narrowed to one of `types`, or undefined: a `Match` condition that narrows. */
 const ofType = <T extends { type: string }, K extends T['type']>(node: T, ...types: K[]) =>
@@ -122,6 +123,8 @@ const ListItemBody = (props: { item: MdListItem }) => (
 
 export type MarkdownProps = {
   text: string
+  // Tone of every paragraph (default 'body')
+  tone?: ProseParagraphProps['tone']
   // Renders the first paragraph in the lead tone
   leadFirst?: boolean
   class?: string
@@ -141,7 +144,9 @@ export const Markdown = (props: MarkdownProps) => {
           <Switch>
             <Match when={ofType(block(), 'paragraph')}>
               {(paragraph) => (
-                <ProseParagraph tone={props.leadFirst && index === 0 ? 'lead' : 'body'}>
+                <ProseParagraph
+                  tone={props.leadFirst && index === 0 ? 'lead' : (props.tone ?? 'body')}
+                >
                   <InlineRun inlines={paragraph().inlines} />
                 </ProseParagraph>
               )}

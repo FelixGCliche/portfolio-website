@@ -2,10 +2,8 @@ import { ArrowRight } from '@lucide/solid'
 
 import { ButtonLink, Card } from '@components'
 import { useI18n } from '@features/i18n'
-import { useProfile } from '@features/profile'
+import { displayUrl, useProfile } from '@features/profile'
 import { CopyButton, LinkCard, PanelHeader, SectionLabel } from '@features/response-blocks'
-
-import { displayUrl } from './displayUrl'
 
 // Email, GitHub and LinkedIn only: the phone number is deliberately left out
 export const ContactResponse = () => {

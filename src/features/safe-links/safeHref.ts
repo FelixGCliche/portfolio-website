@@ -48,11 +48,20 @@ const HTTPS = 'https://'
 export const isTopicHref = (href: string): href is TopicKey =>
   (TOPIC_KEYS as ReadonlyArray<string>).includes(href)
 
+const decodeAddress = (address: string): string | undefined => {
+  try {
+    return decodeURIComponent(address)
+  } catch {
+    return undefined
+  }
+}
+
 const isSafeMailto = (href: string): boolean => {
   const rest = href.slice(MAILTO.length)
   const queryStart = rest.indexOf('?')
   const address = queryStart === -1 ? rest : rest.slice(0, queryStart)
-  if (!PROFILE_EMAILS.has(address.toLowerCase())) return false
+  const decoded = decodeAddress(address)
+  if (decoded === undefined || !PROFILE_EMAILS.has(decoded.toLowerCase())) return false
   if (queryStart === -1) return true
   const params = new URLSearchParams(rest.slice(queryStart + 1))
   return [...params.keys()].every((key) => ALLOWED_MAILTO_PARAMS.has(key.toLowerCase()))

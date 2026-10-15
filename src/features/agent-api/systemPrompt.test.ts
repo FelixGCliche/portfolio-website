@@ -34,6 +34,7 @@ describe('buildSystemPrompt', () => {
     const prompt = buildSystemPrompt(locale)
     for (const entry of profile) expect(prompt).not.toContain(entry.phone)
     expect(prompt).toContain('Never disclose or guess any other personal contact details')
+    expect(prompt).toContain('such as a phone number or home address, including inside blocks.')
   })
 
   test('lists every education entry for the locale', () => {
@@ -48,6 +49,19 @@ describe('buildSystemPrompt', () => {
     expect(buildSystemPrompt('en')).toContain(
       'Light markdown is fine (bold, italic, inline code, lists and links)'
     )
+  })
+
+  test('asks for render_blocks on structured answers without repeating them', () => {
+    const prompt = buildSystemPrompt('en')
+    expect(prompt).toContain('call render_blocks instead of writing them out')
+    expect(prompt).toContain('add at most one short sentence, and never repeat the block content')
+    expect(prompt).toContain('- render_blocks: ')
+  })
+
+  test('limits render_blocks to a single call per reply', () => {
+    const prompt = buildSystemPrompt('en')
+    expect(prompt).toContain('Call it exactly once per reply')
+    expect(prompt).toContain('Call this tool at most once per reply')
   })
 
   test('memoizes the prompt per locale', () => {
