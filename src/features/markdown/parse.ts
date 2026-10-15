@@ -6,10 +6,14 @@ export type MdInline =
   | { type: 'code'; text: string }
   | { type: 'link'; href: string; children: MdInline[] }
 
-export type MdBlock =
-  | { type: 'paragraph'; inlines: MdInline[] }
-  | { type: 'list'; ordered: false; items: MdInline[][] }
-  | { type: 'list'; ordered: true; start: number; items: MdInline[][] }
+export type MdList =
+  | { type: 'list'; ordered: false; items: MdListItem[] }
+  | { type: 'list'; ordered: true; start: number; items: MdListItem[] }
+
+// `children` is the item's sub-list; the parser nests one level deep
+export type MdListItem = { inlines: MdInline[]; children?: MdList }
+
+export type MdBlock = { type: 'paragraph'; inlines: MdInline[] } | MdList
 
 const LIST_ITEM = /^\s*(?:([-*•])|(\d{1,9})[.)])\s+(\S.*)$/
 // A list marker with no content yet: held back while it is the last (streaming) line
@@ -17,6 +21,19 @@ const BARE_MARKER = /^\s*(?:[-*•]|\d{1,9}[.)])\s*$/
 const HEADING = /^\s*#{1,6}\s+(.*?)(?:\s+#+)?\s*$/
 const WORD_CHAR = /[\p{L}\p{N}]/u
 const PUNCTUATION = /[!-/:-@[-`{-~]/
+
+// A marker indented this far past its list's own markers starts (or continues) a sub-list
+const NEST_INDENT = 2
+
+const indentOf = (line: string) => {
+  let width = 0
+  for (const char of line) {
+    if (char === ' ') width++
+    else if (char === '\t') width += 4 - (width % 4)
+    else break
+  }
+  return width
+}
 
 const isSpace = (char: string | undefined) => char === undefined || /\s/.test(char)
 const isWord = (char: string | undefined) => char !== undefined && WORD_CHAR.test(char)
@@ -163,15 +180,30 @@ const parseInlines = (text: string, allowLinks = true): MdInline[] => {
   return out
 }
 
+type PendingList = { ordered: boolean; start: number; items: PendingItem[] }
+type PendingItem = { text: string; children?: PendingList }
 type Pending =
   | { type: 'paragraph'; lines: string[] }
-  | { type: 'list'; ordered: boolean; start: number; items: string[] }
+  | ({ type: 'list'; indent: number } & PendingList)
+
+const toList = (list: PendingList): MdList => {
+  const items = list.items.map((item): MdListItem =>
+    item.children
+      ? { inlines: parseInlines(item.text), children: toList(item.children) }
+      : { inlines: parseInlines(item.text) }
+  )
+  return list.ordered
+    ? { type: 'list', ordered: true, start: list.start, items }
+    : { type: 'list', ordered: false, items }
+}
 
 /**
- * Parses the light markdown the agent writes: paragraphs, single-level lists and headings (shown
- * as a bold paragraph), with code, strong, em and allowlisted links inline. It is safe to call on
- * every prefix of a streaming reply: unclosed markers stay literal and only complete, safe hrefs
- * become links. Raw HTML is plain text.
+ * Parses the light markdown the agent writes: paragraphs, lists and headings (shown as a bold
+ * paragraph), with code, strong, em and allowlisted links inline. Lists nest one level: a marker
+ * indented at least two columns past its list's markers becomes a sub-item of the item above it;
+ * deeper markers join that same sub-list, whose kind (ordered or not) is set by its first marker.
+ * It is safe to call on every prefix of a streaming reply: unclosed markers stay literal and only
+ * complete, safe hrefs become links. Raw HTML is plain text.
  */
 export const parseMarkdown = (src: string): MdBlock[] => {
   const blocks: MdBlock[] = []
@@ -181,23 +213,21 @@ export const parseMarkdown = (src: string): MdBlock[] => {
     if (pending?.type === 'paragraph') {
       blocks.push({ type: 'paragraph', inlines: parseInlines(pending.lines.join('\n')) })
     } else if (pending?.type === 'list') {
-      const items = pending.items.map((item) => parseInlines(item))
-      blocks.push(
-        pending.ordered
-          ? { type: 'list', ordered: true, start: pending.start, items }
-          : { type: 'list', ordered: false, items }
-      )
+      blocks.push(toList(pending))
     }
     pending = undefined
   }
 
   const lines = String(src ?? '').split(/\r\n?|\n/)
-  // A blank line keeps a list open when the next non-blank line is an item of the same kind
+  const nests = (line: string) =>
+    pending?.type === 'list' && indentOf(line) >= pending.indent + NEST_INDENT
+  // A blank line keeps a list open when the next non-blank line is a sub-item or an item of the
+  // same kind
   const continuesList = (from: number) => {
     if (pending?.type !== 'list') return false
     const next = lines.slice(from + 1).find((line) => line.trim())
     const item = next === undefined ? null : LIST_ITEM.exec(next)
-    return item !== null && (item[2] !== undefined) === pending.ordered
+    return item !== null && (nests(next ?? '') || (item[2] !== undefined) === pending.ordered)
   }
 
   for (const [index, line] of lines.entries()) {
@@ -215,13 +245,23 @@ export const parseMarkdown = (src: string): MdBlock[] => {
       })
     } else if (item) {
       const ordered = item[2] !== undefined
-      if (pending?.type !== 'list' || pending.ordered !== ordered) {
-        flush()
-        pending = { type: 'list', ordered, start: ordered ? Number(item[2]) : 1, items: [] }
+      const start = ordered ? Number(item[2]) : 1
+      const parent = pending?.type === 'list' && nests(line) ? pending.items.at(-1) : undefined
+      if (parent) {
+        parent.children ??= { ordered, start, items: [] }
+        parent.children.items.push({ text: item[3].trim() })
+      } else {
+        if (pending?.type !== 'list' || pending.ordered !== ordered) {
+          flush()
+          pending = { type: 'list', indent: indentOf(line), ordered, start, items: [] }
+        }
+        pending.items.push({ text: item[3].trim() })
       }
-      pending.items.push(item[3].trim())
     } else if (pending?.type === 'list' && /^\s/.test(line)) {
-      pending.items[pending.items.length - 1] += `\n${line.trim()}`
+      // A continuation line joins the last item, or the last sub-item when it has one
+      const last = pending.items.at(-1)
+      const target = last?.children?.items.at(-1) ?? last
+      if (target) target.text += `\n${line.trim()}`
     } else {
       if (pending?.type !== 'paragraph') {
         flush()

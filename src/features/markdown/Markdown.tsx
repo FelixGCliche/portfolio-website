@@ -1,11 +1,11 @@
-import { createMemo, For, Match, Switch } from 'solid-js'
+import { createMemo, For, Match, Show, Switch } from 'solid-js'
 
 import { cn } from '@components'
 import { NextLink, ProseParagraph } from '@features/response-blocks'
 import { isTopicHref } from '@features/safe-links'
 import type { TopicKey } from '@features/topic-keys'
 
-import { type MdBlock, type MdInline, parseMarkdown } from './parse'
+import { type MdBlock, type MdInline, type MdList, type MdListItem, parseMarkdown } from './parse'
 
 const LINK_CLASS = 'focus-ring text-primary underline underline-offset-4 hover:opacity-80'
 
@@ -14,7 +14,7 @@ const topicOf = (value: string): TopicKey | undefined => (isTopicHref(value) ? v
 const blockOf = <K extends MdBlock['type']>(block: MdBlock, type: K) =>
   block.type === type ? (block as Extract<MdBlock, { type: K }>) : undefined
 
-const orderedOf = (block: MdBlock) => (block.type === 'list' && block.ordered ? block : undefined)
+const orderedOf = (list: MdList) => (list.ordered ? list : undefined)
 
 // Index-keyed so a growing (streaming) inline run updates nodes in place instead of remounting
 const Inlines = (props: { inlines: MdInline[] }) => (
@@ -71,6 +71,53 @@ const Inline = (props: { node: MdInline }) => (
   </Switch>
 )
 
+// The item's text, then its sub-list (if any) below it
+const ListItemBody = (props: { item: MdListItem }) => (
+  <div class="flex min-w-0 flex-col gap-1">
+    <span class="whitespace-pre-line">
+      <Inlines inlines={props.item.inlines} />
+    </span>
+    <Show when={props.item.children}>{(children) => <List list={children()} />}</Show>
+  </div>
+)
+
+const List = (props: { list: MdList }) => (
+  <Switch
+    fallback={
+      <ul class="flex flex-col gap-1">
+        <For each={props.list.items} keyed={false}>
+          {(item) => (
+            <li class="flex gap-2.5">
+              <span class="text-muted-foreground flex-none" aria-hidden="true">
+                ▸
+              </span>
+              <ListItemBody item={item()} />
+            </li>
+          )}
+        </For>
+      </ul>
+    }
+  >
+    <Match when={orderedOf(props.list)}>
+      {(ordered) => (
+        <ol class="flex flex-col gap-1" start={ordered().start}>
+          {/* Non-keyed For passes the index as a plain number, not an accessor */}
+          <For each={ordered().items} keyed={false}>
+            {(item, itemIndex) => (
+              <li class="flex gap-2.5">
+                <span class="text-muted-foreground flex-none tabular-nums" aria-hidden="true">
+                  {ordered().start + itemIndex}.
+                </span>
+                <ListItemBody item={item()} />
+              </li>
+            )}
+          </For>
+        </ol>
+      )}
+    </Match>
+  </Switch>
+)
+
 export type MarkdownProps = {
   text: string
   // Renders the first paragraph in the lead tone
@@ -99,51 +146,7 @@ export const Markdown = (props: MarkdownProps) => {
                 </ProseParagraph>
               )}
             </Match>
-            <Match when={blockOf(block(), 'list')}>
-              {(list) => (
-                <Switch
-                  fallback={
-                    <ul class="flex flex-col gap-1">
-                      <For each={list().items} keyed={false}>
-                        {(item) => (
-                          <li class="flex gap-2.5">
-                            <span class="text-muted-foreground flex-none" aria-hidden="true">
-                              ▸
-                            </span>
-                            <span class="min-w-0 whitespace-pre-line">
-                              <Inlines inlines={item()} />
-                            </span>
-                          </li>
-                        )}
-                      </For>
-                    </ul>
-                  }
-                >
-                  <Match when={orderedOf(list())}>
-                    {(ordered) => (
-                      <ol class="flex flex-col gap-1" start={ordered().start}>
-                        {/* Non-keyed For passes the index as a plain number, not an accessor */}
-                        <For each={ordered().items} keyed={false}>
-                          {(item, itemIndex) => (
-                            <li class="flex gap-2.5">
-                              <span
-                                class="text-muted-foreground flex-none tabular-nums"
-                                aria-hidden="true"
-                              >
-                                {ordered().start + itemIndex}.
-                              </span>
-                              <span class="min-w-0 whitespace-pre-line">
-                                <Inlines inlines={item()} />
-                              </span>
-                            </li>
-                          )}
-                        </For>
-                      </ol>
-                    )}
-                  </Match>
-                </Switch>
-              )}
-            </Match>
+            <Match when={blockOf(block(), 'list')}>{(list) => <List list={list()} />}</Match>
           </Switch>
         )}
       </For>

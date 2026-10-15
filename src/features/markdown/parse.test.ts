@@ -4,12 +4,13 @@ import { about, profile } from '@content'
 
 import { isSafeHref } from '@features/safe-links'
 
-import { type MdBlock, type MdInline, parseMarkdown } from './parse'
+import { type MdBlock, type MdInline, type MdListItem, parseMarkdown } from './parse'
 
 const email = profile[0]?.email ?? ''
 
 const text = (value: string): MdInline => ({ type: 'text', text: value })
 const paragraph = (...inlines: MdInline[]): MdBlock => ({ type: 'paragraph', inlines })
+const item = (...inlines: MdInline[]): MdListItem => ({ inlines })
 /** The inlines of a single-paragraph source. */
 const inlines = (src: string) => {
   const [block, ...rest] = parseMarkdown(src)
@@ -25,9 +26,14 @@ const collectLinks = (nodes: ReadonlyArray<MdInline>): string[] =>
     return []
   })
 
+const itemLinks = (entry: MdListItem): string[] => [
+  ...collectLinks(entry.inlines),
+  ...(entry.children?.items.flatMap(itemLinks) ?? []),
+]
+
 const blockLinks = (blocks: ReadonlyArray<MdBlock>) =>
   blocks.flatMap((block) =>
-    block.type === 'paragraph' ? collectLinks(block.inlines) : block.items.flatMap(collectLinks)
+    block.type === 'paragraph' ? collectLinks(block.inlines) : block.items.flatMap(itemLinks)
   )
 
 describe('blocks', () => {
@@ -55,7 +61,7 @@ describe('blocks', () => {
       {
         type: 'list',
         ordered: false,
-        items: [[text('one')], [{ type: 'strong', children: [text('two')] }]],
+        items: [item(text('one')), item({ type: 'strong', children: [text('two')] })],
       },
     ])
   })
@@ -66,14 +72,14 @@ describe('blocks', () => {
         type: 'list',
         ordered: true,
         start: 1,
-        items: [[text('one')], [text('two')], [text('ten')]],
+        items: [item(text('one')), item(text('two')), item(text('ten'))],
       },
     ])
   })
 
   test('keeps the source start number of an ordered list', () => {
     expect(parseMarkdown('3. three\n4. four')).toEqual([
-      { type: 'list', ordered: true, start: 3, items: [[text('three')], [text('four')]] },
+      { type: 'list', ordered: true, start: 3, items: [item(text('three')), item(text('four'))] },
     ])
   })
 
@@ -83,40 +89,98 @@ describe('blocks', () => {
         type: 'list',
         ordered: true,
         start: 1,
-        items: [[text('Foo')], [text('Bar')], [text('Baz')]],
+        items: [item(text('Foo')), item(text('Bar')), item(text('Baz'))],
       },
     ])
     expect(parseMarkdown('- a\n\n- b\n\nafter')).toEqual([
-      { type: 'list', ordered: false, items: [[text('a')], [text('b')]] },
+      { type: 'list', ordered: false, items: [item(text('a')), item(text('b'))] },
       paragraph(text('after')),
     ])
   })
 
   test('ends a list at a blank line followed by another list kind', () => {
     expect(parseMarkdown('- a\n\n1. b')).toEqual([
-      { type: 'list', ordered: false, items: [[text('a')]] },
-      { type: 'list', ordered: true, start: 1, items: [[text('b')]] },
+      { type: 'list', ordered: false, items: [item(text('a'))] },
+      { type: 'list', ordered: true, start: 1, items: [item(text('b'))] },
     ])
   })
 
   test('starts a new list when the list kind changes', () => {
     expect(parseMarkdown('- a\n1. b')).toEqual([
-      { type: 'list', ordered: false, items: [[text('a')]] },
-      { type: 'list', ordered: true, start: 1, items: [[text('b')]] },
+      { type: 'list', ordered: false, items: [item(text('a'))] },
+      { type: 'list', ordered: true, start: 1, items: [item(text('b'))] },
     ])
   })
 
   test('separates a list from surrounding paragraph lines', () => {
     expect(parseMarkdown('Intro:\n- a\n- b\nOutro')).toEqual([
       paragraph(text('Intro:')),
-      { type: 'list', ordered: false, items: [[text('a')], [text('b')]] },
+      { type: 'list', ordered: false, items: [item(text('a')), item(text('b'))] },
       paragraph(text('Outro')),
     ])
   })
 
   test('appends indented continuation lines to the last list item', () => {
     expect(parseMarkdown('- a\n  more\n- b')).toEqual([
-      { type: 'list', ordered: false, items: [[text('a\nmore')], [text('b')]] },
+      { type: 'list', ordered: false, items: [item(text('a\nmore')), item(text('b'))] },
+    ])
+  })
+
+  test('nests indented markers one level under the item above', () => {
+    expect(parseMarkdown('- a\n  - b\n  - c\n- d\n   1. e')).toEqual([
+      {
+        type: 'list',
+        ordered: false,
+        items: [
+          {
+            inlines: [text('a')],
+            children: { type: 'list', ordered: false, items: [item(text('b')), item(text('c'))] },
+          },
+          {
+            inlines: [text('d')],
+            children: { type: 'list', ordered: true, start: 1, items: [item(text('e'))] },
+          },
+        ],
+      },
+    ])
+  })
+
+  test('keeps deeper markers in the same sub-list', () => {
+    expect(parseMarkdown('1. a\n   - b\n     - c\n2. d')).toEqual([
+      {
+        type: 'list',
+        ordered: true,
+        start: 1,
+        items: [
+          {
+            inlines: [text('a')],
+            children: { type: 'list', ordered: false, items: [item(text('b')), item(text('c'))] },
+          },
+          item(text('d')),
+        ],
+      },
+    ])
+  })
+
+  test('keeps a sub-list across a blank line and joins continuations to the sub-item', () => {
+    expect(parseMarkdown('- a\n\n  1. b\n  more\n- c')).toEqual([
+      {
+        type: 'list',
+        ordered: false,
+        items: [
+          {
+            inlines: [text('a')],
+            children: { type: 'list', ordered: true, start: 1, items: [item(text('b\nmore'))] },
+          },
+          item(text('c')),
+        ],
+      },
+    ])
+  })
+
+  test('treats a single-space indent as a sibling, not a sub-item', () => {
+    expect(parseMarkdown('- a\n - b')).toEqual([
+      { type: 'list', ordered: false, items: [item(text('a')), item(text('b'))] },
     ])
   })
 
@@ -296,7 +360,7 @@ describe('streaming', () => {
       expect(parseMarkdown(marker)).toEqual([])
       expect(parseMarkdown(`Intro\n${marker}`)).toEqual([paragraph(text('Intro'))])
       expect(parseMarkdown(`- a\n${marker}`)).toEqual([
-        { type: 'list', ordered: false, items: [[text('a')]] },
+        { type: 'list', ordered: false, items: [item(text('a'))] },
       ])
     }
   )
@@ -307,11 +371,12 @@ describe('streaming', () => {
   })
 
   test('a growing list item never passes through an empty item', () => {
-    for (const src of ['- a\n', '- a\n-', '- a\n- ', '- a\n- b']) {
+    for (const src of ['- a\n', '- a\n-', '- a\n- ', '- a\n- b', '- a\n  -', '- a\n  - ']) {
       const [block, ...rest] = parseMarkdown(src)
       expect(rest).toEqual([])
       expect(block?.type).toBe('list')
-      if (block?.type === 'list') for (const item of block.items) expect(item).not.toEqual([])
+      if (block?.type === 'list')
+        for (const entry of block.items) expect(entry.inlines).not.toEqual([])
     }
   })
 
