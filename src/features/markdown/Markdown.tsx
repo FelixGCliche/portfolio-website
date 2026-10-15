@@ -3,9 +3,14 @@ import { createMemo, For, Match, Show, Switch } from 'solid-js'
 
 import { cn } from '@components'
 import { useI18n } from '@features/i18n'
+import {
+  type MdInline,
+  type MdLink,
+  type MdList,
+  type MdListItem,
+  parseMarkdown,
+} from '@features/markdown-ast'
 import { LINK_CLASS, NextLink, opensNewTab, Prose, ProseParagraph } from '@features/response-blocks'
-
-import { type MdInline, type MdLink, type MdList, type MdListItem, parseMarkdown } from './parse'
 
 /** `node` narrowed to one of `types`, or undefined: a `Match` condition that narrows. */
 const ofType = <T extends { type: string }, K extends T['type']>(node: T, ...types: K[]) =>
