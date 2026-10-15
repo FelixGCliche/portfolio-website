@@ -25,8 +25,24 @@ export type AgentReply = {
   status: AgentReplyStatus
 }
 
+// Structural equality of JSON values, exiting at the first difference without serializing.
+const jsonEqual = (a: unknown, b: unknown): boolean => {
+  if (a === b) return true
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b) || a.length !== b.length) return false
+    return a.every((item, i) => jsonEqual(item, b[i]))
+  }
+  if (Array.isArray(b)) return false
+  const left = a as Record<string, unknown>
+  const right = b as Record<string, unknown>
+  const keys = Object.keys(left)
+  if (keys.length !== Object.keys(right).length) return false
+  return keys.every((key) => Object.hasOwn(right, key) && jsonEqual(left[key], right[key]))
+}
+
 /** Whether two blocks are the same, by value. */
-export const blockEqual = (a: Block, b: Block): boolean => JSON.stringify(a) === JSON.stringify(b)
+export const blockEqual = (a: Block, b: Block): boolean => jsonEqual(a, b)
 
 /** Whether two reply parts render the same, so a streaming update can skip unchanged ones. */
 export const replyPartEqual = (a: ReplyPart, b: ReplyPart): boolean => {
