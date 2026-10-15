@@ -8,7 +8,8 @@ export type MdInline =
 
 export type MdBlock =
   | { type: 'paragraph'; inlines: MdInline[] }
-  | { type: 'list'; ordered: boolean; items: MdInline[][] }
+  | { type: 'list'; ordered: false; items: MdInline[][] }
+  | { type: 'list'; ordered: true; start: number; items: MdInline[][] }
 
 const LIST_ITEM = /^\s*(?:([-*•])|(\d{1,9})[.)])\s+(.*)$/
 const HEADING = /^\s*#{1,6}\s+(.*?)(?:\s+#+)?\s*$/
@@ -134,7 +135,7 @@ const parseInlines = (text: string, allowLinks = true): MdInline[] => {
 
 type Pending =
   | { type: 'paragraph'; lines: string[] }
-  | { type: 'list'; ordered: boolean; items: string[] }
+  | { type: 'list'; ordered: boolean; start: number; items: string[] }
 
 /**
  * Parses the light markdown the agent writes: paragraphs, single-level lists and headings (shown
@@ -150,20 +151,30 @@ export const parseMarkdown = (src: string): MdBlock[] => {
     if (pending?.type === 'paragraph') {
       blocks.push({ type: 'paragraph', inlines: parseInlines(pending.lines.join('\n')) })
     } else if (pending?.type === 'list') {
-      blocks.push({
-        type: 'list',
-        ordered: pending.ordered,
-        items: pending.items.map((item) => parseInlines(item)),
-      })
+      const items = pending.items.map((item) => parseInlines(item))
+      blocks.push(
+        pending.ordered
+          ? { type: 'list', ordered: true, start: pending.start, items }
+          : { type: 'list', ordered: false, items }
+      )
     }
     pending = undefined
   }
 
-  for (const line of String(src ?? '').split(/\r\n?|\n/)) {
+  const lines = String(src ?? '').split(/\r\n?|\n/)
+  // A blank line keeps a list open when the next non-blank line is an item of the same kind
+  const continuesList = (from: number) => {
+    if (pending?.type !== 'list') return false
+    const next = lines.slice(from + 1).find((line) => line.trim())
+    const item = next === undefined ? null : LIST_ITEM.exec(next)
+    return item !== null && (item[2] !== undefined) === pending.ordered
+  }
+
+  for (const [index, line] of lines.entries()) {
     const heading = HEADING.exec(line)
     const item = LIST_ITEM.exec(line)
     if (!line.trim()) {
-      flush()
+      if (!continuesList(index)) flush()
     } else if (heading) {
       flush()
       blocks.push({
@@ -174,7 +185,7 @@ export const parseMarkdown = (src: string): MdBlock[] => {
       const ordered = item[2] !== undefined
       if (pending?.type !== 'list' || pending.ordered !== ordered) {
         flush()
-        pending = { type: 'list', ordered, items: [] }
+        pending = { type: 'list', ordered, start: ordered ? Number(item[2]) : 1, items: [] }
       }
       pending.items.push(item[3].trim())
     } else if (pending?.type === 'list' && /^\s/.test(line)) {

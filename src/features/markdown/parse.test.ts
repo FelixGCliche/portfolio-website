@@ -62,14 +62,47 @@ describe('blocks', () => {
 
   test('groups numbered lines into an ordered list', () => {
     expect(parseMarkdown('1. one\n2. two\n10. ten')).toEqual([
-      { type: 'list', ordered: true, items: [[text('one')], [text('two')], [text('ten')]] },
+      {
+        type: 'list',
+        ordered: true,
+        start: 1,
+        items: [[text('one')], [text('two')], [text('ten')]],
+      },
+    ])
+  })
+
+  test('keeps the source start number of an ordered list', () => {
+    expect(parseMarkdown('3. three\n4. four')).toEqual([
+      { type: 'list', ordered: true, start: 3, items: [[text('three')], [text('four')]] },
+    ])
+  })
+
+  test('keeps a loose list together across blank lines', () => {
+    expect(parseMarkdown('1. Foo\n\n2. Bar\n\n\n3. Baz')).toEqual([
+      {
+        type: 'list',
+        ordered: true,
+        start: 1,
+        items: [[text('Foo')], [text('Bar')], [text('Baz')]],
+      },
+    ])
+    expect(parseMarkdown('- a\n\n- b\n\nafter')).toEqual([
+      { type: 'list', ordered: false, items: [[text('a')], [text('b')]] },
+      paragraph(text('after')),
+    ])
+  })
+
+  test('ends a list at a blank line followed by another list kind', () => {
+    expect(parseMarkdown('- a\n\n1. b')).toEqual([
+      { type: 'list', ordered: false, items: [[text('a')]] },
+      { type: 'list', ordered: true, start: 1, items: [[text('b')]] },
     ])
   })
 
   test('starts a new list when the list kind changes', () => {
     expect(parseMarkdown('- a\n1. b')).toEqual([
       { type: 'list', ordered: false, items: [[text('a')]] },
-      { type: 'list', ordered: true, items: [[text('b')]] },
+      { type: 'list', ordered: true, start: 1, items: [[text('b')]] },
     ])
   })
 

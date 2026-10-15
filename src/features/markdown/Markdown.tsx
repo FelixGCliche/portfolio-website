@@ -14,6 +14,8 @@ const topicOf = (value: string): TopicKey | undefined => (isTopicHref(value) ? v
 const blockOf = <K extends MdBlock['type']>(block: MdBlock, type: K) =>
   block.type === type ? (block as Extract<MdBlock, { type: K }>) : undefined
 
+const orderedOf = (block: MdBlock) => (block.type === 'list' && block.ordered ? block : undefined)
+
 // Index-keyed so a growing (streaming) inline run updates nodes in place instead of remounting
 const Inlines = (props: { inlines: MdInline[] }) => (
   <For each={props.inlines} keyed={false}>
@@ -120,24 +122,27 @@ export const Markdown = (props: MarkdownProps) => {
                     </ul>
                   }
                 >
-                  <Match when={list().ordered}>
-                    <ol class="flex flex-col gap-1">
-                      <For each={list().items} keyed={false}>
-                        {(item, itemIndex) => (
-                          <li class="flex gap-2.5">
-                            <span
-                              class="text-muted-foreground flex-none tabular-nums"
-                              aria-hidden="true"
-                            >
-                              {itemIndex + 1}.
-                            </span>
-                            <span class="min-w-0 whitespace-pre-line">
-                              <Inlines inlines={item()} />
-                            </span>
-                          </li>
-                        )}
-                      </For>
-                    </ol>
+                  <Match when={orderedOf(list())}>
+                    {(ordered) => (
+                      <ol class="flex flex-col gap-1" start={ordered().start}>
+                        {/* Non-keyed For passes the index as a plain number, not an accessor */}
+                        <For each={ordered().items} keyed={false}>
+                          {(item, itemIndex) => (
+                            <li class="flex gap-2.5">
+                              <span
+                                class="text-muted-foreground flex-none tabular-nums"
+                                aria-hidden="true"
+                              >
+                                {ordered().start + itemIndex}.
+                              </span>
+                              <span class="min-w-0 whitespace-pre-line">
+                                <Inlines inlines={item()} />
+                              </span>
+                            </li>
+                          )}
+                        </For>
+                      </ol>
+                    )}
                   </Match>
                 </Switch>
               )}
