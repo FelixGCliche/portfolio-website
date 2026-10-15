@@ -32,18 +32,54 @@ const pushText = (out: MdInline[], text: string) => {
   else out.push({ type: 'text', text })
 }
 
+/** Finds the bracket closing the one at `open` (`[` or `(`), or -1. */
+const findMatching = (text: string, open: number) => {
+  const [opener, closer] = text[open] === '[' ? ['[', ']'] : ['(', ')']
+  let depth = 0
+  for (let index = open; index < text.length; index++) {
+    if (text[index] === '\\') index++
+    else if (text[index] === opener) depth++
+    else if (text[index] === closer && --depth === 0) return index
+  }
+  return -1
+}
+
+/** For a complete `[label](href)` starting at `open`, the indexes of `]` and `)`; otherwise -1s. */
+const findLink = (text: string, open: number) => {
+  const labelEnd = findMatching(text, open)
+  const hrefEnd =
+    labelEnd !== -1 && text[labelEnd + 1] === '(' ? findMatching(text, labelEnd + 1) : -1
+  return { labelEnd, hrefEnd }
+}
+
 /**
  * Finds where the emphasis closing `size` delimiters starts, or -1. A closer is a run of the
  * marker that follows non-space content; strong (size 2) takes the last two of a run of two or
- * more, em (size 1) takes a lone marker or the last of a run of three or more.
+ * more, em (size 1) takes a lone marker or the last of a run of three or more. Escaped characters,
+ * code spans and (when `allowLinks`) whole links are skipped, as `parseInlines` consumes them first.
  */
-const findCloser = (text: string, from: number, marker: string, size: number) => {
+const findCloser = (
+  text: string,
+  from: number,
+  marker: string,
+  size: number,
+  allowLinks: boolean
+) => {
   let index = from
   while (index < text.length) {
+    if (text[index] === '\\' && PUNCTUATION.test(text[index + 1] ?? '')) {
+      index += 2
+      continue
+    }
     if (text[index] === '`') {
       const ticks = runLength(text, index, '`')
       const close = text.indexOf('`'.repeat(ticks), index + ticks)
       index = close === -1 ? index + ticks : close + ticks
+      continue
+    }
+    if (text[index] === '[' && allowLinks) {
+      const { hrefEnd } = findLink(text, index)
+      index = hrefEnd === -1 ? index + 1 : hrefEnd + 1
       continue
     }
     if (text[index] !== marker) {
@@ -57,18 +93,6 @@ const findCloser = (text: string, from: number, marker: string, size: number) =>
     const bounded = marker !== '_' || !isWord(text[end])
     if (fits && flanked && bounded) return end - size
     index = end
-  }
-  return -1
-}
-
-/** Finds the bracket closing the one at `open` (`[` or `(`), or -1. */
-const findMatching = (text: string, open: number) => {
-  const [opener, closer] = text[open] === '[' ? ['[', ']'] : ['(', ')']
-  let depth = 0
-  for (let index = open; index < text.length; index++) {
-    if (text[index] === '\\') index++
-    else if (text[index] === opener) depth++
-    else if (text[index] === closer && --depth === 0) return index
   }
   return -1
 }
@@ -98,7 +122,7 @@ const parseInlines = (text: string, allowLinks = true): MdInline[] => {
       const length = runLength(text, index, char)
       const size = length >= 2 ? 2 : 1
       const opens = !isSpace(text[index + length]) && (char !== '_' || !isWord(text[index - 1]))
-      const close = opens ? findCloser(text, index + size, char, size) : -1
+      const close = opens ? findCloser(text, index + size, char, size, allowLinks) : -1
       if (close === -1) {
         pushText(out, char.repeat(length))
         index += length
@@ -108,9 +132,7 @@ const parseInlines = (text: string, allowLinks = true): MdInline[] => {
         index = close + size
       }
     } else if (char === '[' && allowLinks) {
-      const labelEnd = findMatching(text, index)
-      const hrefEnd =
-        labelEnd !== -1 && text[labelEnd + 1] === '(' ? findMatching(text, labelEnd + 1) : -1
+      const { labelEnd, hrefEnd } = findLink(text, index)
       if (hrefEnd === -1) {
         pushText(out, char)
         index++

@@ -200,6 +200,24 @@ describe('inlines', () => {
     expect(inlines('\\*not em\\* and \\[x\\]')).toEqual([text('*not em* and [x]')])
   })
 
+  test('does not close emphasis on an escaped marker', () => {
+    expect(inlines('*foo\\* bar*')).toEqual([{ type: 'em', children: [text('foo* bar')] }])
+    expect(inlines('**a\\** b**')).toEqual([{ type: 'strong', children: [text('a** b')] }])
+  })
+
+  test('does not close emphasis on a marker inside a link', () => {
+    const link = (href: string): MdInline => ({ type: 'link', href, children: [text('a')] })
+    expect(inlines('**[a](https://github.com/x_y_)**')).toEqual([
+      { type: 'strong', children: [link('https://github.com/x_y_')] },
+    ])
+    expect(inlines('_see [a](https://github.com/x_y_) now_')).toEqual([
+      { type: 'em', children: [text('see '), link('https://github.com/x_y_'), text(' now')] },
+    ])
+    expect(inlines('*see [a](https://github.com/x*y) now*')).toEqual([
+      { type: 'em', children: [text('see '), link('https://github.com/x*y'), text(' now')] },
+    ])
+  })
+
   test('parses links with safe hrefs', () => {
     expect(
       inlines('see [my **work**](/work) and [GitHub](https://github.com/FelixGCliche)')
