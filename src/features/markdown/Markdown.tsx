@@ -40,12 +40,9 @@ const Inline = (props: { node: MdInline }) => (
         </em>
       )}
     </Match>
+    {/* Always code, even for a topic key: only link syntax becomes a topic link */}
     <Match when={props.node.type === 'code' && props.node}>
-      {(node) => (
-        <Switch fallback={<code class="text-foreground bg-muted px-1">{node().text}</code>}>
-          <Match when={topicOf(node().text)}>{(topic) => <NextLink topic={topic()} />}</Match>
-        </Switch>
-      )}
+      {(node) => <code class="text-foreground bg-muted px-1">{node().text}</code>}
     </Match>
     <Match when={props.node.type === 'link' && props.node}>
       {(node) => (
