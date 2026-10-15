@@ -23,22 +23,25 @@ export const WorkResponse = () => {
       <PanelHeader label={t('work.header')} meta={t('work.newestFirst')} />
       <Timeline>
         <For each={roles()}>
-          {(role) => (
-            <TimelineItem
-              title={role.title}
-              company={role.company}
-              range={formatRange(role.start, role.end, t('work.present'))}
-              current={role.end === null}
-            >
-              <div class="flex items-center gap-2.5">
-                <Tag>{t('work.months', { count: monthsBetween(role.start, role.end) })}</Tag>
-                <DurationBar months={monthsBetween(role.start, role.end)} />
-              </div>
-              <div class="text-secondary-foreground">
-                <BulletList items={role.bullets} />
-              </div>
-            </TimelineItem>
-          )}
+          {(role) => {
+            const months = monthsBetween(role.start, role.end)
+            return (
+              <TimelineItem
+                title={role.title}
+                company={role.company}
+                range={formatRange(role.start, role.end, t('work.present'))}
+                current={role.end === null}
+              >
+                <div class="flex items-center gap-2.5">
+                  <Tag>{t('work.months', { count: months })}</Tag>
+                  <DurationBar months={months} />
+                </div>
+                <div class="text-secondary-foreground">
+                  <BulletList items={role.bullets} />
+                </div>
+              </TimelineItem>
+            )
+          }}
         </For>
       </Timeline>
       <NextLinks topics={['/skills', '/resume']} />
