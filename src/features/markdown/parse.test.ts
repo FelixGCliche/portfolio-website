@@ -356,6 +356,16 @@ describe('inlines', () => {
     ])
   })
 
+  test('renders an image as its alt text, never as a link', () => {
+    expect(inlines('a ![photo](/work) and ![x](https://evil.com/a.png)!')).toEqual([
+      text('a photo and x!'),
+    ])
+    expect(inlines('wow! [ok](/work)')).toEqual([
+      text('wow! '),
+      { type: 'link', kind: 'topic', href: '/work', children: [text('ok')] },
+    ])
+  })
+
   test('scans many unmatched brackets in linear time', () => {
     const src = '[a '.repeat(20_000)
     const started = performance.now()

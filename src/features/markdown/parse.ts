@@ -25,7 +25,7 @@ const HEADING = /^\s*#{1,6}\s+(.*?)(?:\s+#+)?\s*$/
 const WORD_CHAR = /[\p{L}\p{N}]/u
 const PUNCTUATION = /[!-/:-@[-`{-~]/
 // Characters that can start inline syntax; anything between them is plain text
-const SPECIAL = /[\\`*_[]/g
+const SPECIAL = /[\\`*_[!]/g
 
 // A marker indented this far past its list's own markers starts (or continues) a sub-list
 const NEST_INDENT = 2
@@ -158,7 +158,9 @@ const parseInlines = (text: string, allowLinks = true): MdInline[] => {
   let index = 0
   while (index < text.length) {
     const char = text[index]
-    const link = scanner.link(index)
+    // An image (`![alt](src)`) is never rendered; it reads as its alt text
+    const image = char === '!' ? scanner.link(index + 1) : undefined
+    const link = image ?? scanner.link(index)
     if (isEscape(text, index)) {
       pushText(out, text[index + 1])
       index += 2
@@ -186,9 +188,10 @@ const parseInlines = (text: string, allowLinks = true): MdInline[] => {
         index = close + size
       }
     } else if (link) {
-      const label = text.slice(index + 1, link.labelEnd)
+      const open = image ? index + 1 : index
+      const label = text.slice(open + 1, link.labelEnd)
       const href = text.slice(link.labelEnd + 2, link.hrefEnd).trim()
-      const safe = classifyHref(href)
+      const safe = image ? undefined : classifyHref(href)
       // An empty label falls back to a safe href so the link stays visible; otherwise it drops
       const children: MdInline[] = label.trim()
         ? parseInlines(label, false)
@@ -230,11 +233,11 @@ const toList = (list: PendingList): MdList => {
 
 /**
  * Parses the light markdown the agent writes: paragraphs, lists and headings (shown as a bold
- * paragraph), with code, strong, em and allowlisted links inline. Lists nest one level: a marker
- * indented at least two columns past its list's markers becomes a sub-item of the item above it;
- * deeper markers join that same sub-list, whose kind (ordered or not) is set by its first marker.
- * It is safe to call on every prefix of a streaming reply: unclosed markers stay literal and only
- * complete, safe hrefs become links. Raw HTML is plain text.
+ * paragraph), with code, strong, em and allowlisted links inline; an image shows its alt text.
+ * Lists nest one level: a marker indented at least two columns past its list's markers becomes a
+ * sub-item of the item above it; deeper markers join that same sub-list, whose kind (ordered or
+ * not) is set by its first marker. It is safe to call on every prefix of a streaming reply:
+ * unclosed markers stay literal and only complete, safe hrefs become links. Raw HTML is plain text.
  */
 export const parseMarkdown = (src: string): MdBlock[] => {
   const blocks: MdBlock[] = []
