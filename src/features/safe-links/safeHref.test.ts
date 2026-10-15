@@ -4,7 +4,7 @@ import { profile } from '@content'
 
 import { TOPIC_KEYS } from '@features/topic-keys'
 
-import { isSafeHref, isTopicHref } from './safeHref'
+import { classifyHref, isSafeHref, isTopicHref } from './safeHref'
 
 const email = profile[0]?.email ?? ''
 
@@ -78,5 +78,33 @@ describe('isSafeHref', () => {
   test('rejects non-string input without throwing', () => {
     expect(isSafeHref(undefined as never)).toBe(false)
     expect(isSafeHref(42 as never)).toBe(false)
+  })
+
+  test.each([0x20, 0x5c, 0x7f, 0xa0, 0xad, 0x1680, 0x180e, 0x2000, 0x200f, 0x2028, 0x202f, 0x205f])(
+    'rejects the unsafe range boundary code point %d',
+    (code) => {
+      expect(isSafeHref(`https://github.com/a${String.fromCodePoint(code)}`)).toBe(false)
+    }
+  )
+
+  test('accepts characters just outside the unsafe ranges', () => {
+    for (const code of [0x21, 0x5b, 0x5d, 0x7e, 0xa1, 0xac, 0xae, 0x1fff, 0x2010, 0x2030, 0x2070])
+      expect(isSafeHref(`https://github.com/a${String.fromCodePoint(code)}`)).toBe(true)
+  })
+})
+
+describe('classifyHref', () => {
+  test('tags each safe href with its kind', () => {
+    expect(classifyHref(TOPIC_KEYS[0])).toEqual({ kind: 'topic', href: TOPIC_KEYS[0] })
+    expect(classifyHref('https://github.com/x')).toEqual({
+      kind: 'external',
+      href: 'https://github.com/x',
+    })
+    expect(classifyHref(`mailto:${email}`)).toEqual({ kind: 'mailto', href: `mailto:${email}` })
+  })
+
+  test('returns undefined for an unsafe href', () => {
+    expect(classifyHref('javascript:alert(1)')).toBeUndefined()
+    expect(classifyHref('https://evil.com/')).toBeUndefined()
   })
 })

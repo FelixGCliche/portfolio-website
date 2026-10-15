@@ -34,13 +34,12 @@ const UNSAFE_RANGES: ReadonlyArray<readonly [number, number]> = [
   [0xfeff, 0xfeff], // byte order mark
 ]
 
-const hasUnsafeChar = (href: string): boolean => {
-  for (const char of href) {
-    const code = char.codePointAt(0) ?? 0
-    if (UNSAFE_RANGES.some(([from, to]) => code >= from && code <= to)) return true
-  }
-  return false
-}
+const codeUnit = (code: number) => `\\u{${code.toString(16)}}`
+
+const UNSAFE_CHAR = new RegExp(
+  `[${UNSAFE_RANGES.map(([from, to]) => `${codeUnit(from)}-${codeUnit(to)}`).join('')}]`,
+  'u'
+)
 
 const MAILTO = 'mailto:'
 const HTTPS = 'https://'
@@ -71,15 +70,23 @@ const isSafeHttps = (href: string): boolean => {
   )
 }
 
+/** A link target that passed `classifyHref`, tagged with what kind of link it is. */
+export type SafeHref =
+  | { kind: 'topic'; href: TopicKey }
+  | { kind: 'external' | 'mailto'; href: string }
+
 /**
- * Whether `href` may be rendered as a link: a topic key, an https URL on an allowlisted host, or
- * a mailto to the profile's own address. Everything else (other schemes, hosts, credentials,
- * protocol-relative URLs, hidden characters) is refused.
+ * Classifies `href` when it may be rendered as a link: a topic key, an https URL on an allowlisted
+ * host (external), or a mailto to the profile's own address. Everything else (other schemes,
+ * hosts, credentials, protocol-relative URLs, hidden characters) is refused with `undefined`.
  */
-export const isSafeHref = (href: string): boolean => {
-  if (typeof href !== 'string' || href.length === 0 || hasUnsafeChar(href)) return false
-  if (isTopicHref(href)) return true
-  if (href.startsWith(MAILTO)) return isSafeMailto(href)
-  if (href.startsWith(HTTPS)) return isSafeHttps(href)
-  return false
+export const classifyHref = (href: string): SafeHref | undefined => {
+  if (typeof href !== 'string' || href.length === 0 || UNSAFE_CHAR.test(href)) return undefined
+  if (isTopicHref(href)) return { kind: 'topic', href }
+  if (href.startsWith(MAILTO)) return isSafeMailto(href) ? { kind: 'mailto', href } : undefined
+  if (href.startsWith(HTTPS)) return isSafeHttps(href) ? { kind: 'external', href } : undefined
+  return undefined
 }
+
+/** Whether `href` may be rendered as a link; see `classifyHref`. */
+export const isSafeHref = (href: string): boolean => classifyHref(href) !== undefined
