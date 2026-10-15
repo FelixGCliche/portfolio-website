@@ -270,7 +270,12 @@ describe('inlines', () => {
   })
 
   test('does not close emphasis on a marker inside a link', () => {
-    const link = (href: string): MdInline => ({ type: 'link', href, children: [text('a')] })
+    const link = (href: string): MdInline => ({
+      type: 'link',
+      kind: 'external',
+      href,
+      children: [text('a')],
+    })
     expect(inlines('**[a](https://github.com/x_y_)**')).toEqual([
       { type: 'strong', children: [link('https://github.com/x_y_')] },
     ])
@@ -289,14 +294,25 @@ describe('inlines', () => {
       text('see '),
       {
         type: 'link',
+        kind: 'topic',
         href: '/work',
         children: [text('my '), { type: 'strong', children: [text('work')] }],
       },
       text(' and '),
-      { type: 'link', href: 'https://github.com/FelixGCliche', children: [text('GitHub')] },
+      {
+        type: 'link',
+        kind: 'external',
+        href: 'https://github.com/FelixGCliche',
+        children: [text('GitHub')],
+      },
     ])
     expect(inlines(`[mail](mailto:${email}?subject=Hi)`)).toEqual([
-      { type: 'link', href: `mailto:${email}?subject=Hi`, children: [text('mail')] },
+      {
+        type: 'link',
+        kind: 'mailto',
+        href: `mailto:${email}?subject=Hi`,
+        children: [text('mail')],
+      },
     ])
   })
 
@@ -319,9 +335,14 @@ describe('inlines', () => {
   test('uses the href as the label of a link with an empty label', () => {
     expect(inlines('see [](/about) or [ ](https://github.com/x)')).toEqual([
       text('see '),
-      { type: 'link', href: '/about', children: [text('/about')] },
+      { type: 'link', kind: 'topic', href: '/about', children: [text('/about')] },
       text(' or '),
-      { type: 'link', href: 'https://github.com/x', children: [text('https://github.com/x')] },
+      {
+        type: 'link',
+        kind: 'external',
+        href: 'https://github.com/x',
+        children: [text('https://github.com/x')],
+      },
     ])
   })
 
@@ -331,8 +352,15 @@ describe('inlines', () => {
 
   test('does not nest links inside a link label', () => {
     expect(inlines('[a [b](/work)](/about)')).toEqual([
-      { type: 'link', href: '/about', children: [text('a [b](/work)')] },
+      { type: 'link', kind: 'topic', href: '/about', children: [text('a [b](/work)')] },
     ])
+  })
+
+  test('scans many unmatched brackets in linear time', () => {
+    const src = '[a '.repeat(20_000)
+    const started = performance.now()
+    expect(inlines(src)).toEqual([text(src.trim())])
+    expect(performance.now() - started).toBeLessThan(500)
   })
 
   test('keeps a bracket without a link target literal', () => {
