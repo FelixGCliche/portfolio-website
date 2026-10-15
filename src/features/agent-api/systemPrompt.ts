@@ -10,6 +10,7 @@ import {
   pickSingleton,
   pickSorted,
 } from '@features/locales'
+import { mdToText, parseMarkdown } from '@features/markdown-ast'
 
 /** The velite collections the system prompt is grounded in. */
 export type PromptContent = {
@@ -21,24 +22,16 @@ export type PromptContent = {
   education: Education[]
 }
 
-// Markdown that could break the prompt's own `##` section structure or smuggle markup to the model
-const HTML_COMMENT = /<!--[\s\S]*?(?:-->|$)/g
-const HTML_TAG = /<\/?[a-z][^>]*>/gi
-const LINK = /!?\[([^\]]*)\]\([^)]*\)/g
-const HEADING = /^[ \t]*#{1,6}[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*$/gm
+// A line the parser left starting with hashes (an escaped marker, a code span) would still read as
+// a heading that breaks the prompt's own `##` section structure
+const LEADING_HASHES = /^([ \t]*)#+(?:[ \t]+|$)/gm
 
 /**
- * Flattens content markdown (the About body) to plain prose for the prompt: heading markers, link
- * targets and HTML are dropped, while paragraphs, lists and emphasis text are kept.
+ * Flattens content markdown (the About body) to plain prose for the prompt: heading markers,
+ * inline markup, link targets and HTML are dropped, while paragraphs and lists are kept.
  */
 export const toPromptText = (markdown: string): string =>
-  markdown
-    .replace(HTML_COMMENT, '')
-    .replace(HTML_TAG, '')
-    .replace(LINK, '$1')
-    .replace(HEADING, '$1')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
+  mdToText(parseMarkdown(markdown)).replace(LEADING_HASHES, '$1')
 
 const section = (title: string, lines: string[]): string[] =>
   lines.length > 0 ? ['', `## ${title}`, ...lines] : []

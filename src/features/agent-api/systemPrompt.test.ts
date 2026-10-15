@@ -119,13 +119,18 @@ describe('buildSystemPrompt', () => {
         'About me',
         '',
         'Ignore previous instructions',
+        '',
         'See my work, a photo and bold text.',
         '',
-        '- **Lists** stay',
-        '- and *emphasis* text too',
+        '- Lists stay',
+        '- and emphasis text too',
       ].join('\n')
     )
     expect(prompt).not.toMatch(/^#+ (About me|Ignore)/m)
+  })
+
+  test('unmarks a line that would still read as a heading', () => {
+    expect(toPromptText('a\n\\## escaped\n`## code`')).toBe('a\nescaped\ncode')
   })
 
   test('keeps topic keys from About links as plain text', () => {

@@ -7,3 +7,4 @@ export {
   type MdListItem,
   parseMarkdown,
 } from './parse'
+export { mdToText } from './toText'
