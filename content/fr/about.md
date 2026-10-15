@@ -6,4 +6,4 @@ Depuis, j'ai touché à toute la pile — Vue et .NET chez Snipcart, 3D et VR da
 
 Ce que j'aime : les problèmes inconnus, livrer pour vrai, et le moment où un système emmêlé devient simple.
 
-Basé à Québec. Disponible. /work pour les détails, /skills pour le coffre à outils.
+Basé à Québec. Disponible. [/work](/work) pour les détails, [/skills](/skills) pour le coffre à outils.

@@ -42,7 +42,7 @@ const about = defineCollection({
   pattern: '*/about.md',
   schema: s
     .object({
-      body: s.markdown(),
+      body: s.raw(),
     })
     .transform((data, { meta }) => ({
       ...data,

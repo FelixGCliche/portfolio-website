@@ -6,4 +6,4 @@ Since then I've worked across the stack — Vue and .NET at Snipcart, 3D and VR 
 
 What I like: unfamiliar problems, shipping real things, and the moment a tangled system finally goes simple.
 
-Based in Québec City, open to work. /work for the details, /skills for the toolbox.
+Based in Québec City, open to work. [/work](/work) for the details, [/skills](/skills) for the toolbox.

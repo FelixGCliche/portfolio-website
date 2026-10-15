@@ -1,9 +1,13 @@
 import { Match, Switch } from 'solid-js'
 import type { ParentProps } from 'solid-js'
 
+import { cn } from '@components'
+
 // Vertical rhythm and measure for a run of paragraphs
-export const Prose = (props: ParentProps) => (
-  <div class="text-secondary-foreground flex max-w-[62ch] flex-col gap-3.5">{props.children}</div>
+export const Prose = (props: ParentProps<{ class?: string }>) => (
+  <div class={cn('text-secondary-foreground flex max-w-[62ch] flex-col gap-3.5', props.class)}>
+    {props.children}
+  </div>
 )
 
 export type ProseParagraphProps = ParentProps<{

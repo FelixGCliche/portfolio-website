@@ -10,7 +10,7 @@ export type LinkCardProps = {
 }
 
 // Web links open in a new tab; mailto:, tel: and in-site links stay in place
-const opensNewTab = (href: string) => /^https?:\/\//i.test(href)
+export const opensNewTab = (href: string) => /^https?:\/\//i.test(href)
 
 export const LinkCard = (props: LinkCardProps) => {
   const { t } = useI18n()
