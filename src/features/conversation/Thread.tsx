@@ -32,10 +32,9 @@ const STATUS_WEIGHT: Record<AgentTextMessage['status'], number> = {
 }
 
 // Rough rendered size of a reply part, so streamed text and blocks both register as growth.
+// Blocks only appear once finished, so counting them (and completion) is enough, and stays O(1).
 const partSize = (part: ReplyPart) =>
-  part.kind === 'text'
-    ? part.text.length
-    : JSON.stringify(part.blocks).length + Number(part.complete)
+  part.kind === 'text' ? part.text.length : part.blocks.length * 2 + Number(part.complete)
 
 const partOf = <K extends ReplyPart['kind']>(part: ReplyPart, kind: K) =>
   part.kind === kind ? (part as Extract<ReplyPart, { kind: K }>) : undefined
@@ -49,7 +48,7 @@ const UserRow = (props: { message: UserMessage }) => (
 const AGENT_ROW_CLASS = `${ROW_CLASS} flex-col gap-4 pt-3 pl-[26px]`
 
 const TopicRow = (props: { message: AgentTopicMessage }) => (
-  <div class={AGENT_ROW_CLASS}>
+  <div class={AGENT_ROW_CLASS} data-message-id={props.message.id}>
     <Dynamic component={responses[props.message.topic]} />
   </div>
 )
@@ -110,11 +109,23 @@ export const Thread = () => {
   const { t, locale } = useI18n()
   const conversation = useConversation()
   const router = useRouter()
-  // Re-running the topic the thread already ends on would only duplicate its reply
+  let threadEl: HTMLDivElement | undefined
+  let pinned = true
+  // Re-running the topic the thread already ends on would only duplicate its reply, so the click
+  // brings that reply into view instead of doing nothing.
   const runTopic = (key: TopicKey) => {
     const last = untrack(() => conversation.state.messages.at(-1))
-    if (last?.role === 'agent' && last.kind === 'topic' && last.topic === key) return
-    conversation.run(key)
+    if (last?.role !== 'agent' || last.kind !== 'topic' || last.topic !== key) {
+      conversation.run(key)
+      return
+    }
+    const row = threadEl?.querySelector<HTMLElement>(`[data-message-id="${last.id}"]`)
+    if (!row) {
+      conversation.run(key)
+      return
+    }
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    row.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' })
   }
   // Hrefs cached per locale and topic; reading locale() keeps callers reactive to language changes
   const hrefs = new Map<string, string>()
@@ -128,8 +139,6 @@ export const Thread = () => {
     }
     return href
   }
-  let threadEl: HTMLDivElement | undefined
-  let pinned = true
 
   const scroller = () => threadEl?.closest<HTMLElement>(SCROLLER_SELECTOR) ?? undefined
 

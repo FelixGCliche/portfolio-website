@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import type { Block } from '@features/block-schema'
 
-import { type ReplyBlocksPart, replyPartEqual } from './messages'
+import { blockEqual, type ReplyBlocksPart, replyPartEqual } from './messages'
 
 const heading: Block = { type: 'heading', label: 'Experience' }
 const tags: Block = { type: 'tags', items: ['TypeScript', 'Rust'] }
@@ -13,6 +13,17 @@ const blocks = (overrides: Partial<ReplyBlocksPart> = {}): ReplyBlocksPart => ({
   blocks: [heading, tags],
   complete: true,
   ...overrides,
+})
+
+describe('blockEqual', () => {
+  test('compares nested values structurally', () => {
+    expect(blockEqual(tags, { type: 'tags', items: ['TypeScript', 'Rust'] })).toBe(true)
+    expect(blockEqual(tags, { type: 'tags', items: ['TypeScript'] })).toBe(false)
+    expect(blockEqual(heading, { type: 'heading', label: 'Experience', note: 'x' } as Block)).toBe(
+      false
+    )
+    expect(blockEqual(heading, tags)).toBe(false)
+  })
 })
 
 describe('replyPartEqual', () => {
