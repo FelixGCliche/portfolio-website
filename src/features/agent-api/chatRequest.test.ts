@@ -5,7 +5,10 @@ import {
   localeFromRequest,
   MAX_HISTORY_MESSAGE_CHARS,
   MAX_MESSAGES,
+  MAX_CHARS_PER_TOKEN,
+  MAX_COMPLETION_TOKENS,
   MAX_TOOL_ARGUMENTS_CHARS,
+  MAX_TURN_OUTPUT_CHARS,
   MAX_USER_MESSAGE_CHARS,
   maxToolArgumentsChars,
   parseChatRequest,
@@ -108,10 +111,17 @@ describe('parseChatRequest', () => {
       ).ok
 
     test('allows render_blocks a larger limit', () => {
-      expect(maxToolArgumentsChars('render_blocks')).toBe(6000)
+      expect(maxToolArgumentsChars('render_blocks')).toBe(MAX_TURN_OUTPUT_CHARS)
       expect(accepts('render_blocks', 5000)).toBe(true)
-      expect(accepts('render_blocks', 6000)).toBe(true)
-      expect(accepts('render_blocks', 7000)).toBe(false)
+      expect(accepts('render_blocks', MAX_TURN_OUTPUT_CHARS)).toBe(true)
+      expect(accepts('render_blocks', MAX_TURN_OUTPUT_CHARS + 1)).toBe(false)
+    })
+
+    test('accepts any render_blocks arguments one turn can emit', () => {
+      expect(MAX_TURN_OUTPUT_CHARS).toBe(MAX_COMPLETION_TOKENS * MAX_CHARS_PER_TOKEN)
+      expect(maxToolArgumentsChars('render_blocks')).toBeGreaterThanOrEqual(
+        MAX_COMPLETION_TOKENS * 4
+      )
     })
 
     test('caps other tools at MAX_TOOL_ARGUMENTS_CHARS', () => {
