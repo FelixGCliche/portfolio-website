@@ -3,10 +3,9 @@ import type { ParentProps } from 'solid-js'
 
 import { ButtonLink, Card } from '@components'
 import { useI18n } from '@features/i18n'
-import { useProfile } from '@features/profile'
+import { displayUrl, useProfile } from '@features/profile'
 import { CopyButton, NextLink, PanelHeader } from '@features/response-blocks'
 
-import { displayUrl } from './displayUrl'
 import { formatRange } from './duration'
 import { buildResumeMarkdown } from './resumeMarkdown'
 import { useEducation, useRoles, useSkills } from './useContent'
@@ -42,10 +41,7 @@ export const ResumeResponse = () => {
   const markdown = () =>
     buildResumeMarkdown({
       profile: {
-        name: profile().name,
-        role: profile().role,
-        location: profile().location,
-        email: profile().email,
+        ...profile(),
         github: displayUrl(profile().github),
         linkedin: displayUrl(profile().linkedin),
       },
