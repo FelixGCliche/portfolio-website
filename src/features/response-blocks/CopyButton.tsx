@@ -1,40 +1,10 @@
+import { Check, Copy } from '@lucide/solid'
 import { createSignal, onCleanup, Show } from 'solid-js'
 
 import { Button } from '@components'
 import { useI18n } from '@features/i18n'
 
 const COPIED_MS = 2000
-
-const CopyIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 16 16"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="square"
-    aria-hidden="true"
-  >
-    <rect x="5.5" y="5.5" width="8" height="8" />
-    <path d="M10.5 3.5v-1h-8v8h1" />
-  </svg>
-)
-
-const CheckIcon = () => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 16 16"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.5"
-    stroke-linecap="square"
-    aria-hidden="true"
-  >
-    <path d="M3 8.5l3 3 7-7" />
-  </svg>
-)
 
 export type CopyButtonProps = {
   // The text to copy, or a function producing it at click time
@@ -94,8 +64,11 @@ export const CopyButton = (props: CopyButtonProps) => {
         aria-label={props.label ? undefined : (props.ariaLabel ?? t('blocks.copy'))}
         onClick={() => void copy()}
       >
-        <Show when={status() === 'copied'} fallback={<CopyIcon />}>
-          <CheckIcon />
+        <Show
+          when={status() === 'copied'}
+          fallback={<Copy aria-hidden="true" size={16} strokeWidth={1.5} />}
+        >
+          <Check aria-hidden="true" size={16} strokeWidth={1.5} />
         </Show>
         <Show when={props.label}>
           <span aria-hidden={status() === 'idle' ? undefined : 'true'}>

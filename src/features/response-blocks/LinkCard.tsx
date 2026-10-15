@@ -1,3 +1,4 @@
+import { ArrowUpRight } from '@lucide/solid'
 import { Show } from 'solid-js'
 
 import { useI18n } from '@features/i18n'
@@ -32,9 +33,7 @@ export const LinkCard = (props: LinkCardProps) => {
         </span>
       </span>
       <Show when={newTab()}>
-        <span class="text-primary flex-none" aria-hidden="true">
-          ↗
-        </span>
+        <ArrowUpRight aria-hidden="true" size={16} class="text-primary flex-none" />
       </Show>
     </a>
   )
