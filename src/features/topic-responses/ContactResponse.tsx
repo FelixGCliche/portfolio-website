@@ -1,3 +1,5 @@
+import { ArrowRight } from '@lucide/solid'
+
 import { ButtonLink, Card } from '@components'
 import { useI18n } from '@features/i18n'
 import { useProfile } from '@features/profile'
@@ -40,7 +42,7 @@ export const ContactResponse = () => {
         <div class="flex flex-wrap items-center gap-x-[18px] gap-y-3">
           <ButtonLink href={mailto()} class="basis-full sm:basis-auto">
             <span>{t('contact.emailMe')}</span>
-            <span aria-hidden="true">→</span>
+            <ArrowRight aria-hidden="true" size={16} />
           </ButtonLink>
         </div>
       </Card>
