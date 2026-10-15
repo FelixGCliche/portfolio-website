@@ -1,7 +1,11 @@
 import { Dynamic } from '@solidjs/web'
-import { createEffect, For, Match, onSettled, Show, Switch } from 'solid-js'
+import { useRouter } from '@tanstack/solid-router'
+import { createEffect, For, Match, onSettled, Show, Switch, untrack } from 'solid-js'
 
 import { useI18n } from '@features/i18n'
+import { BlockActionsProvider, PromptLine } from '@features/response-blocks'
+import { topicRoute } from '@features/topics'
+import type { TopicKey } from '@features/topics'
 
 import { useConversation } from './ConversationProvider'
 import type { AgentMessage, AgentTextMessage, AgentTopicMessage, UserMessage } from './messages'
@@ -22,12 +26,7 @@ const STATUS_WEIGHT: Record<AgentTextMessage['status'], number> = {
 const distanceFromBottom = (el: HTMLElement) => el.scrollHeight - el.scrollTop - el.clientHeight
 
 const UserRow = (props: { message: UserMessage }) => (
-  <div class={`${ROW_CLASS} gap-3 font-medium`}>
-    <span class="text-success flex-none" aria-hidden="true">
-      ›
-    </span>
-    <p class="min-w-0 break-words">{props.message.text}</p>
-  </div>
+  <PromptLine class={ROW_CLASS} text={props.message.text} />
 )
 
 const AGENT_ROW_CLASS = `${ROW_CLASS} flex-col gap-4 pt-3 pl-[26px]`
@@ -86,8 +85,27 @@ const AgentRow = (props: { message: AgentMessage }) => (
 )
 
 export const Thread = () => {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const conversation = useConversation()
+  const router = useRouter()
+  // Re-running the topic the thread already ends on would only duplicate its reply
+  const runTopic = (key: TopicKey) => {
+    const last = untrack(() => conversation.state.messages.at(-1))
+    if (last?.role === 'agent' && last.kind === 'topic' && last.topic === key) return
+    conversation.run(key)
+  }
+  // Hrefs cached per locale and topic; reading locale() keeps callers reactive to language changes
+  const hrefs = new Map<string, string>()
+  const topicHref = (key: TopicKey) => {
+    const lang = locale()
+    const id = `${lang}:${key}`
+    let href = hrefs.get(id)
+    if (href === undefined) {
+      href = router.buildLocation(topicRoute(lang, key)).href
+      hrefs.set(id, href)
+    }
+    return href
+  }
   let threadEl: HTMLDivElement | undefined
   let pinned = true
 
@@ -147,11 +165,13 @@ export const Thread = () => {
         { 'py-6': conversation.hasMessages() },
       ]}
     >
-      <For each={conversation.state.messages}>
-        {(message) =>
-          message.role === 'user' ? <UserRow message={message} /> : <AgentRow message={message} />
-        }
-      </For>
+      <BlockActionsProvider runTopic={runTopic} topicHref={topicHref}>
+        <For each={conversation.state.messages}>
+          {(message) =>
+            message.role === 'user' ? <UserRow message={message} /> : <AgentRow message={message} />
+          }
+        </For>
+      </BlockActionsProvider>
     </div>
   )
 }
