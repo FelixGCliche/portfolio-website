@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
-import { profile } from '@content'
+import { about, profile } from '@content'
 
 import { isSafeHref } from '@features/safe-links'
 
@@ -349,4 +349,13 @@ describe('streaming', () => {
       '/skills',
     ])
   })
+})
+
+describe('about content', () => {
+  test.each(about.map((entry) => [entry.locale, entry.body] as const))(
+    'the %s about body points to /work and /skills as topic links',
+    (_, body) => {
+      expect(blockLinks(parseMarkdown(body))).toEqual(['/work', '/skills'])
+    }
+  )
 })
