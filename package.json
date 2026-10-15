@@ -19,6 +19,7 @@
     "fix:format": "oxfmt"
   },
   "dependencies": {
+    "@lucide/solid": "^1.57.0",
     "@solidjs/web": "2.0.0-rc.8",
     "@tanstack/ai": "0.65.1",
     "@tanstack/ai-client": "0.38.0",

@@ -1,3 +1,4 @@
+import { Menu } from '@lucide/solid'
 // eslint-disable-next-line solid/imports -- solid-js 2.x has no intrinsic-element prop types; the renderer package owns them
 import type { ComponentProps } from '@solidjs/web'
 import { createLink } from '@tanstack/solid-router'
@@ -235,17 +236,7 @@ export const SidebarTrigger = (props: SidebarTriggerProps) => {
         props.class,
       ]}
     >
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.5"
-        stroke-linecap="square"
-        class="size-5 md:size-4"
-      >
-        <path d="M3.5 5.5h17M3.5 12h17M3.5 18.5h17" />
-      </svg>
+      <Menu aria-hidden="true" strokeWidth={1.5} class="size-5 md:size-4" />
       <span class="sr-only">{props.label ?? 'Toggle sidebar'}</span>
     </button>
   )

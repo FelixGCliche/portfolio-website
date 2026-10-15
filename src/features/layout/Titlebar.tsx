@@ -1,3 +1,4 @@
+import { Search } from '@lucide/solid'
 import { formatForDisplay } from '@tanstack/hotkeys'
 
 import { SidebarTrigger } from '@components'
@@ -52,18 +53,7 @@ export const Titlebar = () => {
           class="text-muted-foreground hover:text-primary hover:bg-muted focus-visible:ring-ring inline-flex min-w-11 items-center justify-center px-3 text-[11.5px] focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:min-w-0"
         >
           <span class="sr-only">{t('titlebar.openPalette')}</span>
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="square"
-            class="size-5 md:hidden"
-          >
-            <circle cx="11" cy="11" r="6.5" />
-            <path d="m16 16 4.5 4.5" />
-          </svg>
+          <Search aria-hidden="true" strokeWidth={1.5} class="size-5 md:hidden" />
           <span aria-hidden="true" class="hidden whitespace-nowrap md:inline">
             {paletteLabel}
           </span>
