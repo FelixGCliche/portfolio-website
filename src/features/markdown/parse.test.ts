@@ -290,6 +290,31 @@ describe('streaming', () => {
     expect(inlines('**bold*')).toEqual([text('**bold*')])
   })
 
+  test.each(['-', '- ', '*', '* ', '•', '1.', '1. ', '2)'])(
+    'emits nothing for a trailing bare marker %p until content arrives',
+    (marker) => {
+      expect(parseMarkdown(marker)).toEqual([])
+      expect(parseMarkdown(`Intro\n${marker}`)).toEqual([paragraph(text('Intro'))])
+      expect(parseMarkdown(`- a\n${marker}`)).toEqual([
+        { type: 'list', ordered: false, items: [[text('a')]] },
+      ])
+    }
+  )
+
+  test('keeps a bare marker followed by more lines as paragraph text', () => {
+    expect(parseMarkdown('-\nnext')).toEqual([paragraph(text('-\nnext'))])
+    expect(parseMarkdown('1.\n\nnext')).toEqual([paragraph(text('1.')), paragraph(text('next'))])
+  })
+
+  test('a growing list item never passes through an empty item', () => {
+    for (const src of ['- a\n', '- a\n-', '- a\n- ', '- a\n- b']) {
+      const [block, ...rest] = parseMarkdown(src)
+      expect(rest).toEqual([])
+      expect(block?.type).toBe('list')
+      if (block?.type === 'list') for (const item of block.items) expect(item).not.toEqual([])
+    }
+  })
+
   test('never emits a link before its href is complete', () => {
     for (const src of ['[foo', '[foo]', '[foo](', '[foo](htt', '[foo](https://github.com/Fel']) {
       expect(blockLinks(parseMarkdown(src))).toEqual([])

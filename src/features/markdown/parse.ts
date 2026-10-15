@@ -11,7 +11,9 @@ export type MdBlock =
   | { type: 'list'; ordered: false; items: MdInline[][] }
   | { type: 'list'; ordered: true; start: number; items: MdInline[][] }
 
-const LIST_ITEM = /^\s*(?:([-*•])|(\d{1,9})[.)])\s+(.*)$/
+const LIST_ITEM = /^\s*(?:([-*•])|(\d{1,9})[.)])\s+(\S.*)$/
+// A list marker with no content yet: held back while it is the last (streaming) line
+const BARE_MARKER = /^\s*(?:[-*•]|\d{1,9}[.)])\s*$/
 const HEADING = /^\s*#{1,6}\s+(.*?)(?:\s+#+)?\s*$/
 const WORD_CHAR = /[\p{L}\p{N}]/u
 const PUNCTUATION = /[!-/:-@[-`{-~]/
@@ -203,6 +205,8 @@ export const parseMarkdown = (src: string): MdBlock[] => {
     const item = LIST_ITEM.exec(line)
     if (!line.trim()) {
       if (!continuesList(index)) flush()
+    } else if (index === lines.length - 1 && BARE_MARKER.test(line)) {
+      // Emit nothing until content arrives, so it never flickers between paragraph and list
     } else if (heading) {
       flush()
       blocks.push({
