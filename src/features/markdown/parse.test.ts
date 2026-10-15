@@ -252,6 +252,19 @@ describe('inlines', () => {
     ])
   })
 
+  test('uses the href as the label of a link with an empty label', () => {
+    expect(inlines('see [](/about) or [ ](https://github.com/x)')).toEqual([
+      text('see '),
+      { type: 'link', href: '/about', children: [text('/about')] },
+      text(' or '),
+      { type: 'link', href: 'https://github.com/x', children: [text('https://github.com/x')] },
+    ])
+  })
+
+  test('drops a link with an empty label and href, or an unsafe href', () => {
+    expect(inlines('a []() b [](javascript:x) c')).toEqual([text('a  b  c')])
+  })
+
   test('does not nest links inside a link label', () => {
     expect(inlines('[a [b](/work)](/about)')).toEqual([
       { type: 'link', href: '/about', children: [text('a [b](/work)')] },

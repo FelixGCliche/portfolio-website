@@ -137,8 +137,14 @@ const parseInlines = (text: string, allowLinks = true): MdInline[] => {
         pushText(out, char)
         index++
       } else {
-        const children = parseInlines(text.slice(index + 1, labelEnd), false)
+        const label = text.slice(index + 1, labelEnd)
         const href = text.slice(labelEnd + 2, hrefEnd).trim()
+        // An empty label falls back to a safe href so the link stays visible; otherwise it drops
+        const children: MdInline[] = label.trim()
+          ? parseInlines(label, false)
+          : isSafeHref(href)
+            ? [{ type: 'text', text: href }]
+            : []
         if (isSafeHref(href)) out.push({ type: 'link', href, children })
         else
           for (const child of children) {
