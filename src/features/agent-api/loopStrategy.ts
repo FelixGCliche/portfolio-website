@@ -4,16 +4,30 @@ import { renderBlocksTool } from '@features/agent-tools'
 
 type LoopMessage = Parameters<AgentLoopStrategy>[0]['messages'][number]
 
-/** True once the model has called `render_blocks` after the visitor's latest message. */
+/**
+ * True once a `render_blocks` call made after the visitor's latest message has succeeded. A call
+ * whose result carries an error (e.g. arguments that failed schema validation) does not count, so
+ * the model gets another turn to retry.
+ */
 export const hasRenderedBlocksThisRun = (messages: readonly LoopMessage[]): boolean => {
   const lastUser = messages.findLastIndex((message) => message.role === 'user')
-  return messages
-    .slice(lastUser + 1)
-    .some(
-      (message) =>
-        message.role === 'assistant' &&
-        message.toolCalls?.some((call) => call.function.name === renderBlocksTool.name)
+  const run = messages.slice(lastUser + 1)
+  const renderCallIds = new Set(
+    run.flatMap((message) =>
+      message.role === 'assistant'
+        ? (message.toolCalls ?? [])
+            .filter((call) => call.function.name === renderBlocksTool.name)
+            .map((call) => call.id)
+        : []
     )
+  )
+  return run.some(
+    (message) =>
+      message.role === 'tool' &&
+      message.toolCallId !== undefined &&
+      renderCallIds.has(message.toolCallId) &&
+      message.error === undefined
+  )
 }
 
 /**
