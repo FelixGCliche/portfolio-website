@@ -74,9 +74,23 @@
   --radius-xl: calc(var(--radius) + 4px);
 
   --font-grotesk-mono: 'PP Right Grotesk Mono', monospace;
+
+  /* Inline so var(--chars) resolves on the animated element, not on :root */
+  --animate-typing: typing 0.5s steps(var(--chars, 1), end) both;
 }
 
 @theme {
+  --text-body: 13.5px;
+  --text-body--line-height: 1.7;
+  --text-lead: 15px;
+  --text-label: 12px;
+  --text-label--letter-spacing: 0.08em;
+  --text-eyebrow: 12px;
+  --text-eyebrow--letter-spacing: 0.16em;
+  --text-title: 26px;
+  --text-title--letter-spacing: -0.015em;
+  --text-title--line-height: 1.2;
+
   --animate-caret-blink: caret-blink 1s step-end infinite;
   --animate-rise: rise 180ms ease-out both;
 
@@ -88,6 +102,12 @@
     to {
       opacity: 1;
       transform: none;
+    }
+  }
+
+  @keyframes typing {
+    from {
+      width: 0;
     }
   }
 

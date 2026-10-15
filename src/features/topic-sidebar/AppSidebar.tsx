@@ -1,3 +1,4 @@
+import { X } from '@lucide/solid'
 import { For, Show } from 'solid-js'
 
 import {
@@ -50,17 +51,7 @@ export const AppSidebar = () => {
               onClick={() => sidebar.setOpenMobile(false)}
               class="text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-ring ml-auto inline-flex size-11 flex-none items-center justify-center focus-visible:ring-2 focus-visible:outline-none"
             >
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="square"
-                class="size-5"
-              >
-                <path d="M6 6l12 12M18 6L6 18" />
-              </svg>
+              <X aria-hidden="true" strokeWidth={1.5} class="size-5" />
             </button>
           </Show>
         </div>
