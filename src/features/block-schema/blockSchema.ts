@@ -25,7 +25,7 @@ const headingBlock = z.object({
 const proseBlock = z.object({
   type: z.literal('prose').describe('A paragraph of text.'),
   text: text(600).describe(
-    'The text, at most 600 characters. Light markdown is allowed: **bold**, *italic*, `code`, [label](/topic) links and "- " lists.'
+    `The text, at most 600 characters. Light markdown is allowed: **bold**, *italic*, \`code\`,[label](topic-key) links and "- " lists. A link target must be exactly one of these topic keys: ${TOPIC_KEYS.join(', ')}; never any other URL or path.`
   ),
   tone: z
     .enum(['lead', 'body', 'quote'])
