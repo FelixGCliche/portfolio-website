@@ -39,6 +39,27 @@ describe('hasRenderedBlocksThisRun', () => {
     expect(hasRenderedBlocksThisRun([user, blocksTurn, toolResult])).toBe(true)
   })
 
+  test('is false until the render_blocks call has a result', () => {
+    expect(hasRenderedBlocksThisRun([user, blocksTurn])).toBe(false)
+  })
+
+  test('is false when the render_blocks call failed, so the model can retry', () => {
+    const failed: ModelMessage = {
+      role: 'tool',
+      content: '{"error":"Input validation failed for tool render_blocks"}',
+      toolCallId: 'call-1',
+      error: 'Input validation failed for tool render_blocks',
+    }
+    expect(hasRenderedBlocksThisRun([user, blocksTurn, failed])).toBe(false)
+    const retry: ModelMessage = {
+      role: 'assistant',
+      content: '',
+      toolCalls: [call('render_blocks', 'call-2')],
+    }
+    const retried: ModelMessage = { role: 'tool', content: '{}', toolCallId: 'call-2' }
+    expect(hasRenderedBlocksThisRun([user, blocksTurn, failed, retry, retried])).toBe(true)
+  })
+
   test('ignores render_blocks calls from earlier turns of the conversation', () => {
     const next: ModelMessage = { role: 'user', content: 'and your skills?' }
     expect(hasRenderedBlocksThisRun([user, blocksTurn, toolResult, next])).toBe(false)
