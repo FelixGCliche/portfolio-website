@@ -2,10 +2,14 @@
 import type { JSX } from '@solidjs/web'
 import { For } from 'solid-js'
 
+import { cn } from '@components'
 import { useI18n } from '@features/i18n'
 import type { TopicKey } from '@features/topic-keys'
 
 import { useBlockActions } from './BlockActions'
+
+// The inline text-link look shared by topic links and links in rendered markdown
+export const LINK_CLASS = 'focus-ring text-primary underline underline-offset-4 hover:opacity-80'
 
 const isPlainClick = (event: MouseEvent) =>
   event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey
@@ -30,7 +34,7 @@ export const NextLink = (props: NextLinkProps) => {
     <a
       href={actions.topicHref(props.topic)}
       onClick={onClick}
-      class="focus-ring text-primary inline-flex min-h-11 items-center px-2 underline underline-offset-4 hover:opacity-80"
+      class={cn(LINK_CLASS, 'inline-flex min-h-11 items-center px-2')}
     >
       {props.children ?? props.topic}
     </a>
