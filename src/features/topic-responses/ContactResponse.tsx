@@ -11,7 +11,7 @@ export const ContactResponse = () => {
   const profile = useProfile()
 
   const mailto = () =>
-    `mailto:${profile().email}?subject=${encodeURIComponent(t('contact.subject'))}`
+    `mailto:${encodeURIComponent(profile().email).replace('%40', '@')}?subject=${encodeURIComponent(t('contact.subject'))}`
 
   return (
     <div class="flex flex-col gap-[22px]">
