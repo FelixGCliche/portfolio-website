@@ -11,5 +11,8 @@ export const monthsBetween = (start: string, end: string | null, now?: Date): nu
   return Math.max(1, endIndex - toMonthIndex(start) + 1)
 }
 
-export const formatRange = (start: string, end: string | null, presentLabel: string): string =>
-  `${start} → ${end ?? presentLabel}`
+export const formatRange = (
+  start: string | number,
+  end: string | number | null,
+  presentLabel: string
+): string => `${start} → ${end ?? presentLabel}`

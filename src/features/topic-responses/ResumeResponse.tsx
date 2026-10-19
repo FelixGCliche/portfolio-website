@@ -102,7 +102,7 @@ export const ResumeResponse = () => {
 
       <Section
         label={t('resume.section.education')}
-        meta={`${education().start} → ${education().end}`}
+        meta={formatRange(education().start, education().end, t('work.present'))}
       >
         <Card class="gap-0.5 px-5 py-3.5">
           <span class="text-foreground font-bold">{education().degree}</span>

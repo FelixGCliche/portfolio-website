@@ -13,8 +13,8 @@ const input = {
   },
   summary: 'Builds things.\n',
   roles: [
-    { title: 'Dev', company: 'Acme', start: '2023-05', end: '2024-04' },
-    { title: 'Lead', company: 'Beta', start: '2024-05', end: null },
+    { title: 'Dev', company: 'Acme', start: '2023-05', end: '2024-04', bullets: ['Shipped it'] },
+    { title: 'Lead', company: 'Beta', start: '2024-05', end: null, bullets: [] },
   ],
   education: { degree: 'BSc', school: 'UdeM', start: 2018, end: 2021 },
   skills: [{ area: 'Frontend', tools: ['Solid', 'TypeScript'] }],
@@ -32,11 +32,24 @@ describe('buildResumeMarkdown', () => {
     const md = buildResumeMarkdown(input)
     expect(md).toContain('# Jane Doe\n\nDeveloper · Montreal\n')
     expect(md).toContain('jane@example.com · github.com/jane · linkedin.com/in/jane')
-    expect(md).toContain('## profile\n\nBuilds things.\n')
-    expect(md).toContain('- **Dev** @ Acme (2023-05 → 2024-04)')
+    expect(md).toContain('## Profile\n\nBuilds things.\n')
+    expect(md).toContain('## Experience\n\n')
+    expect(md).toContain('- **Dev** @ Acme (2023-05 → 2024-04)\n  - Shipped it\n- **Lead**')
     expect(md).toContain('- **Lead** @ Beta (2024-05 → present)')
-    expect(md).toContain('## education\n\n- **BSc** @ UdeM (2018 → 2021)')
-    expect(md).toContain('- **Frontend:** Solid · TypeScript')
+    expect(md).toContain('## Education\n\n- **BSc** @ UdeM (2018 → 2021)')
+    expect(md).toContain('## Skills\n\n- **Frontend:** Solid · TypeScript')
     expect(md.endsWith('\n')).toBe(true)
+  })
+
+  test('escapes markdown syntax in titles, names and tools', () => {
+    const md = buildResumeMarkdown({
+      ...input,
+      roles: [{ title: '*Star* dev', company: 'C# Co', start: '2023-05', end: null, bullets: [] }],
+      education: { degree: 'B_Sc', school: '[UdeM]', start: 2018, end: 2021 },
+      skills: [{ area: 'Back_end', tools: ['C#', 'Node_js', '<T>'] }],
+    })
+    expect(md).toContain('- **\\*Star\\* dev** @ C\\# Co (2023-05 → present)')
+    expect(md).toContain('- **B\\_Sc** @ \\[UdeM\\] (2018 → 2021)')
+    expect(md).toContain('- **Back\\_end:** C\\# · Node\\_js · \\<T\\>')
   })
 })

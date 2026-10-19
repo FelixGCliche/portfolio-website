@@ -25,4 +25,8 @@ describe('formatRange', () => {
     expect(formatRange('2023-05', '2024-04', 'present')).toBe('2023-05 → 2024-04')
     expect(formatRange('2023-05', null, 'present')).toBe('2023-05 → present')
   })
+
+  test('numeric years', () => {
+    expect(formatRange(2018, 2021, 'present')).toBe('2018 → 2021')
+  })
 })
