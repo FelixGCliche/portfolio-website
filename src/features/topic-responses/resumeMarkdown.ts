@@ -52,7 +52,7 @@ export const buildResumeMarkdown = (input: ResumeMarkdownInput): string => {
     '',
     ...roles.flatMap((role) => [
       `- **${escapeMarkdown(role.title)}** @ ${escapeMarkdown(role.company)} (${formatRange(role.start, role.end, labels.present)})`,
-      ...role.bullets.map((bullet) => `  - ${bullet}`),
+      ...role.bullets.map((bullet) => `  - ${escapeMarkdown(bullet)}`),
     ]),
     '',
     heading(labels.education),

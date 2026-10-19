@@ -44,11 +44,20 @@ describe('buildResumeMarkdown', () => {
   test('escapes markdown syntax in titles, names and tools', () => {
     const md = buildResumeMarkdown({
       ...input,
-      roles: [{ title: '*Star* dev', company: 'C# Co', start: '2023-05', end: null, bullets: [] }],
+      roles: [
+        {
+          title: '*Star* dev',
+          company: 'C# Co',
+          start: '2023-05',
+          end: null,
+          bullets: ['Used *bold* _it_'],
+        },
+      ],
       education: { degree: 'B_Sc', school: '[UdeM]', start: 2018, end: 2021 },
       skills: [{ area: 'Back_end', tools: ['C#', 'Node_js', '<T>'] }],
     })
     expect(md).toContain('- **\\*Star\\* dev** @ C\\# Co (2023-05 → present)')
+    expect(md).toContain('  - Used \\*bold\\* \\_it\\_')
     expect(md).toContain('- **B\\_Sc** @ \\[UdeM\\] (2018 → 2021)')
     expect(md).toContain('- **Back\\_end:** C\\# · Node\\_js · \\<T\\>')
   })
