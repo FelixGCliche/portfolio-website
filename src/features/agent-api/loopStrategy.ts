@@ -1,6 +1,6 @@
 import { type AgentLoopStrategy, combineStrategies, maxIterations } from '@tanstack/ai'
 
-import { renderBlocksTool } from '@features/agent-tools'
+import { isErrorContent, renderBlocksTool } from '@features/agent-tools'
 
 type LoopMessage = Parameters<AgentLoopStrategy>[0]['messages'][number]
 
@@ -25,7 +25,10 @@ export const endedWithRenderedBlocks = (messages: readonly LoopMessage[]): boole
   return calls.every((call) =>
     run.some(
       (message) =>
-        message.role === 'tool' && message.toolCallId === call.id && message.error === undefined
+        message.role === 'tool' &&
+        message.toolCallId === call.id &&
+        message.error === undefined &&
+        !isErrorContent(message.content)
     )
   )
 }

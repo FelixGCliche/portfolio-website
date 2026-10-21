@@ -68,6 +68,15 @@ describe('endedWithRenderedBlocks', () => {
     expect(endedWithRenderedBlocks([user, blocksTurn, failed, retry, result('call-2')])).toBe(true)
   })
 
+  test('is false when the failure is only reported in the tool message content', () => {
+    const failed: ModelMessage = {
+      role: 'tool',
+      content: '{"error":"Input validation failed for tool render_blocks"}',
+      toolCallId: 'call-1',
+    }
+    expect(endedWithRenderedBlocks([user, blocksTurn, failed])).toBe(false)
+  })
+
   test('ignores render_blocks calls from earlier turns of the conversation', () => {
     const next: ModelMessage = { role: 'user', content: 'and your skills?' }
     expect(endedWithRenderedBlocks([user, blocksTurn, toolResult, next])).toBe(false)

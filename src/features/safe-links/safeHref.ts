@@ -56,12 +56,22 @@ const decodeAddress = (address: string): string | undefined => {
   }
 }
 
+/**
+ * The decoded, lowercased recipient of a `mailto:` href, ignoring any query. `undefined` when
+ * `href` is not a mailto or its address is not valid percent-encoding.
+ */
+export const mailtoRecipient = (href: string): string | undefined => {
+  if (!href.startsWith(MAILTO)) return undefined
+  const rest = href.slice(MAILTO.length)
+  const queryStart = rest.indexOf('?')
+  return decodeAddress(queryStart === -1 ? rest : rest.slice(0, queryStart))?.toLowerCase()
+}
+
 const isSafeMailto = (href: string): boolean => {
   const rest = href.slice(MAILTO.length)
   const queryStart = rest.indexOf('?')
-  const address = queryStart === -1 ? rest : rest.slice(0, queryStart)
-  const decoded = decodeAddress(address)
-  if (decoded === undefined || !PROFILE_EMAILS.has(decoded.toLowerCase())) return false
+  const recipient = mailtoRecipient(href)
+  if (recipient === undefined || !PROFILE_EMAILS.has(recipient)) return false
   if (queryStart === -1) return true
   const params = new URLSearchParams(rest.slice(queryStart + 1))
   return [...params.keys()].every((key) => ALLOWED_MAILTO_PARAMS.has(key.toLowerCase()))

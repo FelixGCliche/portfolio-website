@@ -8,6 +8,7 @@ import {
   MAX_CHARS_PER_TOKEN,
   MAX_COMPLETION_TOKENS,
   MAX_TOOL_ARGUMENTS_CHARS,
+  MAX_TOTAL_TOOL_ARGUMENTS_CHARS,
   MAX_TURN_OUTPUT_CHARS,
   MAX_USER_MESSAGE_CHARS,
   maxToolArgumentsChars,
@@ -126,6 +127,30 @@ describe('parseChatRequest', () => {
     test('keeps the text history cap independent of the render_blocks limit', () => {
       expect(MAX_HISTORY_MESSAGE_CHARS).toBe(8000)
       expect(maxToolArgumentsChars('render_blocks')).toBeGreaterThan(MAX_HISTORY_MESSAGE_CHARS)
+    })
+
+    test('caps total tool arguments across the history', () => {
+      const turn = (n: number, length: number) => [
+        {
+          id: `a${n}`,
+          role: 'assistant',
+          toolCalls: [{ ...call('render_blocks', length), id: `c${n}` }],
+        },
+        { id: `t${n}`, role: 'tool', toolCallId: `c${n}`, content: '{}' },
+      ]
+      const history = (turns: number) =>
+        parseChatRequest(
+          body({
+            messages: [
+              userMessage('hi'),
+              ...Array.from({ length: turns }, (_, i) => turn(i, MAX_TURN_OUTPUT_CHARS)).flat(),
+            ],
+          }),
+          ['render_blocks']
+        ).ok
+      expect(history(4)).toBe(true)
+      expect(history(5)).toBe(false)
+      expect(MAX_TOTAL_TOOL_ARGUMENTS_CHARS).toBe(4 * MAX_TURN_OUTPUT_CHARS)
     })
 
     test('caps other tools at MAX_TOOL_ARGUMENTS_CHARS', () => {
