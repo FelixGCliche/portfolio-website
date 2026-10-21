@@ -3,7 +3,6 @@ import { For } from 'solid-js'
 import { useI18n } from '@features/i18n'
 import {
   BulletList,
-  DurationBar,
   NextLinks,
   PanelHeader,
   Tag,
@@ -32,7 +31,6 @@ export const WorkResponse = () => {
             >
               <div class="flex items-center gap-2.5">
                 <Tag>{t('work.months', { count: monthsBetween(role.start, role.end) })}</Tag>
-                <DurationBar months={monthsBetween(role.start, role.end)} />
               </div>
               <div class="text-secondary-foreground">
                 <BulletList items={role.bullets} />
