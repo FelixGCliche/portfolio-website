@@ -61,4 +61,28 @@ describe('buildResumeMarkdown', () => {
     expect(md).toContain('- **B\\_Sc** @ \\[UdeM\\] (2018 → 2021)')
     expect(md).toContain('- **Back\\_end:** C\\# · Node\\_js · \\<T\\>')
   })
+
+  test('escapes tables, entities, links, strikethrough and list markers', () => {
+    const md = buildResumeMarkdown({
+      ...input,
+      roles: [
+        {
+          title: 'A|B & C',
+          company: '![x](y) ~~z~~',
+          start: '2023-05',
+          end: null,
+          bullets: ['- nested', '+ plus', '1. ordered', 'trailing -', 'mid-word C++ a+b', 'a\\-'],
+        },
+      ],
+      skills: [{ area: 'Tools', tools: ['-', 'C++'] }],
+    })
+    expect(md).toContain('- **A\\|B \\& C** @ \\!\\[x\\]\\(y\\) \\~\\~z\\~\\~ (2023-05 → present)')
+    expect(md).toContain('  - \\- nested\n')
+    expect(md).toContain('  - \\+ plus\n')
+    expect(md).toContain('  - 1\\. ordered\n')
+    expect(md).toContain('  - trailing \\-\n')
+    expect(md).toContain('  - mid-word C++ a+b\n')
+    expect(md).toContain('  - a\\\\\\-\n')
+    expect(md).toContain('- **Tools:** \\- · C+\\+')
+  })
 })
