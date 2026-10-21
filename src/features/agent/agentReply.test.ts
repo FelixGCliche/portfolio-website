@@ -1,8 +1,9 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, spyOn, test } from 'bun:test'
 
 import type { UIMessage } from '@tanstack/ai-client'
 
-import type { Block } from '@features/block-schema'
+import * as blockSchemaModule from '@features/block-schema'
+import { type Block, MAX_BLOCKS } from '@features/block-schema'
 import type { ReplyPart } from '@features/conversation'
 
 import { mapTurnReply, replyParts, turnMessages } from './agentReply'
@@ -172,6 +173,81 @@ describe('replyParts', () => {
     expect(
       replyParts([message('a1', [blocksCall('call-1', fullArgs, 'input-streaming')])], true)
     ).toEqual([blocksPart('call-1', [heading, tags])])
+  })
+})
+
+describe('replyParts streaming cache', () => {
+  const headings = (count: number): Block[] =>
+    Array.from({ length: count }, (_, i) => ({ type: 'heading', label: `H${i}` }))
+
+  // The blocks shown for one call with `args`, in `state`.
+  const shown = (id: string, args: string, state: CallState, settled = false): Block[] => {
+    const [part] = replyParts([message('a1', [blocksCall(id, args, state)])], settled)
+    return part?.kind === 'blocks' ? part.blocks : []
+  }
+
+  // Every prefix of `args`, as the arguments of a streaming call.
+  const stream = (id: string, args: string): Block[][] =>
+    Array.from({ length: args.length }, (_, i) =>
+      shown(id, args.slice(0, i + 1), 'input-streaming')
+    )
+
+  test('streams append-only blocks that keep their identity', () => {
+    const all = headings(3)
+    const args = JSON.stringify({ blocks: all })
+    let previous: Block[] = []
+    for (const blocks of stream('cache-append', args)) {
+      expect(blocks.length).toBeGreaterThanOrEqual(previous.length)
+      previous.forEach((block, i) => expect(blocks[i]).toBe(block))
+      previous = blocks
+    }
+    expect(previous).toEqual(all.slice(0, 2))
+    const final = shown('cache-append', args, 'input-complete')
+    expect(final).toEqual(all)
+    expect(final[0]).toBe(previous[0])
+    expect(final[1]).toBe(previous[1])
+  })
+
+  test('validates each closed element once', () => {
+    const spy = spyOn(blockSchemaModule, 'parseBlocksLenient')
+    try {
+      const args = JSON.stringify({ blocks: headings(4) })
+      stream('cache-once', args)
+      shown('cache-once', args, 'input-complete')
+      const validated = spy.mock.calls.reduce(
+        (count, [value]) => count + (Array.isArray(value) ? value.length : 0),
+        0
+      )
+      expect(validated).toBe(4)
+    } finally {
+      spy.mockRestore()
+    }
+  })
+
+  test('appends the held-back block once when the stream settles', () => {
+    const args = JSON.stringify({ blocks: headings(3) })
+    const streaming = shown('cache-settle', args, 'input-streaming')
+    expect(streaming).toEqual(headings(2))
+    const settled = shown('cache-settle', args, 'input-streaming', true)
+    expect(settled).toEqual(headings(3))
+    expect(settled[0]).toBe(streaming[0])
+    expect(shown('cache-settle', args, 'input-streaming', true)).toEqual(headings(3))
+  })
+
+  test('caps the blocks at MAX_BLOCKS across chunks, skipping invalid ones', () => {
+    const all = headings(MAX_BLOCKS + 2)
+    const args = JSON.stringify({ blocks: [{ type: 'nope' }, ...all] })
+    for (const blocks of stream('cache-cap', args))
+      expect(blocks.length).toBeLessThanOrEqual(MAX_BLOCKS)
+    expect(shown('cache-cap', args, 'input-complete')).toEqual(all.slice(0, MAX_BLOCKS))
+  })
+
+  test('starts over when a call id is reused with other arguments', () => {
+    const first = JSON.stringify({ blocks: headings(3) })
+    expect(shown('cache-reuse', first, 'input-streaming')).toEqual(headings(2))
+    const other = JSON.stringify({ blocks: [tags, heading, tags] })
+    expect(shown('cache-reuse', other, 'input-streaming')).toEqual([tags, heading])
+    expect(shown('cache-reuse', other, 'input-complete')).toEqual([tags, heading, tags])
   })
 })
 
