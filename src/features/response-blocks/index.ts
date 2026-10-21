@@ -1,7 +1,6 @@
 export * from './BlockActions'
 export * from './BulletList'
 export * from './CopyButton'
-export * from './DurationBar'
 export * from './KeyValue'
 export * from './LinkCard'
 export * from './NextLinks'
