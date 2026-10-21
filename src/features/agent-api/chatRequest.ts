@@ -33,6 +33,11 @@ export const TOOL_ARGUMENTS_CHARS_BY_TOOL: Readonly<Record<string, number>> = {
 /** Longest accepted JSON arguments string for a call to the tool named `name`, in characters. */
 export const maxToolArgumentsChars = (name: string): number =>
   TOOL_ARGUMENTS_CHARS_BY_TOOL[name] ?? MAX_TOOL_ARGUMENTS_CHARS
+/**
+ * Most tool call argument characters accepted across the whole history. Per-call caps alone would
+ * let a request carry megabytes of arguments to the model; this allows about four maximal turns.
+ */
+export const MAX_TOTAL_TOOL_ARGUMENTS_CHARS = 4 * MAX_TURN_OUTPUT_CHARS
 
 const idSchema = z.string().min(1).max(128)
 
@@ -113,12 +118,19 @@ export const createChatRequestSchema = (toolNames: readonly string[] = []) => {
       .max(MAX_MESSAGES)
       .superRefine((messages, ctx) => {
         const callIds = new Set<string>()
+        let totalArgumentChars = 0
         for (const message of messages) {
           if (message.role === 'assistant') {
-            for (const call of message.toolCalls ?? []) callIds.add(call.id)
+            for (const call of message.toolCalls ?? []) {
+              callIds.add(call.id)
+              totalArgumentChars += call.function.arguments.length
+            }
           } else if (message.role === 'tool' && !callIds.has(message.toolCallId)) {
             ctx.addIssue({ code: 'custom', message: 'Tool result without a matching tool call.' })
           }
+        }
+        if (totalArgumentChars > MAX_TOTAL_TOOL_ARGUMENTS_CHARS) {
+          ctx.addIssue({ code: 'custom', message: 'Tool call arguments are too long in total.' })
         }
         if (!messages.some((message) => message.role === 'user')) {
           ctx.addIssue({ code: 'custom', message: 'The conversation has no user message.' })

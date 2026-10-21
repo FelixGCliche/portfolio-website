@@ -1,6 +1,7 @@
 import { parsePartialJSON } from '@tanstack/ai-client'
 import type { UIMessage } from '@tanstack/ai-client'
 
+import { isErrorContent, isErrorOutput } from '@features/agent-tools'
 import { MAX_BLOCKS, parseBlocksLenient } from '@features/block-schema'
 import type { Block } from '@features/block-schema'
 import type { AgentReply, ReplyPart } from '@features/conversation'
@@ -35,20 +36,9 @@ type MessagePart = UIMessage['parts'][number]
 type ToolCallPart = Extract<MessagePart, { type: 'tool-call' }>
 type ToolResultPart = Extract<MessagePart, { type: 'tool-result' }>
 
-// Whether a tool output reports an error instead of a result.
-const isErrorOutput = (output: unknown): boolean =>
-  typeof output === 'object' && output !== null && 'error' in output
-
-// Whether a tool result's content reports an error, e.g. the server rejecting invalid arguments.
-const isErrorResult = (result: ToolResultPart): boolean => {
-  if (result.state === 'error' || result.error !== undefined) return true
-  if (typeof result.content !== 'string') return false
-  try {
-    return isErrorOutput(JSON.parse(result.content))
-  } catch {
-    return false
-  }
-}
+// Whether a tool result reports an error, e.g. the server rejecting invalid arguments.
+const isErrorResult = (result: ToolResultPart): boolean =>
+  result.state === 'error' || result.error !== undefined || isErrorContent(result.content)
 
 // Whether the whole call was rejected (failed validation or execution): none of its blocks show.
 const isRejected = (part: ToolCallPart, results: ReadonlyMap<string, ToolResultPart>): boolean => {
@@ -71,9 +61,11 @@ const isWholeJSON = (text: string): boolean => {
  * Validated blocks of a streaming call, by tool call id: `blocks` came from the first `closed`
  * elements of the raw array parsed out of `args`. Closed elements are final (a later element has
  * started), so they are validated once and reused while the arguments grow. Entries are dropped
- * once the call is whole or rejected, and the map is bounded so abandoned streams can't pile up.
+ * rejected. A whole call keeps its final blocks (`whole`), reused only for the exact same arguments,
+ * so finished calls aren't re-parsed on every later read. The map is bounded so abandoned calls
+ * can't pile up, and an id reused with other arguments (e.g. by another conversation) starts over.
  */
-type CallCache = { args: string; closed: number; blocks: Block[] }
+type CallCache = { args: string; input: unknown; whole: boolean; closed: number; blocks: Block[] }
 const callCache = new Map<string, CallCache>()
 const MAX_CACHED_CALLS = 16
 
@@ -92,6 +84,11 @@ const cacheCall = (id: string, entry: CallCache) => {
 const cachedCall = (part: ToolCallPart, end: number): CallCache | undefined => {
   const entry = callCache.get(part.id)
   if (!entry) return undefined
+  if (entry.whole) {
+    if (entry.args === part.arguments && entry.input === part.input) return entry
+    callCache.delete(part.id)
+    return undefined
+  }
   if (entry.closed <= end && part.arguments.startsWith(entry.args)) return entry
   callCache.delete(part.id)
   return undefined
@@ -115,6 +112,11 @@ const callBlocks = (part: ToolCallPart, finished: boolean, settled: boolean): Bl
   const whole = finished || (settled && (part.input !== undefined || isWholeJSON(part.arguments)))
   const end = whole ? raw.length : Math.max(raw.length - 1, 0)
   const cached = cachedCall(part, end)
+  if (cached?.whole) {
+    if (whole) return [...cached.blocks]
+    callCache.delete(part.id)
+    return callBlocks(part, finished, settled)
+  }
   const closed = cached?.closed ?? 0
   const head = cached?.blocks ?? []
   const tail =
@@ -122,8 +124,7 @@ const callBlocks = (part: ToolCallPart, finished: boolean, settled: boolean): Bl
       ? parseBlocksLenient(raw.slice(closed, end), MAX_BLOCKS - head.length)
       : []
   const blocks = [...head, ...tail]
-  if (whole) callCache.delete(part.id)
-  else cacheCall(part.id, { args: part.arguments, closed: end, blocks })
+  cacheCall(part.id, { args: part.arguments, input: part.input, whole, closed: end, blocks })
   // A copy: the returned list may be written into the conversation store and mutated there.
   return [...blocks]
 }

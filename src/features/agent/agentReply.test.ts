@@ -242,6 +242,31 @@ describe('replyParts streaming cache', () => {
     expect(shown('cache-cap', args, 'input-complete')).toEqual(all.slice(0, MAX_BLOCKS))
   })
 
+  test('does not re-parse a finished call on later reads', () => {
+    const spy = spyOn(blockSchemaModule, 'parseBlocksLenient')
+    try {
+      const args = JSON.stringify({ blocks: headings(3) })
+      const first = shown('cache-final', args, 'complete')
+      const calls = spy.mock.calls.length
+      const again = shown('cache-final', args, 'complete')
+      expect(spy.mock.calls.length).toBe(calls)
+      expect(again).toEqual(first)
+      expect(again).not.toBe(first)
+      expect(again[0]).toBe(first[0])
+    } finally {
+      spy.mockRestore()
+    }
+  })
+
+  test('does not reuse a finished call for other arguments or a streaming read', () => {
+    const first = JSON.stringify({ blocks: headings(3) })
+    expect(shown('cache-final-id', first, 'complete')).toEqual(headings(3))
+    expect(shown('cache-final-id', first, 'input-streaming')).toEqual(headings(2))
+    const other = JSON.stringify({ blocks: [tags] })
+    expect(shown('cache-final-id', first, 'complete')).toEqual(headings(3))
+    expect(shown('cache-final-id', other, 'complete')).toEqual([tags])
+  })
+
   test('starts over when a call id is reused with other arguments', () => {
     const first = JSON.stringify({ blocks: headings(3) })
     expect(shown('cache-reuse', first, 'input-streaming')).toEqual(headings(2))
