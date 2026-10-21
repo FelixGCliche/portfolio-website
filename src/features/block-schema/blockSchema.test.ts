@@ -114,6 +114,63 @@ describe('blockSchema', () => {
     expect(ok({ type: 'next', topics: ['/about', '/work', '/skills', '/resume'] })).toBe(false)
   })
 
+  test.each([
+    '(418) 805-6251',
+    'Call 418-805-6251',
+    '418.805.6251',
+    '4188056251',
+    '+1 418 805 6251',
+    '+44 20 7946 0958',
+    '555-1234',
+    '41 88 05 62 51',
+  ])('rejects a phone number %p in any text field', (phone) => {
+    expect(ok({ type: 'heading', label: phone })).toBe(false)
+    expect(ok({ type: 'prose', text: `Reach me at ${phone}.` })).toBe(false)
+    expect(ok({ type: 'keyValue', rows: [{ key: 'Phone', value: phone }] })).toBe(false)
+    expect(ok({ type: 'list', items: [phone] })).toBe(false)
+    expect(ok({ type: 'table', columns: ['a', 'b'], rows: [['x', phone]] })).toBe(false)
+    expect(
+      ok({ type: 'timeline', items: [{ title: 'Dev', range: '2021', bullets: [phone] }] })
+    ).toBe(false)
+    expect(ok({ type: 'links', items: [{ ...validBlocks.links.items[1], value: phone }] })).toBe(
+      false
+    )
+  })
+
+  test.each(['2021 – 2024', '2019-2024', 'Jan 2021 - Dec 2024', '5 years, 12 projects', '100 000'])(
+    'accepts number-bearing text %p that is not a phone number',
+    (value) => {
+      expect(ok({ type: 'keyValue', rows: [{ key: 'Facts', value }] })).toBe(true)
+    }
+  )
+
+  test.each([
+    { label: 'Email', value: 'someone@evil.com', href: `mailto:${email}` },
+    { label: 'someone@evil.com', value: email, href: `mailto:${email}` },
+    { label: 'GitHub', value: email, href: 'https://github.com/FelixGCliche' },
+    { label: 'GitHub', value: 'github.com/someone-else', href: 'https://github.com/FelixGCliche' },
+    { label: 'GitHub', value: 'https://evil.com/x', href: 'https://github.com/FelixGCliche' },
+    { label: 'evil.com', value: 'FelixGCliche', href: 'https://github.com/FelixGCliche' },
+    { label: 'Email', value: 'gagnecliche.dev', href: `mailto:${email}` },
+  ])('rejects link text naming another target %p', (item) => {
+    expect(ok({ type: 'links', items: [item] })).toBe(false)
+  })
+
+  test.each([
+    { label: 'Email', value: email.toUpperCase(), href: `mailto:${email}` },
+    { label: 'Email', value: `mailto:${email}`, href: `mailto:${email}?subject=Hi` },
+    { label: 'GitHub', value: 'github.com/FelixGCliche', href: 'https://github.com/FelixGCliche' },
+    {
+      label: 'GitHub',
+      value: 'https://github.com/FelixGCliche/',
+      href: 'https://github.com/FelixGCliche',
+    },
+    { label: 'LinkedIn', value: 'linkedin.com/in/x', href: 'https://www.linkedin.com/in/x' },
+    { label: 'github.com', value: 'FelixGCliche', href: 'https://github.com/FelixGCliche' },
+  ])('accepts link text matching its target %p', (item) => {
+    expect(ok({ type: 'links', items: [item] })).toBe(true)
+  })
+
   test('rejects empty strings and empty arrays', () => {
     expect(ok({ type: 'heading', label: '   ' })).toBe(false)
     expect(ok({ type: 'list', items: [] })).toBe(false)

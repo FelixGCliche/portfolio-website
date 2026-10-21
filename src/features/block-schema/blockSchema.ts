@@ -3,11 +3,21 @@ import { z } from 'zod'
 import { isSafeHref, isTopicHref } from '@features/safe-links'
 import { TOPIC_KEYS } from '@features/topic-keys'
 
+import { containsPhoneNumber, linkTextMatchesHref } from './contactText'
+
 /** The most blocks one `render_blocks` call may show. */
 export const MAX_BLOCKS = 6
 
-/** A trimmed, non-empty string of at most `max` characters. */
-const text = (max: number) => z.string().trim().min(1).max(max)
+const NO_PHONE = 'Text must not contain a phone number'
+
+/** A trimmed, non-empty string of at most `max` characters that holds no phone number. */
+const text = (max: number) =>
+  z
+    .string()
+    .trim()
+    .min(1)
+    .max(max)
+    .refine((value) => !containsPhoneNumber(value), NO_PHONE)
 
 const successTone = z
   .enum(['success'])
@@ -142,21 +152,32 @@ const linksBlock = z.object({
   type: z.literal('links').describe('External contact links, such as email, GitHub or LinkedIn.'),
   items: z
     .array(
-      z.object({
-        label: text(30).describe('Link name, at most 30 characters, such as "GitHub".'),
-        value: text(80).describe(
-          'Shown text, at most 80 characters, such as the handle or address.'
-        ),
-        href: z
-          .string()
-          .trim()
-          .max(300)
-          .refine(
-            (href) => isSafeHref(href) && !isTopicHref(href),
-            'Link is not an allowed external link'
-          )
-          .describe('The https GitHub or LinkedIn URL, or a mailto: link to the profile email.'),
-      })
+      z
+        .object({
+          label: text(30).describe('Link name, at most 30 characters, such as "GitHub".'),
+          value: text(80).describe(
+            'Shown text, at most 80 characters, such as the handle or address. Any email address or URL in it must be the link target itself.'
+          ),
+          href: z
+            .string()
+            .trim()
+            .max(300)
+            .refine(
+              (href) => isSafeHref(href) && !isTopicHref(href),
+              'Link is not an allowed external link'
+            )
+            .refine((href) => !containsPhoneNumber(href), NO_PHONE)
+            .describe('The https GitHub or LinkedIn URL, or a mailto: link to the profile email.'),
+        })
+        .superRefine((item, ctx) => {
+          for (const field of ['label', 'value'] as const)
+            if (!linkTextMatchesHref(item[field], item.href))
+              ctx.addIssue({
+                code: 'custom',
+                path: [field],
+                message: 'Shown text names an address or URL other than the link target',
+              })
+        })
     )
     .min(1)
     .max(4)
@@ -205,13 +226,14 @@ export type RenderBlocksInput = z.infer<typeof renderBlocksInputSchema>
 
 /**
  * Validates each element of a possibly partial `blocks` array on its own and keeps the valid ones
- * in order, up to `MAX_BLOCKS`. Meant for partial JSON while a tool call streams in.
+ * in order, up to `limit` (`MAX_BLOCKS` by default). Meant for partial JSON while a tool call
+ * streams in; a smaller `limit` validates a tail slice against the budget its head left.
  */
-export const parseBlocksLenient = (value: unknown): Block[] => {
+export const parseBlocksLenient = (value: unknown, limit = MAX_BLOCKS): Block[] => {
   if (!Array.isArray(value)) return []
   const blocks: Block[] = []
   for (const element of value) {
-    if (blocks.length >= MAX_BLOCKS) break
+    if (blocks.length >= limit) break
     const result = blockSchema.safeParse(element)
     if (result.success) blocks.push(result.data)
   }
