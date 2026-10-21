@@ -14,13 +14,8 @@ import { errorResponse, INVALID_REQUEST_MESSAGE } from './errors'
 import { createAgentLoopStrategy } from './loopStrategy'
 import { systemPromptFor } from './systemPrompt'
 
-/** Primary model: free tier, supports tool calling, solid in English and French. */
-export const AGENT_MODEL = 'google/gemma-4-31b-it:free'
-/** Tried in order by OpenRouter when the primary model is rate-limited or unavailable. */
-export const AGENT_FALLBACK_MODELS = [
-  'nvidia/nemotron-3-super-120b-a12b:free',
-  'google/gemma-4-26b-a4b-it:free',
-] as const
+/** OpenRouter's free router: picks an available free model per request, with tool calling support. */
+export const AGENT_MODEL = 'openrouter/free' as Parameters<typeof createOpenRouterText>[0]
 /** Most model turns (tool round-trips included) per request. */
 export const MAX_AGENT_ITERATIONS = 5
 
@@ -30,7 +25,8 @@ const UNAVAILABLE_MESSAGE = 'The assistant is unavailable right now. Please try 
 export const agentToolNames: readonly string[] = agentTools.map((tool) => tool.name)
 
 const upstreamRunError = (chunk?: StreamChunk): StreamChunk => ({
-  ...(chunk?.type === EventType.RUN_ERROR ? chunk : {}),
+  ...(chunk?.type === EventType.RUN_ERROR && chunk.runId ? { runId: chunk.runId } : {}),
+  ...(chunk?.type === EventType.RUN_ERROR && chunk.threadId ? { threadId: chunk.threadId } : {}),
   type: EventType.RUN_ERROR,
   timestamp: Date.now(),
   message: UNAVAILABLE_MESSAGE,
@@ -87,7 +83,6 @@ export const createChatResponse = async (
       tools: agentTools,
       agentLoopStrategy: createAgentLoopStrategy(MAX_AGENT_ITERATIONS),
       modelOptions: {
-        models: [...AGENT_FALLBACK_MODELS],
         maxCompletionTokens: MAX_COMPLETION_TOKENS,
       },
       threadId: params.threadId,
