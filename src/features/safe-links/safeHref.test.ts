@@ -4,7 +4,7 @@ import { profile } from '@content'
 
 import { TOPIC_KEYS } from '@features/topic-keys'
 
-import { classifyHref, isSafeHref, isTopicHref } from './safeHref'
+import { classifyHref, isSafeHref, isTopicHref, mailtoRecipient } from './safeHref'
 
 const email = profile[0]?.email ?? ''
 
@@ -29,6 +29,7 @@ describe('isSafeHref', () => {
     'https://www.linkedin.com/in/someone',
     `mailto:${email}`,
     `mailto:${email.toUpperCase()}`,
+    `mailto:${encodeURIComponent(email)}`,
     `mailto:${email}?subject=Hello%20there`,
     `mailto:${email}?subject=Hi&body=Text`,
   ])('accepts %s', (href) => {
@@ -70,6 +71,7 @@ describe('isSafeHref', () => {
     `mailto:${email}?bcc=evil@else.com`,
     `mailto:${email}?subject=Hi&to=evil@else.com`,
     'mailto:',
+    'mailto:%zz',
     'https://',
   ])('rejects %p', (href) => {
     expect(isSafeHref(href)).toBe(false)
@@ -106,5 +108,19 @@ describe('classifyHref', () => {
   test('returns undefined for an unsafe href', () => {
     expect(classifyHref('javascript:alert(1)')).toBeUndefined()
     expect(classifyHref('https://evil.com/')).toBeUndefined()
+  })
+})
+
+describe('mailtoRecipient', () => {
+  const email = profile[0]?.email ?? ''
+
+  test('decodes and lowercases the recipient, ignoring the query', () => {
+    expect(mailtoRecipient(`mailto:${email.toUpperCase()}?subject=Hi`)).toBe(email.toLowerCase())
+    expect(mailtoRecipient('mailto:a%40b.co')).toBe('a@b.co')
+  })
+
+  test('is undefined for non-mailto or invalid encoding', () => {
+    expect(mailtoRecipient('https://github.com')).toBeUndefined()
+    expect(mailtoRecipient('mailto:%E0%A4%A')).toBeUndefined()
   })
 })

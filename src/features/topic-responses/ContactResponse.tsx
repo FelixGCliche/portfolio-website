@@ -2,10 +2,8 @@ import { ArrowRight } from '@lucide/solid'
 
 import { ButtonLink, Card } from '@components'
 import { useI18n } from '@features/i18n'
-import { useProfile } from '@features/profile'
+import { displayUrl, useProfile } from '@features/profile'
 import { CopyButton, LinkCard, PanelHeader, SectionLabel } from '@features/response-blocks'
-
-import { displayUrl } from './displayUrl'
 
 // Email, GitHub and LinkedIn only: the phone number is deliberately left out
 export const ContactResponse = () => {
@@ -13,7 +11,7 @@ export const ContactResponse = () => {
   const profile = useProfile()
 
   const mailto = () =>
-    `mailto:${profile().email}?subject=${encodeURIComponent(t('contact.subject'))}`
+    `mailto:${encodeURIComponent(profile().email).replace('%40', '@')}?subject=${encodeURIComponent(t('contact.subject'))}`
 
   return (
     <div class="flex flex-col gap-[22px]">
