@@ -118,10 +118,14 @@ describe('parseChatRequest', () => {
     })
 
     test('accepts any render_blocks arguments one turn can emit', () => {
-      expect(MAX_TURN_OUTPUT_CHARS).toBe(MAX_COMPLETION_TOKENS * MAX_CHARS_PER_TOKEN)
-      expect(maxToolArgumentsChars('render_blocks')).toBeGreaterThanOrEqual(
-        MAX_COMPLETION_TOKENS * 4
-      )
+      const maxTurnArguments = MAX_COMPLETION_TOKENS * MAX_CHARS_PER_TOKEN
+      expect(maxToolArgumentsChars('render_blocks')).toBeGreaterThanOrEqual(maxTurnArguments)
+      expect(accepts('render_blocks', maxTurnArguments)).toBe(true)
+    })
+
+    test('keeps the text history cap independent of the render_blocks limit', () => {
+      expect(MAX_HISTORY_MESSAGE_CHARS).toBe(8000)
+      expect(maxToolArgumentsChars('render_blocks')).toBeGreaterThan(MAX_HISTORY_MESSAGE_CHARS)
     })
 
     test('caps other tools at MAX_TOOL_ARGUMENTS_CHARS', () => {
