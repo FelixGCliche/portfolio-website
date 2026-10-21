@@ -54,7 +54,9 @@ describe('buildSystemPrompt', () => {
   test('asks for render_blocks on structured answers without repeating them', () => {
     const prompt = buildSystemPrompt('en')
     expect(prompt).toContain('call render_blocks instead of writing them out')
-    expect(prompt).toContain('add at most one short sentence, and never repeat the block content')
+    expect(prompt).toContain(
+      'write any accompanying text (at most one short sentence) before the call, and never repeat the block content'
+    )
     expect(prompt).toContain('- render_blocks: ')
   })
 

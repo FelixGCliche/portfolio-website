@@ -8,18 +8,18 @@ import { INVALID_REQUEST_MESSAGE } from './errors'
 export const MAX_MESSAGES = 40
 /** Longest accepted text for a single user message, in characters. */
 export const MAX_USER_MESSAGE_CHARS = 2000
-/** Most tokens the model may generate per turn. */
+/** Most tokens the model may generate per turn; sized so one `render_blocks` call fits a whole answer. */
 export const MAX_COMPLETION_TOKENS = 2048
 /**
  * Upper bound on characters per generated token. Real tokens average ~4 characters, but long
- * whitespace runs or identifiers can be longer, so this errs high: history the model really
- * produced must never be rejected when the client replays it.
+ * whitespace runs or identifiers can be longer, so this errs high: tool call arguments the model
+ * really produced must never be rejected when the client replays them.
  */
 export const MAX_CHARS_PER_TOKEN = 8
-/** Most characters the model can emit in a single turn (text or tool call arguments). */
+/** Most characters the model can emit in a single turn. */
 export const MAX_TURN_OUTPUT_CHARS = MAX_COMPLETION_TOKENS * MAX_CHARS_PER_TOKEN
 /** Longest accepted text for an assistant or tool message replayed from history, in characters. */
-export const MAX_HISTORY_MESSAGE_CHARS = MAX_TURN_OUTPUT_CHARS
+export const MAX_HISTORY_MESSAGE_CHARS = 8000
 /** Longest accepted JSON arguments string for a single tool call, in characters. */
 export const MAX_TOOL_ARGUMENTS_CHARS = 2000
 /**
@@ -75,15 +75,22 @@ export const createChatRequestSchema = (toolNames: readonly string[] = []) => {
             .object({
               // With no tools registered, no tool call can be genuine.
               name: z.string().refine((name) => toolNames.includes(name)),
-              // Bounded by the largest per-tool limit here, then by the call's own tool below.
-              arguments: z
-                .string()
-                .max(
-                  Math.max(MAX_TOOL_ARGUMENTS_CHARS, ...Object.values(TOOL_ARGUMENTS_CHARS_BY_TOOL))
-                ),
+              arguments: z.string(),
             })
-            .refine((call) => call.arguments.length <= maxToolArgumentsChars(call.name), {
-              message: 'Tool call arguments are too long.',
+            // Each tool has its own arguments limit, so it is checked once the name is known.
+            .superRefine((call, ctx) => {
+              const maximum = maxToolArgumentsChars(call.name)
+              if (call.arguments.length > maximum) {
+                ctx.addIssue({
+                  code: 'too_big',
+                  origin: 'string',
+                  maximum,
+                  inclusive: true,
+                  input: call.arguments,
+                  path: ['arguments'],
+                  message: 'Tool call arguments are too long.',
+                })
+              }
             }),
         })
       )
