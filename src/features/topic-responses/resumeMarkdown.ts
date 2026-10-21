@@ -28,8 +28,12 @@ export type ResumeMarkdownInput = {
   }
 }
 
-// Backslash-escapes characters that would otherwise be read as Markdown syntax
-const escapeMarkdown = (text: string): string => text.replace(/[\\*_[\]`#<>]/g, '\\$&')
+// Backslash-escapes characters that would otherwise be read as Markdown syntax: inline syntax
+// anywhere, plus list markers (+ - or "1.") at the start and + - at the end, where they could
+// open a nested list or underline a setext heading. Each character is matched once against the
+// original text, so nothing is escaped twice.
+const escapeMarkdown = (text: string): string =>
+  text.replace(/[\\*_[\]`#<>|&!()~]|(?<=^\s*)[+-]|[+-]$/g, '\\$&').replace(/^(\s*\d+)\./, '$1\\.')
 
 const capitalize = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1)
 
