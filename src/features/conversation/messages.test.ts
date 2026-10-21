@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import type { Block } from '@features/block-schema'
 
-import { blockEqual, type ReplyBlocksPart, replyPartEqual } from './messages'
+import { blockEqual, mergeStreamingBlocks, type ReplyBlocksPart, replyPartEqual } from './messages'
 
 const heading: Block = { type: 'heading', label: 'Experience' }
 const tags: Block = { type: 'tags', items: ['TypeScript', 'Rust'] }
@@ -49,5 +49,40 @@ describe('replyPartEqual', () => {
     expect(
       replyPartEqual(blocks(), blocks({ blocks: [heading, { type: 'tags', items: ['Go'] }] }))
     ).toBe(false)
+  })
+})
+
+describe('mergeStreamingBlocks', () => {
+  const prose: Block = { type: 'prose', text: 'Hello' }
+
+  test('appends only the new blocks, keeping earlier ones', () => {
+    const current: Block[] = [heading]
+    mergeStreamingBlocks(current, [{ ...heading }, tags, prose])
+    expect(current).toEqual([heading, tags, prose])
+    expect(current[0]).toBe(heading)
+  })
+
+  test('is a no-op when the blocks are the same', () => {
+    const current: Block[] = [heading, tags]
+    mergeStreamingBlocks(current, JSON.parse(JSON.stringify(current)) as Block[])
+    expect(current[0]).toBe(heading)
+    expect(current[1]).toBe(tags)
+    expect(current).toHaveLength(2)
+  })
+
+  test('replaces the last shared block when it differs', () => {
+    const current: Block[] = [heading, tags]
+    const changed: Block = { type: 'tags', items: ['Go'] }
+    mergeStreamingBlocks(current, [heading, changed, prose])
+    expect(current).toEqual([heading, changed, prose])
+    expect(current[1]).toBe(changed)
+  })
+
+  test('drops blocks the next list no longer has', () => {
+    const current: Block[] = [heading, tags, prose]
+    mergeStreamingBlocks(current, [heading])
+    expect(current).toEqual([heading])
+    mergeStreamingBlocks(current, [])
+    expect(current).toEqual([])
   })
 })

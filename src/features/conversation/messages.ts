@@ -56,6 +56,20 @@ export const replyPartEqual = (a: ReplyPart, b: ReplyPart): boolean => {
   )
 }
 
+/**
+ * Brings `current` (a streaming call's blocks, e.g. a store draft) up to `next` in place. A
+ * streaming call's blocks are append-only, so only blocks past `current`'s end are written: O(new
+ * blocks) per chunk, and earlier blocks keep their identity instead of remounting. As a safety net
+ * the last shared block is rewritten if it differs, and blocks `next` no longer has are removed.
+ */
+export const mergeStreamingBlocks = (current: Block[], next: readonly Block[]): void => {
+  const shared = Math.min(current.length, next.length)
+  if (shared > 0 && !blockEqual(current[shared - 1], next[shared - 1]))
+    current[shared - 1] = next[shared - 1]
+  if (current.length > next.length) current.splice(next.length)
+  else for (let i = shared; i < next.length; i++) current.push(next[i])
+}
+
 export type UserMessage = { id: string; role: 'user'; text: string }
 
 /** A static topic response, rendered by its topic component. */

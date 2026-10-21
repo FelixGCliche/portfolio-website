@@ -1,7 +1,7 @@
 import { parsePartialJSON } from '@tanstack/ai-client'
 import type { UIMessage } from '@tanstack/ai-client'
 
-import { parseBlocksLenient } from '@features/block-schema'
+import { MAX_BLOCKS, parseBlocksLenient } from '@features/block-schema'
 import type { Block } from '@features/block-schema'
 import type { AgentReply, ReplyPart } from '@features/conversation'
 
@@ -68,17 +68,64 @@ const isWholeJSON = (text: string): boolean => {
 }
 
 /**
+ * Validated blocks of a streaming call, by tool call id: `blocks` came from the first `closed`
+ * elements of the raw array parsed out of `args`. Closed elements are final (a later element has
+ * started), so they are validated once and reused while the arguments grow. Entries are dropped
+ * once the call is whole or rejected, and the map is bounded so abandoned streams can't pile up.
+ */
+type CallCache = { args: string; closed: number; blocks: Block[] }
+const callCache = new Map<string, CallCache>()
+const MAX_CACHED_CALLS = 16
+
+const cacheCall = (id: string, entry: CallCache) => {
+  callCache.delete(id)
+  callCache.set(id, entry)
+  // Maps iterate in insertion order: evict the least recently written call.
+  for (const oldest of callCache.keys()) {
+    if (callCache.size <= MAX_CACHED_CALLS) break
+    callCache.delete(oldest)
+  }
+}
+
+// The cached blocks of a call, if its arguments still extend the ones they were parsed from (a
+// reused call id with other arguments starts over) and its raw array still has those elements.
+const cachedCall = (part: ToolCallPart, end: number): CallCache | undefined => {
+  const entry = callCache.get(part.id)
+  if (!entry) return undefined
+  if (entry.closed <= end && part.arguments.startsWith(entry.args)) return entry
+  callCache.delete(part.id)
+  return undefined
+}
+
+/**
  * The blocks of a `render_blocks` call. While its arguments stream in, the last array element may
  * be cut off mid-value (partial JSON fills in truncated strings), so it is held back until the
  * next block starts or the call completes: only finished blocks are shown. When the stream ended
  * with the arguments still cut off (aborted or failed), the truncated last block stays dropped.
+ * Only elements closed since the previous chunk are validated; earlier ones come from the cache,
+ * so a call's blocks are append-only and keep their identity across chunks.
  */
 const callBlocks = (part: ToolCallPart, finished: boolean, settled: boolean): Block[] => {
   const args = (part.input ?? parsePartialJSON(part.arguments)) as { blocks?: unknown } | undefined
   const raw = args?.blocks
-  if (!Array.isArray(raw)) return []
+  if (!Array.isArray(raw)) {
+    callCache.delete(part.id)
+    return []
+  }
   const whole = finished || (settled && (part.input !== undefined || isWholeJSON(part.arguments)))
-  return parseBlocksLenient(whole ? raw : raw.slice(0, -1))
+  const end = whole ? raw.length : Math.max(raw.length - 1, 0)
+  const cached = cachedCall(part, end)
+  const closed = cached?.closed ?? 0
+  const head = cached?.blocks ?? []
+  const tail =
+    end > closed && head.length < MAX_BLOCKS
+      ? parseBlocksLenient(raw.slice(closed, end), MAX_BLOCKS - head.length)
+      : []
+  const blocks = [...head, ...tail]
+  if (whole) callCache.delete(part.id)
+  else cacheCall(part.id, { args: part.arguments, closed: end, blocks })
+  // A copy: the returned list may be written into the conversation store and mutated there.
+  return [...blocks]
 }
 
 /**
@@ -101,7 +148,10 @@ export const replyParts = (messages: readonly UIMessage[], settled = false): Rep
       return text ? [{ kind: 'text', text }] : []
     }
     if (part.type === 'tool-call' && part.name === RENDER_BLOCKS_TOOL) {
-      if (isRejected(part, results)) return []
+      if (isRejected(part, results)) {
+        callCache.delete(part.id)
+        return []
+      }
       const finished = !STREAMING_STATES.has(part.state)
       const blocks = callBlocks(part, finished, settled)
       const complete = finished || settled
