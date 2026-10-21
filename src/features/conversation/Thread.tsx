@@ -1,6 +1,6 @@
 import { Dynamic } from '@solidjs/web'
 import { useRouter } from '@tanstack/solid-router'
-import { createEffect, For, Match, onSettled, Show, Switch, untrack } from 'solid-js'
+import { createEffect, For, Match, onSettled, Show, Switch } from 'solid-js'
 
 import { useI18n } from '@features/i18n'
 import { Blocks } from '@features/reply-blocks'
@@ -47,7 +47,7 @@ const UserRow = (props: { message: UserMessage }) => (
 const AGENT_ROW_CLASS = `${ROW_CLASS} flex-col gap-4 pt-3 pl-[26px]`
 
 const TopicRow = (props: { message: AgentTopicMessage }) => (
-  <div class={AGENT_ROW_CLASS} data-message-id={props.message.id}>
+  <div class={AGENT_ROW_CLASS}>
     <Dynamic component={responses[props.message.topic]} />
   </div>
 )
@@ -114,22 +114,7 @@ export const Thread = () => {
   const router = useRouter()
   let threadEl: HTMLDivElement | undefined
   let pinned = true
-  // Re-running the topic the thread already ends on would only duplicate its reply, so the click
-  // brings that reply into view instead of doing nothing.
-  const runTopic = (key: TopicKey) => {
-    const last = untrack(() => conversation.state.messages.at(-1))
-    if (last?.role !== 'agent' || last.kind !== 'topic' || last.topic !== key) {
-      conversation.run(key)
-      return
-    }
-    const row = threadEl?.querySelector<HTMLElement>(`[data-message-id="${last.id}"]`)
-    if (!row) {
-      conversation.run(key)
-      return
-    }
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    row.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' })
-  }
+  const runTopic = (key: TopicKey) => conversation.run(key)
   // Hrefs cached per locale and topic; reading locale() keeps callers reactive to language changes
   const hrefs = new Map<string, string>()
   const topicHref = (key: TopicKey) => {
