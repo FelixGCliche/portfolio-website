@@ -57,8 +57,7 @@ This project was created with the [Solid CLI](https://github.com/solidjs-communi
 
 The site includes a chat agent that answers questions about the portfolio. The UI posts the conversation to `POST /api/chat`, a TanStack Start server route running on Cloudflare Workers (`src/routes/api/chat.ts`). The route hands the request to `handleChatRequest` (`src/features/agent-api/`), which checks the origin, rate limit and size, validates the conversation, then streams a reply from [OpenRouter](https://openrouter.ai) through `@tanstack/ai`. The agent is grounded in the portfolio content and has UI tools for changing topic, theme, and language, defined in `src/features/agent-tools/` and run in the browser.
 
-- Primary model: `google/gemma-4-31b-it:free`
-- Fallbacks, tried in order by OpenRouter: `nvidia/nemotron-3-super-120b-a12b:free`, `google/gemma-4-26b-a4b-it:free`
+- Model: a free OpenRouter model chosen from the live model list (free, tool calling with `tool_choice`, 128k+ context), with known-good models preferred; up to 3 are sent per request so OpenRouter falls back in order, and a static list of preferred models is used when the live list can't be loaded. The list is cached for 10 minutes
 - Limits per request: 5 model turns (tool round-trips included), 1024 completion tokens per turn, 64 KiB body, 40 messages, 2000 characters per user message
 
 ### Local setup
@@ -84,5 +83,6 @@ The Worker is named `portfolio-website` (see `wrangler.jsonc`).
 
 ### Known limitations
 
-- Free OpenRouter models are rate limited; busy periods can cause slow or failed replies even with fallbacks
-- Tool calling quality varies between models, so UI tools may occasionally be skipped or misused
+- Free OpenRouter models are rate limited; busy periods can cause slow or failed replies
+- Tool calling quality varies between models; preferred models are tried first, but a fallback model may occasionally skip or misuse UI tools
+- If all selected free models are unavailable at once, the request fails; the static backup list can go stale as OpenRouter retires free models

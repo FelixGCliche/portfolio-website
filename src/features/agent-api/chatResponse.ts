@@ -12,15 +12,11 @@ import { agentTools } from '@features/agent-tools'
 import { type ChatRequest, localeFromRequest, MAX_COMPLETION_TOKENS } from './chatRequest'
 import { errorResponse, INVALID_REQUEST_MESSAGE } from './errors'
 import { createAgentLoopStrategy } from './loopStrategy'
+import { getAgentModels } from './models'
 import { systemPromptFor } from './systemPrompt'
 
-/** Primary model: free tier, supports tool calling, solid in English and French. */
-export const AGENT_MODEL = 'google/gemma-4-31b-it:free'
-/** Tried in order by OpenRouter when the primary model is rate-limited or unavailable. */
-export const AGENT_FALLBACK_MODELS = [
-  'nvidia/nemotron-3-super-120b-a12b:free',
-  'google/gemma-4-26b-a4b-it:free',
-] as const
+type AgentModel = Parameters<typeof createOpenRouterText>[0]
+
 /** Most model turns (tool round-trips included) per request. */
 export const MAX_AGENT_ITERATIONS = 5
 
@@ -30,7 +26,8 @@ const UNAVAILABLE_MESSAGE = 'The assistant is unavailable right now. Please try 
 export const agentToolNames: readonly string[] = agentTools.map((tool) => tool.name)
 
 const upstreamRunError = (chunk?: StreamChunk): StreamChunk => ({
-  ...(chunk?.type === EventType.RUN_ERROR ? chunk : {}),
+  ...(chunk?.type === EventType.RUN_ERROR && chunk.runId ? { runId: chunk.runId } : {}),
+  ...(chunk?.type === EventType.RUN_ERROR && chunk.threadId ? { threadId: chunk.threadId } : {}),
   type: EventType.RUN_ERROR,
   timestamp: Date.now(),
   message: UNAVAILABLE_MESSAGE,
@@ -78,17 +75,21 @@ export const createChatResponse = async (
   if (signal?.aborted) abortController.abort(signal.reason)
   else signal?.addEventListener('abort', () => abortController.abort(signal.reason), { once: true })
 
+  // Live free models are not in the adapter's model union, hence the casts.
+  const [primaryModel, ...fallbackModels] = (await getAgentModels()) as AgentModel[]
+
   // Only setup errors are caught here; failures while streaming become a RUN_ERROR event.
   try {
     const stream = chat({
-      adapter: createOpenRouterText(AGENT_MODEL, apiKey),
+      adapter: createOpenRouterText(primaryModel as AgentModel, apiKey),
       messages: params.messages,
       systemPrompts: [systemPromptFor(localeFromRequest(input))],
       tools: agentTools,
       agentLoopStrategy: createAgentLoopStrategy(MAX_AGENT_ITERATIONS),
       modelOptions: {
-        models: [...AGENT_FALLBACK_MODELS],
         maxCompletionTokens: MAX_COMPLETION_TOKENS,
+        // OpenRouter tries these in order when the primary model fails or is rate limited.
+        ...(fallbackModels.length > 0 ? { models: fallbackModels } : {}),
       },
       threadId: params.threadId,
       runId: params.runId,
