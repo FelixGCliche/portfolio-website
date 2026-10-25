@@ -1,6 +1,5 @@
 import { Card } from '@components'
 import { useI18n } from '@features/i18n'
-import { Markdown } from '@features/markdown'
 import { useProfile } from '@features/profile'
 import { KeyValue, NextLinks, PanelHeader } from '@features/response-blocks'
 
@@ -24,7 +23,11 @@ export const AboutResponse = () => {
           ]}
         />
       </Card>
-      <Markdown text={about().body} leadFirst />
+      <div
+        class="text-secondary-foreground [&>p:first-child]:text-lead [&_strong]:text-foreground flex max-w-[62ch] flex-col gap-3.5 [&_strong]:font-bold [&>p]:text-pretty"
+        // oxlint-disable-next-line solid/no-innerhtml -- compiled from the content file at build time by velite, no user input
+        innerHTML={about().body}
+      />
       <NextLinks
         label={t('about.next', { location: profile().location })}
         topics={['/work', '/skills', '/contact']}
