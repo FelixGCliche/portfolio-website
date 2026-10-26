@@ -12,10 +12,10 @@ import { agentTools } from '@features/agent-tools'
 import { type ChatRequest, localeFromRequest, MAX_COMPLETION_TOKENS } from './chatRequest'
 import { errorResponse, INVALID_REQUEST_MESSAGE } from './errors'
 import { createAgentLoopStrategy } from './loopStrategy'
-import { getAgentModels } from './models'
 import { systemPromptFor } from './systemPrompt'
 
-type AgentModel = Parameters<typeof createOpenRouterText>[0]
+/** OpenRouter's free router: picks an available free model per request that supports the tools used. */
+export const AGENT_MODEL = 'openrouter/free' as Parameters<typeof createOpenRouterText>[0]
 
 /** Most model turns (tool round-trips included) per request. */
 export const MAX_AGENT_ITERATIONS = 5
@@ -75,21 +75,16 @@ export const createChatResponse = async (
   if (signal?.aborted) abortController.abort(signal.reason)
   else signal?.addEventListener('abort', () => abortController.abort(signal.reason), { once: true })
 
-  // Live free models are not in the adapter's model union, hence the casts.
-  const [primaryModel, ...fallbackModels] = (await getAgentModels()) as AgentModel[]
-
   // Only setup errors are caught here; failures while streaming become a RUN_ERROR event.
   try {
     const stream = chat({
-      adapter: createOpenRouterText(primaryModel as AgentModel, apiKey),
+      adapter: createOpenRouterText(AGENT_MODEL, apiKey),
       messages: params.messages,
       systemPrompts: [systemPromptFor(localeFromRequest(input))],
       tools: agentTools,
       agentLoopStrategy: createAgentLoopStrategy(MAX_AGENT_ITERATIONS),
       modelOptions: {
         maxCompletionTokens: MAX_COMPLETION_TOKENS,
-        // OpenRouter tries these in order when the primary model fails or is rate limited.
-        ...(fallbackModels.length > 0 ? { models: fallbackModels } : {}),
       },
       threadId: params.threadId,
       runId: params.runId,
