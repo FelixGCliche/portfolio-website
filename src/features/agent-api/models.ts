@@ -13,13 +13,23 @@ const MODELS_FETCH_TIMEOUT_MS = 3000
 
 /** Free models that reliably call tools, tried first in this order when available. */
 export const PREFERRED_AGENT_MODELS: readonly string[] = [
-  'google/gemma-4-31b-it:free',
-  'nvidia/nemotron-3-super-120b-a12b:free',
-  'google/gemma-4-26b-a4b-it:free',
+  'nvidia/nemotron-3.5-super-vl:free',
+  'nvidia/nemotron-3-ultra-550b-a55b:free',
+  'poolside/laguna-s-2.1:free',
+  'cohere/north-mini-code:free',
 ]
 
+/**
+ * OpenRouter's free router: picks any currently available free model that supports the request.
+ * Always the last fallback so the request survives every ranked model being rate limited or down.
+ */
+export const FREE_ROUTER_MODEL = 'openrouter/free'
+
 /** Used when the live model list can't be fetched and nothing is cached. */
-export const STATIC_AGENT_MODELS: readonly string[] = PREFERRED_AGENT_MODELS
+export const STATIC_AGENT_MODELS: readonly string[] = [
+  ...PREFERRED_AGENT_MODELS.slice(0, MAX_AGENT_MODELS - 1),
+  FREE_ROUTER_MODEL,
+]
 
 /** The fields read from an entry of OpenRouter's `/models` response. */
 export type OpenRouterModelInfo = {
@@ -64,9 +74,9 @@ const fetchAgentModels = async (fetchFn: typeof fetch): Promise<string[]> => {
   if (!response.ok) throw new Error(`model list request failed with status ${response.status}`)
   const body = (await response.json()) as { data?: unknown }
   if (!Array.isArray(body?.data)) throw new Error('model list response has no data array')
-  const ids = rankAgentModels(body.data as OpenRouterModelInfo[])
+  const ids = rankAgentModels(body.data as OpenRouterModelInfo[], MAX_AGENT_MODELS - 1)
   if (ids.length === 0) throw new Error('model list has no usable models')
-  return ids
+  return [...ids, FREE_ROUTER_MODEL]
 }
 
 export type AgentModelSourceOptions = {

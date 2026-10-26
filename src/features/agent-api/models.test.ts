@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 
 import {
   createAgentModelSource,
+  FREE_ROUTER_MODEL,
   MAX_AGENT_MODELS,
   MIN_CONTEXT_LENGTH,
   MODELS_CACHE_TTL_MS,
@@ -52,15 +53,15 @@ describe('rankAgentModels', () => {
     const ids = rankAgentModels(
       [
         model('big/model:free', { context_length: 1_000_000 }),
-        model('google/gemma-4-26b-a4b-it:free'),
+        model('nvidia/nemotron-3-ultra-550b-a55b:free'),
         model('mid/model:free', { context_length: 200_000 }),
-        model('google/gemma-4-31b-it:free'),
+        model('nvidia/nemotron-3.5-super-vl:free'),
       ],
       10
     )
     expect(ids).toEqual([
-      'google/gemma-4-31b-it:free',
-      'google/gemma-4-26b-a4b-it:free',
+      'nvidia/nemotron-3.5-super-vl:free',
+      'nvidia/nemotron-3-ultra-550b-a55b:free',
       'big/model:free',
       'mid/model:free',
     ])
@@ -90,6 +91,7 @@ describe('createAgentModelSource', () => {
     expect(await createAgentModelSource({ fetch })()).toEqual([
       'live/model:free',
       'other/model:free',
+      FREE_ROUTER_MODEL,
     ])
   })
 
@@ -132,7 +134,7 @@ describe('createAgentModelSource', () => {
     await getModels()
     fail = true
     time = MODELS_CACHE_TTL_MS + 1
-    expect(await getModels()).toEqual(['live/model:free', 'other/model:free'])
+    expect(await getModels()).toEqual(['live/model:free', 'other/model:free', FREE_ROUTER_MODEL])
   })
 
   test('shares one in-flight refresh between concurrent callers', async () => {
