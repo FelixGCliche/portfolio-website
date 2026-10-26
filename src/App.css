@@ -10,6 +10,13 @@
   }
 }
 
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+}
+
 @utility pt-safe {
   padding-top: env(safe-area-inset-top, 0px);
 }

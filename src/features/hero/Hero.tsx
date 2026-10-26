@@ -1,5 +1,7 @@
 import { createSignal, createUniqueId, For, onSettled } from 'solid-js'
 
+import { Chip } from '@components'
+import type { ChipVariantProps } from '@components'
 import { useComposer } from '@features/composer'
 import { useConversation } from '@features/conversation'
 import { useI18n } from '@features/i18n'
@@ -17,15 +19,9 @@ const CHIP_LABELS: Record<TopicKey, Extract<UiKey, `chips.${string}`>> = {
   '/contact': 'chips.contact',
 }
 
-const CHIP_CLASS =
-  'border-border text-foreground hover:border-primary hover:text-primary hover:bg-muted focus-visible:ring-ring border px-[15px] py-2 text-[12.5px] whitespace-nowrap focus-visible:ring-2 focus-visible:outline-none'
-
 // Transitions only apply once data-animate is set, so the first paint (and a deep link's collapse) snaps
 const VARIANT_CLASS =
   'grid ease-out duration-200 motion-reduce:transition-none motion-safe:group-data-[animate]/hero:transition-[grid-template-rows,opacity]'
-
-const SLIM_CHIP_CLASS =
-  'border-border text-muted-foreground hover:border-primary hover:text-primary focus-visible:ring-ring border px-[10px] py-1 text-[11.5px] whitespace-nowrap focus-visible:ring-2 focus-visible:outline-none md:px-[11px]'
 
 // Runs a topic from a chip and hands focus to the composer (skipped on mobile to avoid opening the soft keyboard)
 const useRunTopic = () => {
@@ -38,7 +34,7 @@ const useRunTopic = () => {
   }
 }
 
-const HeroChips = (props: { class: string; chipClass: string }) => {
+const HeroChips = (props: { class: string } & ChipVariantProps) => {
   const { t } = useI18n()
   const runTopic = useRunTopic()
 
@@ -46,9 +42,9 @@ const HeroChips = (props: { class: string; chipClass: string }) => {
     <div role="group" aria-label={t('hero.chipsLabel')} class={props.class}>
       <For each={TOPIC_KEYS}>
         {(key) => (
-          <button type="button" class={props.chipClass} onClick={() => runTopic(key)}>
+          <Chip variant={props.variant} size={props.size} onClick={() => runTopic(key)}>
             {t(CHIP_LABELS[key])}
-          </button>
+          </Chip>
         )}
       </For>
     </div>
@@ -73,10 +69,7 @@ const HeroFull = (props: { titleId: string }) => {
       <p class="text-secondary-foreground mt-[22px] hidden max-w-[52ch] text-sm leading-[1.8] text-pretty md:block">
         {profile().heroLede}
       </p>
-      <HeroChips
-        class="mt-5 flex flex-wrap gap-2 md:mt-[26px] md:gap-[9px]"
-        chipClass={CHIP_CLASS}
-      />
+      <HeroChips class="mt-5 flex flex-wrap gap-2 md:mt-[26px] md:gap-[9px]" variant="full" />
     </div>
   )
 }
@@ -94,7 +87,8 @@ const HeroSlim = (props: { nameId: string }) => {
       </h1>
       <HeroChips
         class="ml-auto flex flex-wrap gap-[6px] md:ml-0 md:gap-2"
-        chipClass={SLIM_CHIP_CLASS}
+        variant="muted"
+        size="slim"
       />
     </div>
   )
