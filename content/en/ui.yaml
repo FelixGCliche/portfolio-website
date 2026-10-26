@@ -106,40 +106,43 @@ replies.langSwitchedFr: "On passe en français. Les prochaines réponses suivent
 replies.fallback: "That one I don't have a good answer for. This portfolio is scripted — it knows a handful of commands and nothing beyond them."
 replies.fallbackCommand: "I don't do real conversation, but I can answer that one. Here's {command}:"
 
-contact.intro: "Email is the fastest way to reach me. I answer the same day, and I'm happy to talk through a specific technical problem."
-contact.copyEmail: 'copy email'
-contact.copied: 'copied ✓'
-contact.writeEmail: 'write an email'
-contact.seeResume: 'see the resume'
-contact.label.email: 'email'
-contact.label.phone: 'phone'
-contact.label.where: 'where'
-contact.label.status: 'status'
+about.header: 'about.md'
+about.meta: 'whoami'
+about.name: 'name'
+about.role: 'role'
+about.location: 'location'
+about.status: 'status'
+about.next: 'Open to work in {location}. Next:'
 
-work.intro: 'Four roles across two worlds — web and games. Short version first, then the detail.'
-work.timeline: 'timeline'
-work.header.when: 'WHEN'
-work.header.where: 'WHERE'
-work.header.role: 'ROLE'
+contact.header: 'contact'
+contact.title: 'Got something that has to hold up in production?'
+contact.intro: "I'm open to work in Québec City and remote. Tell me what you're building, what's in the way, and when you need it."
+contact.to: 'to'
+contact.subjectLabel: 'subject'
+contact.subject: "Let's build something"
+contact.copyEmail: 'Copy email address'
+contact.emailMe: 'Email me'
+contact.elsewhere: 'elsewhere'
+
+work.header: 'git log --career'
+work.newestFirst: 'newest first'
+work.months: '{count} mo'
 work.present: 'present'
-work.education: 'education'
 
-skills.intro: "Nothing here I haven't used to ship something. The top two rows are where I'm quickest."
-skills.label: 'skills'
-skills.header.area: 'AREA'
-skills.header.tools: 'TOOLS'
-skills.note: "the design column is left over from game school — handy when there's no designer in the room"
+skills.header: 'toolbox'
+skills.areas: '{count} areas'
+skills.tools: '{count} tools'
+skills.tool: '{count} tool'
 
-resume.toolLabel: 'read resume.pdf'
-resume.intro: "Here's the CV as text — the downloadable version says the same thing."
-resume.copyMarkdown: 'copy as markdown'
-resume.copied: 'resume copied as markdown.'
-resume.download: 'download pdf'
-resume.section.profile: 'Profile'
-resume.section.experience: 'Experience'
-resume.section.education: 'Education'
-resume.section.skills: 'Skills'
+resume.download: 'Download resume (PDF)'
+resume.copyMarkdown: 'Copy as Markdown'
+resume.summary: 'summary'
+resume.fullDetails: 'Full details in {command}'
+resume.byArea: 'by area'
+resume.section.profile: 'profile'
+resume.section.experience: 'experience'
+resume.section.education: 'education'
+resume.section.skills: 'skills'
 resume.profileBlurb: 'Curious, passionate full-stack developer in love with web development. Skilled in building and deploying multi-platform applications; solves new problems by picking up new technologies to deliver quality results.'
 
-placeholder.pending: 'Placeholder — content lands in a later PR'
 notFound.body: 'No topic lives at this address.'
