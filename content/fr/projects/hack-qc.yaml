@@ -1,0 +1,12 @@
+slug: hack-qc
+name: 'La pause électrique'
+description: 'Explorez près de lieux de recharge de véhicule électrique'
+year: 2019
+order: 6
+stack:
+  - 'Java'
+  - 'Android'
+built:
+  - 'La pause électrique est une application Android qui permet de trouver les bornes de recharge à proximité ainsi que des activités et des lieux à visiter pendant que la voiture se recharge.'
+  - "J'ai réalisé cette application pour le hackathon Hack QC, où mes 3 amis et moi avons remporté la 3e place malgré que ce soit notre première expérience dans un événement de programmation."
+  - "Cette application a été développée en Java et j'étais en charge de l'interface et des assets."

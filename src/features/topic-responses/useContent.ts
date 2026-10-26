@@ -1,5 +1,5 @@
-import { about, education, roles, skills } from '@content'
-import type { About, Education, Role, Skill } from '@content'
+import { about, education, projects, roles, skills } from '@content'
+import type { About, Education, Project, Role, Skill } from '@content'
 import { createMemo } from 'solid-js'
 import type { Accessor } from 'solid-js'
 
@@ -9,6 +9,12 @@ import { pickSingleton, pickSorted, useI18n } from '@features/i18n'
 export const useRoles = (): Accessor<Role[]> => {
   const i18n = useI18n()
   return createMemo(() => pickSorted(roles, i18n.locale()), { name: 'roles' })
+}
+
+// Projects for the active locale, sorted by `order` (1 = newest).
+export const useProjects = (): Accessor<Project[]> => {
+  const i18n = useI18n()
+  return createMemo(() => pickSorted(projects, i18n.locale()), { name: 'projects' })
 }
 
 export const useSkills = (): Accessor<Skill[]> => {
