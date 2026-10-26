@@ -5,7 +5,13 @@ import {
   localeFromRequest,
   MAX_HISTORY_MESSAGE_CHARS,
   MAX_MESSAGES,
+  MAX_CHARS_PER_TOKEN,
+  MAX_COMPLETION_TOKENS,
+  MAX_TOOL_ARGUMENTS_CHARS,
+  MAX_TOTAL_TOOL_ARGUMENTS_CHARS,
+  MAX_TURN_OUTPUT_CHARS,
   MAX_USER_MESSAGE_CHARS,
+  maxToolArgumentsChars,
   parseChatRequest,
 } from './chatRequest'
 
@@ -84,6 +90,75 @@ describe('parseChatRequest', () => {
       { id: 't1', role: 'tool', toolCallId: 'c1', content: '{"theme":"dark"}' },
     ]
     expect(parseChatRequest(body({ messages }), ['set_theme']).ok).toBe(true)
+  })
+
+  describe('tool call arguments', () => {
+    const call = (name: string, length: number) => ({
+      id: 'c1',
+      type: 'function',
+      // A JSON string literal of `length` characters in total.
+      function: { name, arguments: JSON.stringify('a'.repeat(length - 2)) },
+    })
+    const accepts = (name: string, length: number) =>
+      parseChatRequest(
+        body({
+          messages: [
+            userMessage('hi'),
+            { id: 'a1', role: 'assistant', toolCalls: [call(name, length)] },
+            { id: 't1', role: 'tool', toolCallId: 'c1', content: '{}' },
+          ],
+        }),
+        ['render_blocks', 'set_theme']
+      ).ok
+
+    test('allows render_blocks a larger limit', () => {
+      expect(maxToolArgumentsChars('render_blocks')).toBe(MAX_TURN_OUTPUT_CHARS)
+      expect(accepts('render_blocks', 5000)).toBe(true)
+      expect(accepts('render_blocks', MAX_TURN_OUTPUT_CHARS)).toBe(true)
+      expect(accepts('render_blocks', MAX_TURN_OUTPUT_CHARS + 1)).toBe(false)
+    })
+
+    test('accepts any render_blocks arguments one turn can emit', () => {
+      const maxTurnArguments = MAX_COMPLETION_TOKENS * MAX_CHARS_PER_TOKEN
+      expect(maxToolArgumentsChars('render_blocks')).toBeGreaterThanOrEqual(maxTurnArguments)
+      expect(accepts('render_blocks', maxTurnArguments)).toBe(true)
+    })
+
+    test('keeps the text history cap independent of the render_blocks limit', () => {
+      expect(MAX_HISTORY_MESSAGE_CHARS).toBe(8000)
+      expect(maxToolArgumentsChars('render_blocks')).toBeGreaterThan(MAX_HISTORY_MESSAGE_CHARS)
+    })
+
+    test('caps total tool arguments across the history', () => {
+      const turn = (n: number, length: number) => [
+        {
+          id: `a${n}`,
+          role: 'assistant',
+          toolCalls: [{ ...call('render_blocks', length), id: `c${n}` }],
+        },
+        { id: `t${n}`, role: 'tool', toolCallId: `c${n}`, content: '{}' },
+      ]
+      const history = (turns: number) =>
+        parseChatRequest(
+          body({
+            messages: [
+              userMessage('hi'),
+              ...Array.from({ length: turns }, (_, i) => turn(i, MAX_TURN_OUTPUT_CHARS)).flat(),
+            ],
+          }),
+          ['render_blocks']
+        ).ok
+      expect(history(4)).toBe(true)
+      expect(history(5)).toBe(false)
+      expect(MAX_TOTAL_TOOL_ARGUMENTS_CHARS).toBe(4 * MAX_TURN_OUTPUT_CHARS)
+    })
+
+    test('caps other tools at MAX_TOOL_ARGUMENTS_CHARS', () => {
+      expect(maxToolArgumentsChars('set_theme')).toBe(MAX_TOOL_ARGUMENTS_CHARS)
+      expect(accepts('set_theme', MAX_TOOL_ARGUMENTS_CHARS)).toBe(true)
+      expect(accepts('set_theme', MAX_TOOL_ARGUMENTS_CHARS + 1)).toBe(false)
+      expect(accepts('set_theme', 5000)).toBe(false)
+    })
   })
 
   test('rejects tool calls to unknown tools', () => {

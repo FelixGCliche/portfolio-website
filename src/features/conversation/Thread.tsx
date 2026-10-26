@@ -3,13 +3,20 @@ import { useRouter } from '@tanstack/solid-router'
 import { createEffect, For, Match, onSettled, Show, Switch, untrack } from 'solid-js'
 
 import { useI18n } from '@features/i18n'
+import { Blocks } from '@features/reply-blocks'
 import { BlockActionsProvider, PromptLine } from '@features/response-blocks'
 import { responses } from '@features/topic-responses'
 import { topicRoute } from '@features/topics'
 import type { TopicKey } from '@features/topics'
 
 import { useConversation } from './ConversationProvider'
-import type { AgentMessage, AgentTextMessage, AgentTopicMessage, UserMessage } from './messages'
+import type {
+  AgentMessage,
+  AgentTextMessage,
+  AgentTopicMessage,
+  ReplyPart,
+  UserMessage,
+} from './messages'
 
 const SCROLLER_SELECTOR = '[data-scroller]'
 const PIN_THRESHOLD = 80
@@ -23,6 +30,14 @@ const STATUS_WEIGHT: Record<AgentTextMessage['status'], number> = {
   error: 3,
 }
 
+// Rough rendered size of a reply part, so streamed text and blocks both register as growth.
+// Blocks only appear once finished, so counting them (and completion) is enough, and stays O(1).
+const partSize = (part: ReplyPart) =>
+  part.kind === 'text' ? part.text.length : part.blocks.length * 2 + Number(part.complete)
+
+const partOf = <K extends ReplyPart['kind']>(part: ReplyPart, kind: K) =>
+  part.kind === kind ? (part as Extract<ReplyPart, { kind: K }>) : undefined
+
 const distanceFromBottom = (el: HTMLElement) => el.scrollHeight - el.scrollTop - el.clientHeight
 
 const UserRow = (props: { message: UserMessage }) => (
@@ -32,7 +47,7 @@ const UserRow = (props: { message: UserMessage }) => (
 const AGENT_ROW_CLASS = `${ROW_CLASS} flex-col gap-4 pt-3 pl-[26px]`
 
 const TopicRow = (props: { message: AgentTopicMessage }) => (
-  <div class={AGENT_ROW_CLASS}>
+  <div class={AGENT_ROW_CLASS} data-message-id={props.message.id}>
     <Dynamic component={responses[props.message.topic]} />
   </div>
 )
@@ -53,9 +68,18 @@ const TextRow = (props: { message: AgentTextMessage }) => {
       >
         <For each={props.message.parts} keyed={false}>
           {(part) => (
-            <p class="text-foreground max-w-[66ch] leading-[1.8] text-pretty whitespace-pre-wrap">
-              {part()}
-            </p>
+            <Switch>
+              <Match when={partOf(part(), 'text')}>
+                {(text) => (
+                  <p class="text-foreground max-w-[66ch] leading-[1.8] text-pretty whitespace-pre-wrap">
+                    {text().text}
+                  </p>
+                )}
+              </Match>
+              <Match when={partOf(part(), 'blocks')}>
+                {(blocks) => <Blocks blocks={blocks().blocks} />}
+              </Match>
+            </Switch>
           )}
         </For>
         <Switch>
@@ -88,11 +112,23 @@ export const Thread = () => {
   const { t, locale } = useI18n()
   const conversation = useConversation()
   const router = useRouter()
-  // Re-running the topic the thread already ends on would only duplicate its reply
+  let threadEl: HTMLDivElement | undefined
+  let pinned = true
+  // Re-running the topic the thread already ends on would only duplicate its reply, so the click
+  // brings that reply into view instead of doing nothing.
   const runTopic = (key: TopicKey) => {
     const last = untrack(() => conversation.state.messages.at(-1))
-    if (last?.role === 'agent' && last.kind === 'topic' && last.topic === key) return
-    conversation.run(key)
+    if (last?.role !== 'agent' || last.kind !== 'topic' || last.topic !== key) {
+      conversation.run(key)
+      return
+    }
+    const row = threadEl?.querySelector<HTMLElement>(`[data-message-id="${last.id}"]`)
+    if (!row) {
+      conversation.run(key)
+      return
+    }
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    row.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' })
   }
   // Hrefs cached per locale and topic; reading locale() keeps callers reactive to language changes
   const hrefs = new Map<string, string>()
@@ -106,8 +142,6 @@ export const Thread = () => {
     }
     return href
   }
-  let threadEl: HTMLDivElement | undefined
-  let pinned = true
 
   const scroller = () => threadEl?.closest<HTMLElement>(SCROLLER_SELECTOR) ?? undefined
 
@@ -134,7 +168,7 @@ export const Thread = () => {
       let size = 0
       for (const message of messages) {
         if (message.role !== 'agent' || message.kind !== 'text') continue
-        size += message.parts.reduce((total, part) => total + part.length, 0)
+        size += message.parts.reduce((total, part) => total + partSize(part), 0)
         size += STATUS_WEIGHT[message.status]
       }
       return { count: messages.length, fromUser, size }

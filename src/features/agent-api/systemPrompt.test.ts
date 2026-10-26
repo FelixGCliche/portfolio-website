@@ -10,7 +10,14 @@ import { buildSystemPrompt, htmlToText, type PromptContent, systemPromptFor } fr
 
 const MAX_PROMPT_CHARS = 12_000
 
-const content: PromptContent = { profile, about, roles, skills, topics, education }
+const content: PromptContent = {
+  profile,
+  about,
+  roles,
+  skills,
+  topics,
+  education,
+}
 
 describe('buildSystemPrompt', () => {
   test('defaults replies to the requested locale language', () => {
@@ -29,14 +36,44 @@ describe('buildSystemPrompt', () => {
     const prompt = buildSystemPrompt(locale)
     for (const entry of profile) expect(prompt).not.toContain(entry.phone)
     expect(prompt).toContain('Never disclose or guess any other personal contact details')
+    expect(prompt).toContain('such as a phone number or home address, including inside blocks.')
   })
 
   test('lists every education entry for the locale', () => {
     const [entry] = education.filter((item) => item.locale === 'en')
-    const second = { ...entry, degree: 'Second degree', start: 2001, end: 2004 }
-    const prompt = buildSystemPrompt('en', { ...content, education: [second, entry] })
+    const second = {
+      ...entry,
+      degree: 'Second degree',
+      start: 2001,
+      end: 2004,
+    }
+    const prompt = buildSystemPrompt('en', {
+      ...content,
+      education: [second, entry],
+    })
     expect(prompt).toContain(`${entry.degree}, `)
     expect(prompt).toContain('Second degree, ')
+  })
+
+  test('asks for plain-text replies without markdown', () => {
+    const prompt = buildSystemPrompt('en')
+    expect(prompt).toContain('a few sentences in plain text only')
+    expect(prompt).toContain('no bold, italics, lists, links, headings, tables, images or HTML')
+  })
+
+  test('asks for render_blocks on structured answers without repeating them', () => {
+    const prompt = buildSystemPrompt('en')
+    expect(prompt).toContain('call render_blocks instead of writing them out')
+    expect(prompt).toContain(
+      'write any accompanying text (at most one short sentence) before the call, and never repeat the block content'
+    )
+    expect(prompt).toContain('- render_blocks: ')
+  })
+
+  test('limits render_blocks to a single call per reply', () => {
+    const prompt = buildSystemPrompt('en')
+    expect(prompt).toContain('Call it exactly once per reply')
+    expect(prompt).toContain('Call this tool at most once per reply')
   })
 
   test('memoizes the prompt per locale', () => {
@@ -80,7 +117,12 @@ describe('buildSystemPrompt', () => {
 
   test('omits sections with no entries', () => {
     const about = [{ locale: 'en' as const, body: '<p> </p>' }]
-    const prompt = buildSystemPrompt('en', { ...content, about, roles: [], skills: [] })
+    const prompt = buildSystemPrompt('en', {
+      ...content,
+      about,
+      roles: [],
+      skills: [],
+    })
     expect(prompt).not.toContain('## About')
     expect(prompt).not.toContain('## Work experience')
     expect(prompt).not.toContain('## Skills')
@@ -89,7 +131,10 @@ describe('buildSystemPrompt', () => {
 
   test('marks ongoing roles as present', () => {
     const [role] = roles.filter((item) => item.locale === 'en')
-    const prompt = buildSystemPrompt('en', { ...content, roles: [{ ...role, end: null }] })
+    const prompt = buildSystemPrompt('en', {
+      ...content,
+      roles: [{ ...role, end: null }],
+    })
     expect(prompt).toContain(`(${role.start} to present)`)
   })
 })

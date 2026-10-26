@@ -2,7 +2,6 @@ import {
   chat,
   chatParamsFromRequestBody,
   EventType,
-  maxIterations,
   type StreamChunk,
   toServerSentEventsResponse,
 } from '@tanstack/ai'
@@ -10,8 +9,9 @@ import { createOpenRouterText } from '@tanstack/ai-openrouter'
 
 import { agentTools } from '@features/agent-tools'
 
-import { type ChatRequest, localeFromRequest } from './chatRequest'
+import { type ChatRequest, localeFromRequest, MAX_COMPLETION_TOKENS } from './chatRequest'
 import { errorResponse, INVALID_REQUEST_MESSAGE } from './errors'
+import { createAgentLoopStrategy } from './loopStrategy'
 import { systemPromptFor } from './systemPrompt'
 
 /** Primary model: free tier, supports tool calling, solid in English and French. */
@@ -23,8 +23,6 @@ export const AGENT_FALLBACK_MODELS = [
 ] as const
 /** Most model turns (tool round-trips included) per request. */
 export const MAX_AGENT_ITERATIONS = 5
-/** Most tokens the model may generate per turn. */
-export const MAX_COMPLETION_TOKENS = 1024
 
 const UNAVAILABLE_MESSAGE = 'The assistant is unavailable right now. Please try again later.'
 
@@ -87,7 +85,7 @@ export const createChatResponse = async (
       messages: params.messages,
       systemPrompts: [systemPromptFor(localeFromRequest(input))],
       tools: agentTools,
-      agentLoopStrategy: maxIterations(MAX_AGENT_ITERATIONS),
+      agentLoopStrategy: createAgentLoopStrategy(MAX_AGENT_ITERATIONS),
       modelOptions: {
         models: [...AGENT_FALLBACK_MODELS],
         maxCompletionTokens: MAX_COMPLETION_TOKENS,

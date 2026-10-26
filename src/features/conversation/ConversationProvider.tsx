@@ -6,7 +6,7 @@ import { useI18n } from '@features/i18n'
 import { topicRoute } from '@features/topics'
 import type { TopicKey } from '@features/topics'
 
-import type { AgentReply, Message } from './messages'
+import { type AgentReply, type Message, mergeStreamingBlocks, replyPartEqual } from './messages'
 
 type ConversationState = {
   messages: Message[]
@@ -89,18 +89,40 @@ export const ConversationProvider = (props: ParentProps) => {
     return id
   }
 
+  // Streaming rewrites the reply on every chunk: only parts (and blocks) that changed are written,
+  // index by index, so rendered parts update in place instead of remounting and re-animating.
+  // Settled parts (finished blocks calls, text parts that only grow) are skipped cheaply per chunk.
   const updateReply = (id: string, reply: AgentReply) => {
     setState((draft) => {
       const message = draft.messages.find((item) => item.id === id)
       if (message?.role !== 'agent' || message.kind !== 'text') return
-      // Streaming rewrites the reply on every chunk: skip writes that change nothing.
-      if (
-        message.status === reply.status &&
-        message.parts.length === reply.parts.length &&
-        message.parts.every((part, i) => part === reply.parts[i])
-      )
-        return
-      Object.assign(message, reply)
+      const parts = message.parts
+      reply.parts.forEach((next, i) => {
+        const current = parts[i]
+        // The same render_blocks call: a complete call's arguments are final. While it streams,
+        // its blocks only grow (closed array elements never change), so only the new ones are
+        // written: earlier blocks keep their identity and don't remount.
+        if (current?.kind === 'blocks' && next.kind === 'blocks' && current.id === next.id) {
+          if (current.complete && next.complete) return
+          mergeStreamingBlocks(current.blocks, next.blocks)
+          if (current.complete !== next.complete) current.complete = next.complete
+          return
+        }
+        if (current && replyPartEqual(current, next)) return
+        // The same text part streaming in: it only ever grows, so anything else at this index is
+        // a different part and is replaced rather than rewritten in place.
+        if (
+          current?.kind === 'text' &&
+          next.kind === 'text' &&
+          next.text.startsWith(current.text)
+        ) {
+          current.text = next.text
+          return
+        }
+        parts[i] = next
+      })
+      if (parts.length > reply.parts.length) parts.splice(reply.parts.length)
+      if (message.status !== reply.status) message.status = reply.status
     })
   }
 

@@ -1,6 +1,7 @@
 import { type AnyTool, toolDefinition } from '@tanstack/ai'
 import { z } from 'zod'
 
+import { MAX_BLOCKS, renderBlocksInputSchema } from '@features/block-schema'
 import { LOCALE_NAMES, LOCALES } from '@features/locales'
 import { THEMES } from '@features/themes'
 import { TOPIC_KEYS } from '@features/topic-keys'
@@ -42,9 +43,41 @@ export const setLanguageTool = toolDefinition({
   outputSchema: z.object({ language: z.enum(LOCALES), status: statusSchema }),
 })
 
+/** Shows rich UI blocks (tables, timelines, facts, links…) inline in the agent's reply. */
+export const renderBlocksTool = toolDefinition({
+  name: 'render_blocks',
+  description: [
+    `Show up to ${MAX_BLOCKS} rich UI blocks inline in your reply, in order. Call this tool at most once per reply and put all the blocks you need in that one call; never call it again, and never send test or placeholder blocks. Use it for structured answers instead of long text:`,
+    'a table to compare things (e.g. two roles side by side);',
+    'keyValue for quick facts (location, status, years of experience);',
+    'timeline for roles or education over time;',
+    'toolRows for skills grouped by area, or tags for a short list of technologies;',
+    'list for a few highlights; heading to title a group of blocks; prose for a short paragraph;',
+    'links only for outbound contact links, and only the GitHub and LinkedIn URLs or a mailto: link to the profile email;',
+    'next to suggest 1 to 3 site topics to open next.',
+    'Only use facts from the portfolio content and never include the phone number. The blocks are shown as soon as the tool is called; do not repeat their content in text.',
+  ].join(' '),
+  inputSchema: renderBlocksInputSchema,
+  outputSchema: z.object({ status: z.literal('rendered'), count: z.number() }),
+})
+
 /**
- * Tool definitions shared by the chat route and the client. The server passes them to the model
- * without an `execute`, so calls are forwarded to the browser, which runs the `.client()`
- * implementations from `createClientTools`.
+ * `render_blocks` runs on the server as a no-op: the blocks are rendered from the streamed tool
+ * call arguments, so the server answers the call inline and the browser needs no round-trip.
  */
-export const agentTools: ReadonlyArray<AnyTool> = [showTopicTool, setThemeTool, setLanguageTool]
+export const renderBlocksServerTool = renderBlocksTool.server(({ blocks }) => ({
+  status: 'rendered' as const,
+  count: blocks.length,
+}))
+
+/**
+ * Tools passed to the model by the chat route. The UI tools have no `execute`, so their calls are
+ * forwarded to the browser, which runs the `.client()` implementations from `createClientTools`;
+ * `render_blocks` is answered on the server.
+ */
+export const agentTools: ReadonlyArray<AnyTool> = [
+  showTopicTool,
+  setThemeTool,
+  setLanguageTool,
+  renderBlocksServerTool,
+]

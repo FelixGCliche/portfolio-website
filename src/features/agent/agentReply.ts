@@ -1,6 +1,16 @@
+import { parsePartialJSON } from '@tanstack/ai-client'
 import type { UIMessage } from '@tanstack/ai-client'
 
-import type { AgentReply } from '@features/conversation'
+import { isErrorContent, isErrorOutput } from '@features/agent-tools'
+import { MAX_BLOCKS, parseBlocksLenient } from '@features/block-schema'
+import type { Block } from '@features/block-schema'
+import type { AgentReply, ReplyPart } from '@features/conversation'
+
+/** The tool whose calls are rendered inline as blocks. */
+export const RENDER_BLOCKS_TOOL = 'render_blocks'
+
+// Tool call states whose arguments are still streaming in.
+const STREAMING_STATES = new Set(['awaiting-input', 'input-streaming'])
 
 /** The chat-client state a reply's status is derived from. */
 export type ReplyState = {
@@ -22,12 +32,135 @@ export const turnMessages = (
   return messages.slice(start + 1, next === -1 ? undefined : next)
 }
 
-/** The visible text of assistant messages, one entry per non-blank text part. */
-export const replyParts = (messages: readonly UIMessage[]): string[] =>
-  messages
+type MessagePart = UIMessage['parts'][number]
+type ToolCallPart = Extract<MessagePart, { type: 'tool-call' }>
+type ToolResultPart = Extract<MessagePart, { type: 'tool-result' }>
+
+// Whether a tool result reports an error, e.g. the server rejecting invalid arguments.
+const isErrorResult = (result: ToolResultPart): boolean =>
+  result.state === 'error' || result.error !== undefined || isErrorContent(result.content)
+
+// Whether the whole call was rejected (failed validation or execution): none of its blocks show.
+const isRejected = (part: ToolCallPart, results: ReadonlyMap<string, ToolResultPart>): boolean => {
+  if (part.state === 'error' || isErrorOutput(part.output)) return true
+  const result = results.get(part.id)
+  return result !== undefined && isErrorResult(result)
+}
+
+// Whether the raw arguments are complete JSON, i.e. weren't cut off mid-stream.
+const isWholeJSON = (text: string): boolean => {
+  try {
+    JSON.parse(text)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Validated blocks of a streaming call, by tool call id: `blocks` came from the first `closed`
+ * elements of the raw array parsed out of `args`. Closed elements are final (a later element has
+ * started), so they are validated once and reused while the arguments grow. Entries are dropped
+ * rejected. A whole call keeps its final blocks (`whole`), reused only for the exact same arguments,
+ * so finished calls aren't re-parsed on every later read. The map is bounded so abandoned calls
+ * can't pile up, and an id reused with other arguments (e.g. by another conversation) starts over.
+ */
+type CallCache = { args: string; input: unknown; whole: boolean; closed: number; blocks: Block[] }
+const callCache = new Map<string, CallCache>()
+const MAX_CACHED_CALLS = 16
+
+const cacheCall = (id: string, entry: CallCache) => {
+  callCache.delete(id)
+  callCache.set(id, entry)
+  // Maps iterate in insertion order: evict the least recently written call.
+  for (const oldest of callCache.keys()) {
+    if (callCache.size <= MAX_CACHED_CALLS) break
+    callCache.delete(oldest)
+  }
+}
+
+// The cached blocks of a call, if its arguments still extend the ones they were parsed from (a
+// reused call id with other arguments starts over) and its raw array still has those elements.
+const cachedCall = (part: ToolCallPart, end: number): CallCache | undefined => {
+  const entry = callCache.get(part.id)
+  if (!entry) return undefined
+  if (entry.whole) {
+    if (entry.args === part.arguments && entry.input === part.input) return entry
+    callCache.delete(part.id)
+    return undefined
+  }
+  if (entry.closed <= end && part.arguments.startsWith(entry.args)) return entry
+  callCache.delete(part.id)
+  return undefined
+}
+
+/**
+ * The blocks of a `render_blocks` call. While its arguments stream in, the last array element may
+ * be cut off mid-value (partial JSON fills in truncated strings), so it is held back until the
+ * next block starts or the call completes: only finished blocks are shown. When the stream ended
+ * with the arguments still cut off (aborted or failed), the truncated last block stays dropped.
+ * Only elements closed since the previous chunk are validated; earlier ones come from the cache,
+ * so a call's blocks are append-only and keep their identity across chunks.
+ */
+const callBlocks = (part: ToolCallPart, finished: boolean, settled: boolean): Block[] => {
+  const args = (part.input ?? parsePartialJSON(part.arguments)) as { blocks?: unknown } | undefined
+  const raw = args?.blocks
+  if (!Array.isArray(raw)) {
+    callCache.delete(part.id)
+    return []
+  }
+  const whole = finished || (settled && (part.input !== undefined || isWholeJSON(part.arguments)))
+  const end = whole ? raw.length : Math.max(raw.length - 1, 0)
+  const cached = cachedCall(part, end)
+  if (cached?.whole) {
+    if (whole) return [...cached.blocks]
+    callCache.delete(part.id)
+    return callBlocks(part, finished, settled)
+  }
+  const closed = cached?.closed ?? 0
+  const head = cached?.blocks ?? []
+  const tail =
+    end > closed && head.length < MAX_BLOCKS
+      ? parseBlocksLenient(raw.slice(closed, end), MAX_BLOCKS - head.length)
+      : []
+  const blocks = [...head, ...tail]
+  cacheCall(part.id, { args: part.arguments, input: part.input, whole, closed: end, blocks })
+  // A copy: the returned list may be written into the conversation store and mutated there.
+  return [...blocks]
+}
+
+/**
+ * The visible parts of assistant messages, in order: one text part per non-blank text part, and
+ * one blocks part per `render_blocks` call once it has at least one block. Other tool calls, tool
+ * results and thinking are not shown, and neither are calls that errored or that the server
+ * rejected. `settled` is true once the stream ended (done, failed or aborted): calls still
+ * mid-arguments then count as complete, since no more input will arrive.
+ */
+export const replyParts = (messages: readonly UIMessage[], settled = false): ReplyPart[] => {
+  const parts = messages
     .filter((message) => message.role === 'assistant')
     .flatMap((message) => message.parts)
-    .flatMap((part) => (part.type === 'text' && part.content.trim() ? [part.content.trim()] : []))
+  const results = new Map<string, ToolResultPart>()
+  for (const part of parts) if (part.type === 'tool-result') results.set(part.toolCallId, part)
+
+  return parts.flatMap((part): ReplyPart[] => {
+    if (part.type === 'text') {
+      const text = part.content.trim()
+      return text ? [{ kind: 'text', text }] : []
+    }
+    if (part.type === 'tool-call' && part.name === RENDER_BLOCKS_TOOL) {
+      if (isRejected(part, results)) {
+        callCache.delete(part.id)
+        return []
+      }
+      const finished = !STREAMING_STATES.has(part.state)
+      const blocks = callBlocks(part, finished, settled)
+      const complete = finished || settled
+      return blocks.length > 0 ? [{ kind: 'blocks', id: part.id, blocks, complete }] : []
+    }
+    return []
+  })
+}
 
 /**
  * Maps the chat client's messages and state to the reply for one turn. Error details are never
@@ -41,7 +174,7 @@ export const mapTurnReply = (
   const turn = turnMessages(messages, userMessageId)
   if (!turn) return { parts: [], status: 'pending' }
 
-  const parts = replyParts(turn)
+  const parts = replyParts(turn, !state.isLoading)
   if (state.isLoading) return { parts, status: parts.length > 0 ? 'streaming' : 'pending' }
   if (state.hasError) return { parts, status: 'error' }
   return { parts, status: 'done' }
