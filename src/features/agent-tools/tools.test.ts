@@ -75,6 +75,13 @@ describe('agentTools', () => {
       expect(renderBlocksTool.description).toContain(word)
   })
 
+  test('render_blocks allows project play and watch links', () => {
+    expect(renderBlocksTool.description).toContain("a project's Play or Watch URL")
+    expect(JSON.stringify(renderBlocksTool.inputSchema.toJSONSchema())).toContain(
+      'a project Play or Watch URL'
+    )
+  })
+
   test('describe their allowed values from the shared constants', () => {
     for (const key of TOPIC_KEYS)
       expect(JSON.stringify(showTopicTool.inputSchema.toJSONSchema())).toContain(key)

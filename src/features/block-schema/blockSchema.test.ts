@@ -1,8 +1,9 @@
 import { describe, expect, test } from 'bun:test'
 
-import { profile } from '@content'
+import { profile, projects } from '@content'
 import { z } from 'zod'
 
+import { videoWatchUrl } from '@features/safe-links'
 import { TOPIC_KEYS } from '@features/topic-keys'
 
 import {
@@ -92,6 +93,36 @@ describe('blockSchema', () => {
     '',
   ])('rejects a links href of %p', (href) => {
     expect(ok({ type: 'links', items: [{ label: 'x', value: 'y', href }] })).toBe(false)
+  })
+
+  const projectHrefs = projects.flatMap((project) => [
+    project.url,
+    project.video && videoWatchUrl(project.video),
+  ])
+  const playHref = projectHrefs.find((href) => href?.includes('itch.io')) ?? ''
+  const watchHref = projectHrefs.find((href) => href?.includes('youtube.com')) ?? ''
+
+  test('accepts project play and watch links from the content', () => {
+    expect(playHref).not.toBe('')
+    expect(watchHref).not.toBe('')
+    expect(
+      ok({
+        type: 'links',
+        items: [
+          { label: 'Play', value: 'Excess Mana', href: playHref },
+          { label: 'Watch', value: 'Stack the Odds', href: watchHref },
+        ],
+      })
+    ).toBe(true)
+  })
+
+  test.each([
+    'https://incrediboldstudio.itch.io/some-other-game',
+    'https://itch.io/',
+    'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    'https://www.youtube.com/embed/jmhAQYLX4fc',
+  ])('rejects an unrelated project-like href %p', (href) => {
+    expect(ok({ type: 'links', items: [{ label: 'Play', value: 'Open', href }] })).toBe(false)
   })
 
   test.each(['/nope', 'work', ''])('rejects next topic %p', (topic) => {

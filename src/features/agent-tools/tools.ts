@@ -53,7 +53,7 @@ export const renderBlocksTool = toolDefinition({
     'timeline for roles or education over time;',
     'toolRows for skills grouped by area, or tags for a short list of technologies;',
     'list for a few highlights; heading to title a group of blocks; prose for a short paragraph;',
-    'links only for outbound contact links, and only the GitHub and LinkedIn URLs or a mailto: link to the profile email;',
+    "links only for outbound links, and only the GitHub and LinkedIn URLs, a mailto: link to the profile email, or a project's Play or Watch URL exactly as listed in the portfolio content;",
     'next to suggest 1 to 3 site topics to open next.',
     'Only use facts from the portfolio content and never include the phone number. The blocks are shown as soon as the tool is called; do not repeat their content in text.',
   ].join(' '),
