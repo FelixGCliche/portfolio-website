@@ -14,6 +14,7 @@ import { useIsMobile } from '@hooks'
 const CHIP_LABELS: Record<TopicKey, Extract<UiKey, `chips.${string}`>> = {
   '/about': 'chips.about',
   '/work': 'chips.work',
+  '/projects': 'chips.projects',
   '/skills': 'chips.skills',
   '/resume': 'chips.resume',
   '/contact': 'chips.contact',

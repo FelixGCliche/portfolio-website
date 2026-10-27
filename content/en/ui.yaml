@@ -97,6 +97,7 @@ hero.chipsLabel: 'Quick actions'
 
 chips.about: 'who I am'
 chips.work: "where I've worked"
+chips.projects: 'what I built'
 chips.skills: 'my toolbox'
 chips.resume: 'see the CV'
 chips.contact: 'get in touch'
@@ -128,6 +129,15 @@ work.header: 'git log --career'
 work.newestFirst: 'newest first'
 work.months: '{count} mo'
 work.present: 'present'
+
+projects.header: 'Personal projects'
+projects.count: '{count} projects'
+projects.caseStudy: 'Case study'
+projects.caseStudyOf: 'Case study: {name}'
+projects.builtHeading: 'What I built and how'
+projects.play: 'play'
+projects.watch: 'watch'
+projects.close: 'Close case study'
 
 skills.header: 'toolbox'
 skills.areas: '{count} areas'

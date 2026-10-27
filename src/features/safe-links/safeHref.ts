@@ -1,6 +1,8 @@
-import { profile } from '@content'
+import { profile, projects } from '@content'
 
 import { TOPIC_KEYS, type TopicKey } from '@features/topic-keys'
+
+import { videoWatchUrl } from './projectLinks'
 
 // Free of Solid and the DOM so the Cloudflare worker can validate model output too.
 
@@ -13,6 +15,14 @@ const ALLOWED_HOSTS: ReadonlySet<string> = new Set([
 
 /** Query parameters a mailto link may carry; recipient-adding ones (cc, bcc, to) are refused. */
 const ALLOWED_MAILTO_PARAMS: ReadonlySet<string> = new Set(['subject', 'body'])
+
+/** Exact project pages (play and watch links) from the content, allowed whatever their host. */
+const PROJECT_URLS: ReadonlySet<string> = new Set(
+  projects
+    .flatMap((project) => [project.url, project.video && videoWatchUrl(project.video)])
+    .filter((href): href is string => typeof href === 'string' && URL.canParse(href))
+    .map((href) => new URL(href).href)
+)
 
 const PROFILE_EMAILS: ReadonlySet<string> = new Set(
   profile.map((entry) => entry.email.toLowerCase())
@@ -85,7 +95,7 @@ const isSafeHttps = (href: string): boolean => {
     url.username === '' &&
     url.password === '' &&
     url.port === '' &&
-    ALLOWED_HOSTS.has(url.hostname)
+    (ALLOWED_HOSTS.has(url.hostname) || PROJECT_URLS.has(url.href))
   )
 }
 
@@ -96,8 +106,9 @@ export type SafeHref =
 
 /**
  * Classifies `href` when it may be rendered as a link: a topic key, an https URL on an allowlisted
- * host (external), or a mailto to the profile's own address. Everything else (other schemes,
- * hosts, credentials, protocol-relative URLs, hidden characters) is refused with `undefined`.
+ * host or a project page from the content (external), or a mailto to the profile's own address.
+ * Everything else (other schemes, hosts, credentials, protocol-relative URLs, hidden characters)
+ * is refused with `undefined`.
  */
 export const classifyHref = (href: string): SafeHref | undefined => {
   if (typeof href !== 'string' || href.length === 0 || UNSAFE_CHAR.test(href)) return undefined
