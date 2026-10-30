@@ -149,7 +149,9 @@ const timelineBlock = z.object({
 })
 
 const linksBlock = z.object({
-  type: z.literal('links').describe('External contact links, such as email, GitHub or LinkedIn.'),
+  type: z
+    .literal('links')
+    .describe('External links, such as email, GitHub, LinkedIn or a project Play or Watch page.'),
   items: z
     .array(
       z
@@ -167,7 +169,9 @@ const linksBlock = z.object({
               'Link is not an allowed external link'
             )
             .refine((href) => !containsPhoneNumber(href), NO_PHONE)
-            .describe('The https GitHub or LinkedIn URL, or a mailto: link to the profile email.'),
+            .describe(
+              'The https GitHub or LinkedIn URL, a mailto: link to the profile email, or a project Play or Watch URL exactly as listed in the portfolio content.'
+            ),
         })
         .superRefine((item, ctx) => {
           for (const field of ['label', 'value'] as const)

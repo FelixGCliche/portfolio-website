@@ -1,19 +1,24 @@
 import { describe, expect, test } from 'bun:test'
 
-import { about, education, profile, roles, skills, topics } from '@content'
+import { about, education, profile, projects, roles, skills, topics } from '@content'
 
 import { agentTools } from '@features/agent-tools'
 import { LOCALE_NAMES, LOCALES } from '@features/locales'
+import { videoWatchUrl } from '@features/safe-links'
 import { TOPIC_KEYS } from '@features/topic-keys'
 
 import { buildSystemPrompt, htmlToText, type PromptContent, systemPromptFor } from './systemPrompt'
 
 const MAX_PROMPT_CHARS = 12_000
 
+const forLocale = <T extends { locale: string }>(items: T[], locale: string) =>
+  items.filter((item) => item.locale === locale)
+
 const content: PromptContent = {
   profile,
   about,
   roles,
+  projects,
   skills,
   topics,
   education,
@@ -94,6 +99,14 @@ describe('buildSystemPrompt', () => {
       expect(prompt).toContain(`${role.title} at ${role.company}`)
       for (const bullet of role.bullets) expect(prompt).toContain(`  - ${bullet}`)
     }
+    for (const project of own(projects)) {
+      expect(prompt).toContain(`- ${project.name} (${project.year}; ${project.stack.join(', ')})`)
+      expect(prompt).toContain(project.description)
+      for (const paragraph of project.built) expect(prompt).toContain(paragraph)
+      if (project.url) expect(prompt).toContain(`Play: ${project.url}`)
+      const watch = project.video && videoWatchUrl(project.video)
+      if (watch) expect(prompt).toContain(`Watch: ${watch}`)
+    }
     for (const skill of own(skills)) expect(prompt).toContain(skill.area)
     for (const topic of own(topics)) expect(prompt).toContain(`${topic.key}: ${topic.desc}`)
     for (const entry of own(education)) expect(prompt).toContain(entry.degree)
@@ -121,12 +134,28 @@ describe('buildSystemPrompt', () => {
       ...content,
       about,
       roles: [],
+      projects: [],
       skills: [],
     })
     expect(prompt).not.toContain('## About')
     expect(prompt).not.toContain('## Work experience')
+    expect(prompt).not.toContain('## Projects')
     expect(prompt).not.toContain('## Skills')
     expect(prompt).toContain('## Profile')
+  })
+
+  test.each([...LOCALES])('lists only the %s projects', (locale) => {
+    const prompt = buildSystemPrompt(locale)
+    expect(prompt).toContain('## Projects')
+    expect(forLocale(projects, locale).length).toBeGreaterThan(0)
+    for (const project of projects.filter((item) => item.locale !== locale))
+      for (const paragraph of project.built)
+        if (!forLocale(projects, locale).some((item) => item.built.includes(paragraph)))
+          expect(prompt).not.toContain(paragraph)
+  })
+
+  test('mentions projects in the intro', () => {
+    expect(buildSystemPrompt('en')).toContain('their work, skills, projects, background')
   })
 
   test('marks ongoing roles as present', () => {
