@@ -3,12 +3,12 @@ import type { Project } from '@content'
 import { Portal } from '@solidjs/web'
 import { createMemo, createSignal, createUniqueId, For, Show } from 'solid-js'
 
-import { Sheet } from '@components'
+import { Sheet, useResponsePane } from '@components'
 import { useI18n } from '@features/i18n'
 import { CaseStudy, NextLinks, PanelHeader, Tag } from '@features/response-blocks'
 import type { CaseStudyLink } from '@features/response-blocks'
 import { videoWatchUrl } from '@features/safe-links'
-import { useIsMobile, useResponsePane } from '@hooks'
+import { useIsMobile } from '@hooks'
 
 import { useProjects } from './useContent'
 
