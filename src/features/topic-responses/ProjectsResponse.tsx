@@ -3,7 +3,7 @@ import type { Project } from '@content'
 import { Portal } from '@solidjs/web'
 import { createMemo, createSignal, createUniqueId, For, Show } from 'solid-js'
 
-import { Sheet, useResponsePane } from '@components'
+import { Drawer, DrawerContent, useResponsePane } from '@components'
 import { useI18n } from '@features/i18n'
 import { CaseStudy, NextLinks, PanelHeader, Tag } from '@features/response-blocks'
 import type { CaseStudyLink } from '@features/response-blocks'
@@ -114,44 +114,51 @@ export const ProjectsResponse = () => {
           }}
         </For>
       </ul>
-      <Sheet
-        side="bottom"
-        draggable
-        id={sheetId}
+      <Drawer
+        direction="bottom"
         open={isMobile() && selectedProject() !== undefined}
         onOpenChange={(open) => {
-          // The sheet also reports closing when the viewport grows past mobile; keep the selection then
+          // The drawer also reports closing when the viewport grows past mobile; keep the selection then
           if (!open && isMobile()) close()
         }}
-        label={t('projects.caseStudyOf', { name: sheetProject()?.name ?? '' })}
-        closeLabel={t('projects.close')}
       >
-        <Show when={sheetProject()}>
-          {(project) => <ProjectCaseStudy project={project()} nameId={sheetNameId} />}
-        </Show>
-      </Sheet>
+        <DrawerContent
+          id={sheetId}
+          label={t('projects.caseStudyOf', { name: sheetProject()?.name ?? '' })}
+          closeLabel={t('projects.close')}
+        >
+          <div class="flex flex-col gap-3.5 px-4 pb-7">
+            <Show when={sheetProject()}>
+              {(project) => <ProjectCaseStudy project={project()} nameId={sheetNameId} />}
+            </Show>
+          </div>
+        </DrawerContent>
+      </Drawer>
       <Show when={responsePane()}>
         {(mount) => (
           <Portal mount={mount()}>
-            <Sheet
-              side="right"
+            <Drawer
+              direction="right"
               modal={false}
-              id={panelId}
               open={!isMobile() && selectedProject() !== undefined}
               onOpenChange={(open) => {
                 // The panel also reports closing when the viewport shrinks to mobile; keep the selection then
                 if (!open && !isMobile()) close()
               }}
-              label={t('projects.caseStudyOf', { name: sheetProject()?.name ?? '' })}
             >
-              <div class="bg-card min-h-0 flex-1 overflow-y-auto overscroll-contain p-[18px]">
-                <Show when={sheetProject()}>
-                  {(project) => (
-                    <ProjectCaseStudy project={project()} nameId={panelNameId} onClose={close} />
-                  )}
-                </Show>
-              </div>
-            </Sheet>
+              <DrawerContent
+                id={panelId}
+                label={t('projects.caseStudyOf', { name: sheetProject()?.name ?? '' })}
+              >
+                <div class="bg-card min-h-0 flex-1 overflow-y-auto overscroll-contain p-[18px]">
+                  <Show when={sheetProject()}>
+                    {(project) => (
+                      <ProjectCaseStudy project={project()} nameId={panelNameId} onClose={close} />
+                    )}
+                  </Show>
+                </div>
+              </DrawerContent>
+            </Drawer>
           </Portal>
         )}
       </Show>
