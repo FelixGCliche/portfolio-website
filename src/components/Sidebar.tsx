@@ -250,7 +250,10 @@ export const SidebarInset = (props: ComponentProps<'main'>) => {
       id="main"
       tabindex="-1"
       {...rest}
-      class={['flex min-h-0 min-w-0 flex-1 flex-col focus:outline-none', props.class]}
+      class={[
+        'relative flex min-h-0 min-w-0 flex-1 flex-col overflow-clip focus:outline-none',
+        props.class,
+      ]}
     >
       {props.children}
     </main>
