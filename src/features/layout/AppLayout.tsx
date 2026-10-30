@@ -1,10 +1,11 @@
 import type { ParentProps } from 'solid-js'
 
-import { SidebarInset, SidebarProvider } from '@components'
+import { ResponsePane, SidebarInset, SidebarProvider } from '@components'
 import { AgentProvider } from '@features/agent'
 import { CommandPalette, CommandPaletteProvider } from '@features/command-palette'
 import { ComposerProvider, Composer } from '@features/composer'
 import { ConversationProvider } from '@features/conversation'
+import { Hero } from '@features/hero'
 import { useI18n } from '@features/i18n'
 import { PreferencesProvider } from '@features/preferences'
 import { AppSidebar } from '@features/topic-sidebar'
@@ -35,15 +36,18 @@ export const AppLayout = (props: ParentProps) => {
                       <div class="relative flex min-h-0 min-w-0 flex-1 overflow-hidden">
                         <AppSidebar />
                         <SidebarInset>
-                          <div
-                            tabindex="0"
-                            role="region"
-                            aria-label={t('layout.contentLabel')}
-                            data-scroller=""
-                            class="focus-visible:ring-ring min-h-0 flex-1 overflow-y-auto focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset"
-                          >
-                            {props.children}
-                          </div>
+                          <Hero />
+                          <ResponsePane>
+                            <div
+                              tabindex="0"
+                              role="region"
+                              aria-label={t('layout.contentLabel')}
+                              data-scroller=""
+                              class="focus-visible:ring-ring min-h-0 flex-1 overflow-y-auto focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset"
+                            >
+                              {props.children}
+                            </div>
+                          </ResponsePane>
                           <Composer />
                         </SidebarInset>
                       </div>
