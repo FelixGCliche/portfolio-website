@@ -1,14 +1,14 @@
 import type { Project } from '@content'
 // eslint-disable-next-line solid/imports -- Portal lives in the renderer package in solid-js 2.x
 import { Portal } from '@solidjs/web'
-import { createMemo, createSignal, createUniqueId, For, onSettled, Show } from 'solid-js'
+import { createMemo, createSignal, createUniqueId, For, Show } from 'solid-js'
 
 import { Sheet } from '@components'
 import { useI18n } from '@features/i18n'
 import { CaseStudy, NextLinks, PanelHeader, Tag } from '@features/response-blocks'
 import type { CaseStudyLink } from '@features/response-blocks'
 import { videoWatchUrl } from '@features/safe-links'
-import { useIsMobile } from '@hooks'
+import { useIsMobile, useResponsePane } from '@hooks'
 
 import { useProjects } from './useContent'
 
@@ -48,13 +48,9 @@ export const ProjectsResponse = () => {
   const panelNameId = createUniqueId()
   const sheetNameId = createUniqueId()
 
-  // The desktop panel overlays the whole main pane (content and composer), so it mounts there
-  const [mainPane, setMainPane] = createSignal<HTMLElement | null>(null, {
-    name: 'projectsMainPane',
-  })
-  onSettled(() => {
-    setMainPane(document.getElementById('main'))
-  })
+  // The desktop panel overlays the response pane (between the hero and the composer, wrapping the scroller),
+  // so it mounts there and stays put while the thread scrolls
+  const responsePane = useResponsePane()
 
   const [selected, setSelected] = createSignal<string | null>(null, { name: 'selectedProject' })
   const selectedProject = createMemo(
@@ -134,7 +130,7 @@ export const ProjectsResponse = () => {
           {(project) => <ProjectCaseStudy project={project()} nameId={sheetNameId} />}
         </Show>
       </Sheet>
-      <Show when={mainPane()}>
+      <Show when={responsePane()}>
         {(mount) => (
           <Portal mount={mount()}>
             <Sheet

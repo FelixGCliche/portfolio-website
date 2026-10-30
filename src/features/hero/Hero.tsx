@@ -121,7 +121,8 @@ export const Hero = () => {
       data-state={collapsed() ? 'collapsed' : 'full'}
       data-animate={animate() ? '' : undefined}
       aria-labelledby={collapsed() ? nameId : titleId}
-      class="group/hero border-border data-[state=collapsed]:bg-card relative z-10 border-b [overflow-anchor:none] data-[state=collapsed]:sticky data-[state=collapsed]:top-0"
+      // Sits above the scroller and may shrink (scrolling itself) so the composer stays visible on short viewports
+      class="group/hero border-border data-[state=collapsed]:bg-card min-h-0 flex-initial overflow-y-auto overscroll-contain border-b"
     >
       <div class={[VARIANT_CLASS, variantState(!collapsed())]} inert={collapsed()}>
         <div class="min-h-0 overflow-hidden">
