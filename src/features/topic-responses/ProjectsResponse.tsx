@@ -10,6 +10,8 @@ import type { CaseStudyLink } from '@features/response-blocks'
 import { videoWatchUrl } from '@features/safe-links'
 import { useIsMobile } from '@hooks'
 
+import { filterProjects } from './filterProjects'
+import type { TopicResponseProps } from './responses'
 import { useProjects } from './useContent'
 
 // One case study is open at a time across every mounted ProjectsResponse; each instance owns its slug
@@ -46,9 +48,14 @@ const ProjectCaseStudy = (props: { project: Project; onClose?: () => void }) => 
   )
 }
 
-export const ProjectsResponse = () => {
+export const ProjectsResponse = (props: TopicResponseProps) => {
   const { t } = useI18n()
-  const projects = useProjects()
+  const allProjects = useProjects()
+  // Only the projects asked for (e.g. by the agent), or every project when none are
+  const projects = createMemo(() => filterProjects(allProjects(), props.projects), {
+    name: 'shownProjects',
+  })
+  const filtered = () => projects().length < allProjects().length
   const isMobile = useIsMobile()
   const panelId = createUniqueId()
   const sheetId = createUniqueId()
@@ -171,7 +178,8 @@ export const ProjectsResponse = () => {
           </Portal>
         )}
       </Show>
-      <NextLinks topics={['/work', '/contact']} />
+      {/* A filtered list links to the full one */}
+      <NextLinks topics={filtered() ? ['/projects', '/work', '/contact'] : ['/work', '/contact']} />
     </div>
   )
 }

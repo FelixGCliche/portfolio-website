@@ -1,27 +1,43 @@
-import { type AgentLoopStrategy, combineStrategies, maxIterations } from '@tanstack/ai'
+import {
+  type AgentLoopStrategy,
+  combineStrategies,
+  maxIterations,
+  type ToolCall,
+} from '@tanstack/ai'
 
-import { isErrorContent, renderBlocksTool } from '@features/agent-tools'
+import { isErrorContent, renderBlocksTool, showTopicTool } from '@features/agent-tools'
 
 type LoopMessage = Parameters<AgentLoopStrategy>[0]['messages'][number]
 
+const count = (calls: readonly ToolCall[], name: string) =>
+  calls.filter((call) => call.function.name === name).length
+
 /**
- * True when the latest tool-calling turn since the visitor's last message called only
- * `render_blocks`, and every one of those calls succeeded. A turn that also called another tool
- * (e.g. a client tool like `show_topic`) needs a follow-up turn once its results are in, and a call
- * whose result carries an error (e.g. arguments that failed schema validation) leaves the model
- * another turn to retry. A `render_blocks` call from an earlier turn of the run (e.g. before a
- * client tool result came back) does not count either.
+ * Whether a turn's tool calls already show the visitor the whole answer: only `render_blocks`
+ * calls, or a single `show_topic` call (alone or alongside a single `render_blocks` call).
  */
-export const endedWithRenderedBlocks = (messages: readonly LoopMessage[]): boolean => {
+const isTerminalTurn = (calls: readonly ToolCall[]): boolean => {
+  const blocks = count(calls, renderBlocksTool.name)
+  const topics = count(calls, showTopicTool.name)
+  if (blocks + topics !== calls.length || calls.length === 0) return false
+  return topics === 0 || (topics === 1 && blocks <= 1)
+}
+
+/**
+ * True when the latest tool-calling turn since the visitor's last message only showed the answer
+ * (see `isTerminalTurn`), and every one of those calls succeeded. A turn that also called another
+ * tool (e.g. `set_theme`) needs a follow-up turn once its results are in, and a call whose result
+ * carries an error (e.g. arguments that failed schema validation, or a failed navigation) leaves the
+ * model another turn to retry. A terminal turn from earlier in the run does not count either.
+ */
+export const endedWithShownAnswer = (messages: readonly LoopMessage[]): boolean => {
   const lastUser = messages.findLastIndex((message) => message.role === 'user')
   const run = messages.slice(lastUser + 1)
   const lastToolTurn = run.findLast(
     (message) => message.role === 'assistant' && (message.toolCalls?.length ?? 0) > 0
   )
   const calls = lastToolTurn?.toolCalls ?? []
-  if (calls.length === 0 || calls.some((call) => call.function.name !== renderBlocksTool.name)) {
-    return false
-  }
+  if (!isTerminalTurn(calls)) return false
   return calls.every((call) =>
     run.some(
       (message) =>
@@ -34,12 +50,13 @@ export const endedWithRenderedBlocks = (messages: readonly LoopMessage[]): boole
 }
 
 /**
- * Ends the run after a turn that only rendered blocks: free models tend to call `render_blocks`
- * again every turn, stacking duplicate or placeholder blocks, and the blocks already carry the whole
- * answer. The system prompt has the model write any accompanying sentence before the call.
+ * Ends the run after a turn that only showed the answer (rendered blocks or a site topic): free
+ * models tend to call `render_blocks` or `show_topic` again every turn, stacking duplicate or
+ * placeholder output, and the shown content already carries the whole answer. The system prompt has
+ * the model write any accompanying sentence before the call.
  */
-export const stopAfterRenderBlocks: AgentLoopStrategy = ({ messages }) =>
-  !endedWithRenderedBlocks(messages)
+export const stopAfterShownAnswer: AgentLoopStrategy = ({ messages }) =>
+  !endedWithShownAnswer(messages)
 
 export const createAgentLoopStrategy = (maxTurns: number): AgentLoopStrategy =>
-  combineStrategies([maxIterations(maxTurns), stopAfterRenderBlocks])
+  combineStrategies([maxIterations(maxTurns), stopAfterShownAnswer])

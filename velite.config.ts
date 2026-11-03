@@ -3,6 +3,7 @@ import { join } from 'node:path'
 
 import { defineCollection, defineConfig, s } from 'velite'
 
+import { isProjectPlayUrl, isProjectVideoUrl } from './src/features/safe-links/projectLinks'
 import { TOPIC_KEYS } from './src/features/topic-keys'
 
 type Locale = 'en' | 'fr'
@@ -99,8 +100,16 @@ const projects = defineCollection({
       year: s.number().int(),
       order: s.number(),
       stack: s.array(s.string()),
-      url: s.string().url().optional(),
-      video: s.string().url().optional(),
+      url: s
+        .string()
+        .url()
+        .refine(isProjectPlayUrl, 'Project url must be a plain https itch.io page')
+        .optional(),
+      video: s
+        .string()
+        .url()
+        .refine(isProjectVideoUrl, 'Project video must be a plain https YouTube embed URL')
+        .optional(),
       built: s.array(s.string()),
     })
     .transform((data, { meta }) => ({

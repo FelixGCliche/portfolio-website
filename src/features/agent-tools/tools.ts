@@ -1,3 +1,4 @@
+import { projects } from '@content'
 import { type AnyTool, toolDefinition } from '@tanstack/ai'
 import { z } from 'zod'
 
@@ -5,18 +6,46 @@ import { MAX_BLOCKS, renderBlocksInputSchema } from '@features/block-schema'
 import { LOCALE_NAMES, LOCALES } from '@features/locales'
 import { THEMES } from '@features/themes'
 import { TOPIC_KEYS } from '@features/topic-keys'
+import type { TopicKey } from '@features/topic-keys'
 
 /** Whether a UI tool call changed the site, or asked for what the site already shows. */
 const statusSchema = z.enum(['applied', 'unchanged'])
 
+/** The topic whose response lists the projects, optionally filtered to some of them. */
+export const PROJECTS_TOPIC = '/projects' satisfies TopicKey
+
+/** Slugs of the portfolio's projects (the same in every locale), in content order. */
+export const PROJECT_SLUGS = [...new Set(projects.map((project) => project.slug))] as [
+  string,
+  ...string[],
+]
+
+const projectsSchema = z
+  .array(z.enum(PROJECT_SLUGS))
+  .min(1)
+  .optional()
+  .describe(
+    `Only with ${PROJECTS_TOPIC}: the slugs of just the projects that answer the visitor's question, to list only those; omit it to list every project. Each one of: ${PROJECT_SLUGS.join(', ')}.`
+  )
+
 /** Opens one of the site's topics in the conversation, as if the visitor typed its command. */
 export const showTopicTool = toolDefinition({
   name: 'show_topic',
-  description: `Show one of the site topics to the visitor (the same as typing its command, e.g. ${TOPIC_KEYS[0]}). Use it when the visitor asks to see, open or go to a topic, or when a topic page answers their question better than a summary. Add at most a short sentence alongside it.`,
-  inputSchema: z.object({
-    key: z.enum(TOPIC_KEYS).describe(`The topic to show, one of: ${TOPIC_KEYS.join(', ')}.`),
+  description: `Show one of the site topics to the visitor (the same as typing its command, e.g. ${TOPIC_KEYS[0]}). Use it when the visitor asks to see, open or go to a topic, or when a topic page answers their question better than a summary. With ${PROJECTS_TOPIC}, pass projects to list only the relevant projects (the visitor can click one to open its case study); omit it only to list them all. Add at most a short sentence alongside it.`,
+  inputSchema: z
+    .object({
+      key: z.enum(TOPIC_KEYS).describe(`The topic to show, one of: ${TOPIC_KEYS.join(', ')}.`),
+      projects: projectsSchema,
+    })
+    .refine((input) => input.projects === undefined || input.key === PROJECTS_TOPIC, {
+      message: `projects is only allowed with key ${PROJECTS_TOPIC}`,
+      path: ['projects'],
+    }),
+  outputSchema: z.object({
+    key: z.enum(TOPIC_KEYS),
+    projects: z.array(z.enum(PROJECT_SLUGS)).optional(),
+    status: statusSchema,
   }),
-  outputSchema: z.object({ key: z.enum(TOPIC_KEYS), status: statusSchema }),
 })
 
 /** Switches the site's colour theme. */
@@ -43,6 +72,10 @@ export const setLanguageTool = toolDefinition({
   outputSchema: z.object({ language: z.enum(LOCALES), status: statusSchema }),
 })
 
+// The single wording for the outbound-link rule, matching the literal labels in the system prompt.
+const LINK_RULE =
+  "links only for outbound links: the GitHub and LinkedIn URLs, a mailto: link to the profile email, or a project URL copied verbatim from the text after that project's `Play:` or `Watch:` label in the portfolio content;"
+
 /** Shows rich UI blocks (tables, timelines, facts, links…) inline in the agent's reply. */
 export const renderBlocksTool = toolDefinition({
   name: 'render_blocks',
@@ -53,7 +86,7 @@ export const renderBlocksTool = toolDefinition({
     'timeline for roles or education over time;',
     'toolRows for skills grouped by area, or tags for a short list of technologies;',
     'list for a few highlights; heading to title a group of blocks; prose for a short paragraph;',
-    'links only for outbound contact links, and only the GitHub and LinkedIn URLs or a mailto: link to the profile email;',
+    LINK_RULE,
     'next to suggest 1 to 3 site topics to open next.',
     'Only use facts from the portfolio content and never include the phone number. The blocks are shown as soon as the tool is called; do not repeat their content in text.',
   ].join(' '),

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import { profile } from '@content'
 
-import { containsPhoneNumber, linkTextMatchesHref } from './contactText'
+import { containsPhoneNumber, expectedLinkText, linkTextMatchesHref } from './contactText'
 
 const GITHUB = 'https://github.com/someone'
 const MAILTO = `mailto:${profile[0]?.email ?? ''}`
@@ -38,6 +38,24 @@ describe('linkTextMatchesHref', () => {
   test('accepts the href host or full URL', () => {
     expect(linkTextMatchesHref('github.com', GITHUB)).toBe(true)
     expect(linkTextMatchesHref('https://github.com/someone', GITHUB)).toBe(true)
+  })
+
+  test('keeps the YouTube video id when comparing watch links', () => {
+    const watch = 'https://www.youtube.com/watch?v=jmhAQYLX4fc'
+    expect(linkTextMatchesHref('https://www.youtube.com/watch?v=jmhAQYLX4fc', watch)).toBe(true)
+    expect(linkTextMatchesHref('youtu.be/jmhAQYLX4fc', watch)).toBe(true)
+    expect(linkTextMatchesHref('youtube.com/watch?v=dQw4w9WgXcQ', watch)).toBe(false)
+    expect(linkTextMatchesHref('youtube.com/watch?v=JMHAQYLX4FC', watch)).toBe(false)
+  })
+
+  test('lists the shown forms a link may use', () => {
+    expect(expectedLinkText('https://incrediboldstudio.itch.io/stack-the-odds')).toEqual([
+      'incrediboldstudio.itch.io/stack-the-odds',
+      'itch.io/stack-the-odds',
+      'incrediboldstudio.itch.io',
+      'itch.io',
+    ])
+    expect(expectedLinkText(MAILTO)).toEqual([(profile[0]?.email ?? '').toLowerCase()])
   })
 
   test('mailto hrefs: recipient matches, other emails and URLs do not', () => {

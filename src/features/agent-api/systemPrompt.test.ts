@@ -1,19 +1,24 @@
 import { describe, expect, test } from 'bun:test'
 
-import { about, education, profile, roles, skills, topics } from '@content'
+import { about, education, profile, projects, roles, skills, topics } from '@content'
 
 import { agentTools } from '@features/agent-tools'
 import { LOCALE_NAMES, LOCALES } from '@features/locales'
+import { videoWatchUrl } from '@features/safe-links'
 import { TOPIC_KEYS } from '@features/topic-keys'
 
 import { buildSystemPrompt, htmlToText, type PromptContent, systemPromptFor } from './systemPrompt'
 
 const MAX_PROMPT_CHARS = 12_000
 
+const forLocale = <T extends { locale: string }>(items: T[], locale: string) =>
+  items.filter((item) => item.locale === locale)
+
 const content: PromptContent = {
   profile,
   about,
   roles,
+  projects,
   skills,
   topics,
   education,
@@ -55,25 +60,38 @@ describe('buildSystemPrompt', () => {
     expect(prompt).toContain('Second degree, ')
   })
 
-  test('asks for plain-text replies without markdown', () => {
+  test('asks for plain-text replies without markdown, preferring tools', () => {
     const prompt = buildSystemPrompt('en')
-    expect(prompt).toContain('a few sentences in plain text only')
-    expect(prompt).toContain('no bold, italics, lists, links, headings, tables, images or HTML')
+    expect(prompt).toContain('Any text you write is plain text only')
+    expect(prompt).toContain(
+      'no markdown, bold, italics, lists, links, headings, tables, images or HTML'
+    )
+    expect(prompt).toContain('Prefer a tool over text')
+    expect(prompt).not.toContain('plain text only. Never')
   })
 
-  test('asks for render_blocks on structured answers without repeating them', () => {
+  test('routes project questions to show_topic, never render_blocks', () => {
+    const prompt = buildSystemPrompt('en')
+    expect(prompt).toContain(
+      'For any question about projects, call show_topic with key "/projects" plus at most one short sentence.'
+    )
+    expect(prompt).toContain(
+      'Set projects to the slugs of just the projects that answer the question'
+    )
+    expect(prompt).toContain('omit projects only when the visitor asks for all projects.')
+    expect(prompt).toContain('Never use render_blocks for projects.')
+  })
+
+  test('asks for render_blocks on other structured answers without repeating them', () => {
     const prompt = buildSystemPrompt('en')
     expect(prompt).toContain('call render_blocks instead of writing them out')
     expect(prompt).toContain(
-      'write any accompanying text (at most one short sentence) before the call, and never repeat the block content'
+      'write any accompanying text (at most one short sentence) before the tool call, and never repeat what the tool shows'
     )
-    expect(prompt).toContain('- render_blocks: ')
   })
 
   test('limits render_blocks to a single call per reply', () => {
-    const prompt = buildSystemPrompt('en')
-    expect(prompt).toContain('Call it exactly once per reply')
-    expect(prompt).toContain('Call this tool at most once per reply')
+    expect(buildSystemPrompt('en')).toContain('Call it exactly once per reply')
   })
 
   test('memoizes the prompt per locale', () => {
@@ -82,8 +100,7 @@ describe('buildSystemPrompt', () => {
 
   test.each([...LOCALES])('includes the %s portfolio content', (locale) => {
     const prompt = buildSystemPrompt(locale)
-    const own = <T extends { locale: string }>(items: T[]) =>
-      items.filter((item) => item.locale === locale)
+    const own = <T extends { locale: string }>(items: T[]) => forLocale(items, locale)
 
     for (const entry of own(profile)) {
       expect(prompt).toContain(entry.name)
@@ -93,6 +110,16 @@ describe('buildSystemPrompt', () => {
     for (const role of own(roles)) {
       expect(prompt).toContain(`${role.title} at ${role.company}`)
       for (const bullet of role.bullets) expect(prompt).toContain(`  - ${bullet}`)
+    }
+    for (const project of own(projects)) {
+      expect(prompt).toContain(
+        `- ${project.name} (${project.year}; ${project.stack.join(', ')}) [slug: ${project.slug}]: `
+      )
+      expect(prompt).toContain(project.description)
+      for (const paragraph of project.built) expect(prompt).toContain(paragraph)
+      if (project.url) expect(prompt).toContain(`Play: ${project.url}`)
+      const watch = project.video && videoWatchUrl(project.video)
+      if (watch) expect(prompt).toContain(`Watch: ${watch}`)
     }
     for (const skill of own(skills)) expect(prompt).toContain(skill.area)
     for (const topic of own(topics)) expect(prompt).toContain(`${topic.key}: ${topic.desc}`)
@@ -121,12 +148,50 @@ describe('buildSystemPrompt', () => {
       ...content,
       about,
       roles: [],
+      projects: [],
       skills: [],
     })
     expect(prompt).not.toContain('## About')
     expect(prompt).not.toContain('## Work experience')
+    expect(prompt).not.toContain('## Projects')
     expect(prompt).not.toContain('## Skills')
     expect(prompt).toContain('## Profile')
+  })
+
+  test.each([...LOCALES])('lists only the %s projects', (locale) => {
+    const prompt = buildSystemPrompt(locale)
+    expect(prompt).toContain('## Projects')
+    const ownNames = forLocale(projects, locale).map((item) => item.name)
+    expect(ownNames.length).toBeGreaterThan(0)
+    for (const project of projects.filter((item) => item.locale !== locale))
+      if (!ownNames.includes(project.name)) expect(prompt).not.toContain(`- ${project.name} (`)
+  })
+
+  test('avoids doubled punctuation and puts Play:/Watch: URLs on their own lines', () => {
+    const [project] = forLocale(projects, 'en')
+    const prompt = buildSystemPrompt('en', {
+      ...content,
+      projects: [
+        {
+          ...project,
+          description: 'Ends already!',
+          url: 'https://example.com/play',
+          video: undefined,
+        },
+      ],
+    })
+    expect(prompt).toContain('Ends already! ')
+    expect(prompt).not.toContain('Ends already!.')
+    expect(prompt).toContain('\n  Play: https://example.com/play')
+    const plain = buildSystemPrompt('en', {
+      ...content,
+      projects: [{ ...project, description: 'No period' }],
+    })
+    expect(plain).toContain('No period. ')
+  })
+
+  test('mentions projects in the intro', () => {
+    expect(buildSystemPrompt('en')).toContain('their work, skills, projects, background')
   })
 
   test('marks ongoing roles as present', () => {
@@ -140,9 +205,9 @@ describe('buildSystemPrompt', () => {
 })
 
 describe('agent tools', () => {
-  test.each([...LOCALES])('are listed from their definitions in the %s prompt', (locale) => {
+  test.each([...LOCALES])('leaves tool descriptions to the schemas in the %s prompt', (locale) => {
     const prompt = buildSystemPrompt(locale)
-    for (const tool of agentTools) expect(prompt).toContain(`- ${tool.name}: ${tool.description}`)
+    for (const tool of agentTools) expect(prompt).not.toContain(tool.description)
   })
 
   test('lists every supported locale with its name', () => {
@@ -150,9 +215,9 @@ describe('agent tools', () => {
     for (const locale of LOCALES) expect(prompt).toContain(`${LOCALE_NAMES[locale]} (${locale})`)
   })
 
-  test('takes topic keys from the shared constants', () => {
-    const prompt = buildSystemPrompt('en')
-    expect(prompt).toContain(`e.g. ${TOPIC_KEYS[0]}`)
+  test('names the projects topic key from the shared constants', () => {
+    expect(TOPIC_KEYS).toContain('/projects')
+    expect(buildSystemPrompt('en')).toContain('key "/projects"')
   })
 })
 

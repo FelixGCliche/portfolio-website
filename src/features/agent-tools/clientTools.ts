@@ -10,8 +10,11 @@ import { setLanguageTool, setThemeTool, showTopicTool } from './tools'
 
 /** The app state and actions the agent's UI tools drive, injected so this module stays provider-free. */
 export type ClientToolActions = {
-  /** Shows a topic in the conversation (ConversationProvider's `run`). */
-  run: (key: TopicKey) => void
+  /**
+   * Shows a topic in the conversation (ConversationProvider's `run`); `projects` limits the
+   * `/projects` topic's list to those slugs.
+   */
+  run: (key: TopicKey, options?: { projects?: string[] }) => void
   theme: Accessor<Theme>
   setTheme: (theme: Theme) => void
   locale: Accessor<Locale>
@@ -80,10 +83,18 @@ export const createClientTools = ({
 
   return [
     showTopicTool.client((args) =>
-      handle(showTopicTool.name, showTopicTool.inputSchema, args, ({ key }) => ({
-        key,
-        status: once(`${showTopicTool.name}:${key}`, () => run(key)),
-      }))
+      handle(showTopicTool.name, showTopicTool.inputSchema, args, ({ key, projects }) => {
+        // Duplicates are dropped; the once key sorts the slugs, so their order doesn't matter
+        const slugs = projects === undefined ? undefined : [...new Set(projects)]
+        const callKey = slugs === undefined ? '' : slugs.toSorted().join(',')
+        return {
+          key,
+          ...(slugs === undefined ? {} : { projects: slugs }),
+          status: once(`${showTopicTool.name}:${key}:${callKey}`, () =>
+            slugs === undefined ? run(key) : run(key, { projects: slugs })
+          ),
+        }
+      })
     ),
     setThemeTool.client((args) =>
       handle(setThemeTool.name, setThemeTool.inputSchema, args, ({ theme: next }) => ({

@@ -4,7 +4,12 @@ import { profile } from '@content'
 
 import { TOPIC_KEYS } from '@features/topic-keys'
 
-import { classifyHref, isSafeHref, isTopicHref, mailtoRecipient } from './safeHref'
+import { createHrefClassifier, isTopicHref, mailtoRecipient } from './safeHref'
+
+const PLAY = 'https://incrediboldstudio.itch.io/stack-the-odds'
+const WATCH = 'https://www.youtube.com/watch?v=jmhAQYLX4fc'
+
+const { classifyHref, isSafeHref } = createHrefClassifier([PLAY, WATCH])
 
 const email = profile[0]?.email ?? ''
 
@@ -32,8 +37,10 @@ describe('isSafeHref', () => {
     `mailto:${encodeURIComponent(email)}`,
     `mailto:${email}?subject=Hello%20there`,
     `mailto:${email}?subject=Hi&body=Text`,
-    'https://incrediboldstudio.itch.io/stack-the-odds',
-    'https://www.youtube.com/watch?v=jmhAQYLX4fc',
+    PLAY,
+    `${PLAY}/`,
+    `${PLAY}#about`,
+    WATCH,
   ])('accepts %s', (href) => {
     expect(isSafeHref(href)).toBe(true)
   })
@@ -79,8 +86,29 @@ describe('isSafeHref', () => {
     'https://incrediboldstudio.itch.io/other-game',
     'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     'https://www.youtube.com/embed/jmhAQYLX4fc',
+    'https://www.youtube.com/watch?v=jmhAQYLX4fc&list=x',
+    'http://incrediboldstudio.itch.io/stack-the-odds',
+    'https://incrediboldstudio.itch.io:8443/stack-the-odds',
   ])('rejects %p', (href) => {
     expect(isSafeHref(href)).toBe(false)
+  })
+
+  test('ignores supplied project URLs off the reviewed project hosts', () => {
+    const { isSafeHref: check } = createHrefClassifier([
+      'https://evil.com/game',
+      'https://itch.io.evil.com/game',
+      'http://incrediboldstudio.itch.io/game',
+      'not a url',
+      'https://studio.itch.io/game',
+    ])
+    expect(check('https://evil.com/game')).toBe(false)
+    expect(check('https://itch.io.evil.com/game')).toBe(false)
+    expect(check('https://incrediboldstudio.itch.io/game')).toBe(false)
+    expect(check('https://studio.itch.io/game')).toBe(true)
+  })
+
+  test('allows no project pages when none are supplied', () => {
+    expect(createHrefClassifier([]).isSafeHref(PLAY)).toBe(false)
   })
 
   test('rejects non-string input without throwing', () => {

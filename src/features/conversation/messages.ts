@@ -72,8 +72,17 @@ export const mergeStreamingBlocks = (current: Block[], next: readonly Block[]): 
 
 export type UserMessage = { id: string; role: 'user'; text: string }
 
-/** A static topic response, rendered by its topic component. */
-export type AgentTopicMessage = { id: string; role: 'agent'; kind: 'topic'; topic: TopicKey }
+/**
+ * A static topic response, rendered by its topic component. `projects` are the slugs of the
+ * projects the `/projects` response lists (every project when omitted).
+ */
+export type AgentTopicMessage = {
+  id: string
+  role: 'agent'
+  kind: 'topic'
+  topic: TopicKey
+  projects?: string[]
+}
 
 /** A streamed free-text response from the LLM agent. */
 export type AgentTextMessage = { id: string; role: 'agent'; kind: 'text' } & AgentReply

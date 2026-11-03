@@ -1,9 +1,9 @@
 import { z } from 'zod'
 
-import { isSafeHref, isTopicHref } from '@features/safe-links'
+import { isTopicHref } from '@features/safe-links'
 import { TOPIC_KEYS } from '@features/topic-keys'
 
-import { containsPhoneNumber, linkTextMatchesHref } from './contactText'
+import { containsPhoneNumber, expectedLinkText, linkTextMatchesHref } from './contactText'
 
 /** The most blocks one `render_blocks` call may show. */
 export const MAX_BLOCKS = 6
@@ -148,41 +148,55 @@ const timelineBlock = z.object({
     .describe('1 to 6 entries.'),
 })
 
-const linksBlock = z.object({
-  type: z.literal('links').describe('External contact links, such as email, GitHub or LinkedIn.'),
-  items: z
-    .array(
-      z
-        .object({
-          label: text(30).describe('Link name, at most 30 characters, such as "GitHub".'),
-          value: text(80).describe(
-            'Shown text, at most 80 characters, such as the handle or address. Any email address or URL in it must be the link target itself.'
-          ),
-          href: z
-            .string()
-            .trim()
-            .max(300)
-            .refine(
-              (href) => isSafeHref(href) && !isTopicHref(href),
-              'Link is not an allowed external link'
-            )
-            .refine((href) => !containsPhoneNumber(href), NO_PHONE)
-            .describe('The https GitHub or LinkedIn URL, or a mailto: link to the profile email.'),
-        })
-        .superRefine((item, ctx) => {
-          for (const field of ['label', 'value'] as const)
-            if (!linkTextMatchesHref(item[field], item.href))
-              ctx.addIssue({
-                code: 'custom',
-                path: [field],
-                message: 'Shown text names an address or URL other than the link target',
-              })
-        })
-    )
-    .min(1)
-    .max(4)
-    .describe('1 to 4 links.'),
-})
+const mismatchMessage = (href: string) => {
+  const expected = expectedLinkText(href)
+  const hint =
+    expected.length > 0
+      ? ` Name it as ${expected.map((form) => `"${form}"`).join(' or ')}, or use plain text such as a name or handle.`
+      : ''
+  return `Shown text names an address or URL other than the link target.${hint}`
+}
+
+const linksBlockOf = (isSafeHref: (href: string) => boolean) =>
+  z.object({
+    type: z
+      .literal('links')
+      .describe('External links, such as email, GitHub, LinkedIn or a project Play or Watch page.'),
+    items: z
+      .array(
+        z
+          .object({
+            label: text(30).describe('Link name, at most 30 characters, such as "GitHub".'),
+            value: text(80).describe(
+              'Shown text, at most 80 characters, such as the handle or address. Any email address or URL in it must name the link target itself.'
+            ),
+            href: z
+              .string()
+              .trim()
+              .max(300)
+              .refine(
+                (href) => isSafeHref(href) && !isTopicHref(href),
+                'Link is not an allowed external link'
+              )
+              .refine((href) => !containsPhoneNumber(href), NO_PHONE)
+              .describe(
+                'The https GitHub or LinkedIn URL, a mailto: link to the profile email, or a project URL copied verbatim from the text after the `Play:` or `Watch:` label of that project.'
+              ),
+          })
+          .superRefine((item, ctx) => {
+            for (const field of ['label', 'value'] as const)
+              if (!linkTextMatchesHref(item[field], item.href))
+                ctx.addIssue({
+                  code: 'custom',
+                  path: [field],
+                  message: mismatchMessage(item.href),
+                })
+          })
+      )
+      .min(1)
+      .max(4)
+      .describe('1 to 4 links.'),
+  })
 
 const nextBlock = z.object({
   type: z.literal('next').describe('Suggested topics to open next.'),
@@ -193,49 +207,58 @@ const nextBlock = z.object({
     .describe('1 to 3 topics.'),
 })
 
-/** One UI block the agent can render, discriminated by `type`. */
-export const blockSchema = z
-  .discriminatedUnion('type', [
-    headingBlock,
-    proseBlock,
-    keyValueBlock,
-    listBlock,
-    tagsBlock,
-    tableBlock,
-    toolRowsBlock,
-    timelineBlock,
-    linksBlock,
-    nextBlock,
-  ])
-  .describe('One block; "type" selects which fields apply.')
+/**
+ * Builds the block schemas around `isSafeHref`, the check a links block href must pass (see
+ * `createHrefClassifier`). `contentBlockSchema.ts` holds the instance built from project content.
+ */
+export const createBlockSchemas = (isSafeHref: (href: string) => boolean) => {
+  /** One UI block the agent can render, discriminated by `type`. */
+  const blockSchema = z
+    .discriminatedUnion('type', [
+      headingBlock,
+      proseBlock,
+      keyValueBlock,
+      listBlock,
+      tagsBlock,
+      tableBlock,
+      toolRowsBlock,
+      timelineBlock,
+      linksBlockOf(isSafeHref),
+      nextBlock,
+    ])
+    .describe('One block; "type" selects which fields apply.')
 
-export type Block = z.infer<typeof blockSchema>
+  /** Input of the `render_blocks` tool. */
+  const renderBlocksInputSchema = z.object({
+    blocks: z
+      .array(blockSchema)
+      .min(1)
+      .max(MAX_BLOCKS)
+      .describe(`1 to ${MAX_BLOCKS} blocks, shown in order.`),
+  })
+
+  /**
+   * Validates each element of a possibly partial `blocks` array on its own and keeps the valid
+   * ones in order, up to `limit` (`MAX_BLOCKS` by default). Meant for partial JSON while a tool
+   * call streams in; a smaller `limit` validates a tail slice against the budget its head left.
+   */
+  const parseBlocksLenient = (value: unknown, limit = MAX_BLOCKS) => {
+    if (!Array.isArray(value)) return []
+    const blocks: z.infer<typeof blockSchema>[] = []
+    for (const element of value) {
+      if (blocks.length >= limit) break
+      const result = blockSchema.safeParse(element)
+      if (result.success) blocks.push(result.data)
+    }
+    return blocks
+  }
+
+  return { blockSchema, renderBlocksInputSchema, parseBlocksLenient }
+}
+
+type BlockSchemas = ReturnType<typeof createBlockSchemas>
+
+export type Block = z.infer<BlockSchemas['blockSchema']>
 export type BlockType = Block['type']
 export type BlockOf<T extends BlockType> = Extract<Block, { type: T }>
-
-/** Input of the `render_blocks` tool. */
-export const renderBlocksInputSchema = z.object({
-  blocks: z
-    .array(blockSchema)
-    .min(1)
-    .max(MAX_BLOCKS)
-    .describe(`1 to ${MAX_BLOCKS} blocks, shown in order.`),
-})
-
-export type RenderBlocksInput = z.infer<typeof renderBlocksInputSchema>
-
-/**
- * Validates each element of a possibly partial `blocks` array on its own and keeps the valid ones
- * in order, up to `limit` (`MAX_BLOCKS` by default). Meant for partial JSON while a tool call
- * streams in; a smaller `limit` validates a tail slice against the budget its head left.
- */
-export const parseBlocksLenient = (value: unknown, limit = MAX_BLOCKS): Block[] => {
-  if (!Array.isArray(value)) return []
-  const blocks: Block[] = []
-  for (const element of value) {
-    if (blocks.length >= limit) break
-    const result = blockSchema.safeParse(element)
-    if (result.success) blocks.push(result.data)
-  }
-  return blocks
-}
+export type RenderBlocksInput = z.infer<BlockSchemas['renderBlocksInputSchema']>

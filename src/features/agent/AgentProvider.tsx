@@ -42,7 +42,7 @@ export const AgentProvider = (props: ParentProps) => {
     // Topic navigation goes through run() so its answered/head de-dupe sees it; the agent's reply
     // already stands in for the visitor's input, so the topic isn't echoed.
     tools: createClientTools({
-      run: (key) => conversation.run(key, { echo: false }),
+      run: (key, options) => conversation.run(key, { ...options, echo: false }),
       theme: preferences.theme,
       setTheme: preferences.setTheme,
       locale: i18n.locale,
