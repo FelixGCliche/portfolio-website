@@ -16,12 +16,25 @@ const ALLOWED_HOSTS: ReadonlySet<string> = new Set([
 /** Query parameters a mailto link may carry; recipient-adding ones (cc, bcc, to) are refused. */
 const ALLOWED_MAILTO_PARAMS: ReadonlySet<string> = new Set(['subject', 'body'])
 
-/** Exact project pages (play and watch links) from the content, allowed whatever their host. */
+const parseUrl = (href: string): URL | undefined => {
+  try {
+    return new URL(href)
+  } catch {
+    return undefined
+  }
+}
+
+// Origin, path and query identify a page; the fragment and a trailing slash on the path do not
+const normalizeUrl = (url: URL): string =>
+  `${url.origin}${url.pathname.replace(/\/+$/, '')}${url.search}`
+
+/** Project pages (play and watch links) from the content, allowed whatever their host. */
 const PROJECT_URLS: ReadonlySet<string> = new Set(
   projects
     .flatMap((project) => [project.url, project.video && videoWatchUrl(project.video)])
-    .filter((href): href is string => typeof href === 'string' && URL.canParse(href))
-    .map((href) => new URL(href).href)
+    .map((href) => (typeof href === 'string' ? parseUrl(href) : undefined))
+    .filter((url): url is URL => url !== undefined)
+    .map(normalizeUrl)
 )
 
 const PROFILE_EMAILS: ReadonlySet<string> = new Set(
@@ -88,14 +101,14 @@ const isSafeMailto = (href: string): boolean => {
 }
 
 const isSafeHttps = (href: string): boolean => {
-  if (!URL.canParse(href)) return false
-  const url = new URL(href)
+  const url = parseUrl(href)
+  if (!url) return false
   return (
     url.protocol === 'https:' &&
     url.username === '' &&
     url.password === '' &&
     url.port === '' &&
-    (ALLOWED_HOSTS.has(url.hostname) || PROJECT_URLS.has(url.href))
+    (ALLOWED_HOSTS.has(url.hostname) || PROJECT_URLS.has(normalizeUrl(url)))
   )
 }
 

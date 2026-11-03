@@ -31,6 +31,7 @@ export type CaseStudyProps = {
 // One project told as a short case study: name, stack, summary, how it was built, and its links
 export const CaseStudy = (props: CaseStudyProps) => {
   const { t } = useI18n()
+  // Links are filtered through classifyHref, so only content-allowlisted external URLs render
   const links = createMemo(
     () => (props.links ?? []).filter((link) => classifyHref(link.href)?.kind === 'external'),
     { name: 'caseStudyLinks' }

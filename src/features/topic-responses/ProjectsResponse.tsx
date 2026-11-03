@@ -1,7 +1,7 @@
 import type { Project } from '@content'
 // eslint-disable-next-line solid/imports -- Portal lives in the renderer package in solid-js 2.x
 import { Portal } from '@solidjs/web'
-import { createMemo, createSignal, createUniqueId, For, Show } from 'solid-js'
+import { createMemo, createSignal, createUniqueId, For, onCleanup, Show } from 'solid-js'
 
 import { Drawer, DrawerContent, useResponsePane } from '@components'
 import { useI18n } from '@features/i18n'
@@ -12,22 +12,29 @@ import { useIsMobile } from '@hooks'
 
 import { useProjects } from './useContent'
 
-const ProjectCaseStudy = (props: { project: Project; nameId: string; onClose?: () => void }) => {
+// One case study is open at a time across every mounted ProjectsResponse; each instance owns its slug
+const [selection, setSelection] = createSignal<{ owner: string; slug: string } | null>(null, {
+  name: 'projectSelection',
+})
+
+const ProjectCaseStudy = (props: { project: Project; onClose?: () => void }) => {
   const { t } = useI18n()
 
-  const links = (): CaseStudyLink[] => {
-    const watch = props.project.video ? videoWatchUrl(props.project.video) : undefined
-    return [
-      ...(props.project.url ? [{ label: t('projects.play'), href: props.project.url }] : []),
-      ...(watch ? [{ label: t('projects.watch'), href: watch }] : []),
-    ]
-  }
+  const links = createMemo(
+    (): CaseStudyLink[] => {
+      const watch = props.project.video ? videoWatchUrl(props.project.video) : undefined
+      return [
+        ...(props.project.url ? [{ label: t('projects.play'), href: props.project.url }] : []),
+        ...(watch ? [{ label: t('projects.watch'), href: watch }] : []),
+      ]
+    },
+    { name: 'projectLinks' }
+  )
 
   return (
     <CaseStudy
       eyebrow={t('projects.caseStudy')}
       name={props.project.name}
-      nameId={props.nameId}
       stack={props.project.stack}
       description={props.project.description}
       heading={t('projects.builtHeading')}
@@ -45,14 +52,19 @@ export const ProjectsResponse = () => {
   const isMobile = useIsMobile()
   const panelId = createUniqueId()
   const sheetId = createUniqueId()
-  const panelNameId = createUniqueId()
-  const sheetNameId = createUniqueId()
+  const instanceId = createUniqueId()
 
   // The desktop panel overlays the response pane (between the hero and the composer, wrapping the scroller),
   // so it mounts there and stays put while the thread scrolls
   const responsePane = useResponsePane()
 
-  const [selected, setSelected] = createSignal<string | null>(null, { name: 'selectedProject' })
+  const selected = () => {
+    const current = selection()
+    return current?.owner === instanceId ? current.slug : null
+  }
+  onCleanup(() => {
+    if (selection()?.owner === instanceId) setSelection(null)
+  })
   const selectedProject = createMemo(
     () => projects().find((project) => project.slug === selected()),
     { name: 'selectedProjectEntry' }
@@ -63,11 +75,17 @@ export const ProjectsResponse = () => {
     { name: 'sheetProject' }
   )
 
+  // No label while nothing has been selected, rather than an empty-named dialog
+  const sheetLabel = () => {
+    const name = sheetProject()?.name
+    return name ? t('projects.caseStudyOf', { name }) : undefined
+  }
+
   const toggle = (slug: string) => {
-    setSelected((current) => (current === slug ? null : slug))
+    setSelection(selected() === slug ? null : { owner: instanceId, slug })
   }
   const close = () => {
-    setSelected(null)
+    if (selection()?.owner === instanceId) setSelection(null)
   }
 
   return (
@@ -122,14 +140,10 @@ export const ProjectsResponse = () => {
           if (!open && isMobile()) close()
         }}
       >
-        <DrawerContent
-          id={sheetId}
-          label={t('projects.caseStudyOf', { name: sheetProject()?.name ?? '' })}
-          closeLabel={t('projects.close')}
-        >
+        <DrawerContent id={sheetId} label={sheetLabel()} closeLabel={t('projects.close')}>
           <div class="flex flex-col gap-3.5 px-4 pb-7">
             <Show when={sheetProject()}>
-              {(project) => <ProjectCaseStudy project={project()} nameId={sheetNameId} />}
+              {(project) => <ProjectCaseStudy project={project()} />}
             </Show>
           </div>
         </DrawerContent>
@@ -146,15 +160,10 @@ export const ProjectsResponse = () => {
                 if (!open && !isMobile()) close()
               }}
             >
-              <DrawerContent
-                id={panelId}
-                label={t('projects.caseStudyOf', { name: sheetProject()?.name ?? '' })}
-              >
+              <DrawerContent id={panelId} label={sheetLabel()}>
                 <div class="bg-card min-h-0 flex-1 overflow-y-auto overscroll-contain p-[18px]">
                   <Show when={sheetProject()}>
-                    {(project) => (
-                      <ProjectCaseStudy project={project()} nameId={panelNameId} onClose={close} />
-                    )}
+                    {(project) => <ProjectCaseStudy project={project()} onClose={close} />}
                   </Show>
                 </div>
               </DrawerContent>
