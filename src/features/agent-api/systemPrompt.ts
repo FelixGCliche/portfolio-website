@@ -86,15 +86,18 @@ const roleLines = (role: Role) => [
   ...role.bullets.map((bullet) => `  - ${bullet}`),
 ]
 
-// One line per project; the play/watch URLs are the exact links render_blocks may show for it.
+// Adds a closing period only when the text does not already end in sentence punctuation.
+const endSentence = (text: string) => (/[.!?]$/.test(text.trim()) ? text.trim() : `${text.trim()}.`)
+
+// One bullet per project; the Play:/Watch: URLs sit on their own sub-lines so they can be copied
+// verbatim into render_blocks links.
 const projectLine = (project: Project) => {
   const watch = project.video === undefined ? undefined : videoWatchUrl(project.video)
   return [
-    `- ${project.name} (${project.year}; ${project.stack.join(', ')}): ${project.description}.`,
-    ...project.built,
-    ...(project.url === undefined ? [] : [`Play: ${project.url}`]),
-    ...(watch === undefined ? [] : [`Watch: ${watch}`]),
-  ].join(' ')
+    `- ${project.name} (${project.year}; ${project.stack.join(', ')}): ${endSentence(project.description)} ${project.built.join(' ')}`.trimEnd(),
+    ...(project.url === undefined ? [] : [`  Play: ${project.url}`]),
+    ...(watch === undefined ? [] : [`  Watch: ${watch}`]),
+  ].join('\n')
 }
 
 const skillLine = (skill: Skill) => `- ${skill.area}: ${skill.tools.join(', ')}`

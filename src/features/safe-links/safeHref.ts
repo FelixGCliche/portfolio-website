@@ -1,8 +1,8 @@
-import { profile, projects } from '@content'
+import { profile } from '@content'
 
 import { TOPIC_KEYS, type TopicKey } from '@features/topic-keys'
 
-import { videoWatchUrl } from './projectLinks'
+import { isProjectHost } from './projectLinks'
 
 // Free of Solid and the DOM so the Cloudflare worker can validate model output too.
 
@@ -27,15 +27,6 @@ const parseUrl = (href: string): URL | undefined => {
 // Origin, path and query identify a page; the fragment and a trailing slash on the path do not
 const normalizeUrl = (url: URL): string =>
   `${url.origin}${url.pathname.replace(/\/+$/, '')}${url.search}`
-
-/** Project pages (play and watch links) from the content, allowed whatever their host. */
-const PROJECT_URLS: ReadonlySet<string> = new Set(
-  projects
-    .flatMap((project) => [project.url, project.video && videoWatchUrl(project.video)])
-    .map((href) => (typeof href === 'string' ? parseUrl(href) : undefined))
-    .filter((url): url is URL => url !== undefined)
-    .map(normalizeUrl)
-)
 
 const PROFILE_EMAILS: ReadonlySet<string> = new Set(
   profile.map((entry) => entry.email.toLowerCase())
@@ -100,36 +91,57 @@ const isSafeMailto = (href: string): boolean => {
   return [...params.keys()].every((key) => ALLOWED_MAILTO_PARAMS.has(key.toLowerCase()))
 }
 
-const isSafeHttps = (href: string): boolean => {
-  const url = parseUrl(href)
-  if (!url) return false
-  return (
-    url.protocol === 'https:' &&
-    url.username === '' &&
-    url.password === '' &&
-    url.port === '' &&
-    (ALLOWED_HOSTS.has(url.hostname) || PROJECT_URLS.has(normalizeUrl(url)))
-  )
-}
-
 /** A link target that passed `classifyHref`, tagged with what kind of link it is. */
 export type SafeHref =
   | { kind: 'topic'; href: TopicKey }
   | { kind: 'external' | 'mailto'; href: string }
 
-/**
- * Classifies `href` when it may be rendered as a link: a topic key, an https URL on an allowlisted
- * host or a project page from the content (external), or a mailto to the profile's own address.
- * Everything else (other schemes, hosts, credentials, protocol-relative URLs, hidden characters)
- * is refused with `undefined`.
- */
-export const classifyHref = (href: string): SafeHref | undefined => {
-  if (typeof href !== 'string' || href.length === 0 || UNSAFE_CHAR.test(href)) return undefined
-  if (isTopicHref(href)) return { kind: 'topic', href }
-  if (href.startsWith(MAILTO)) return isSafeMailto(href) ? { kind: 'mailto', href } : undefined
-  if (href.startsWith(HTTPS)) return isSafeHttps(href) ? { kind: 'external', href } : undefined
-  return undefined
+export type HrefClassifier = {
+  /**
+   * Classifies `href` when it may be rendered as a link: a topic key, an https URL on an
+   * allowlisted host or one of the project pages (external), or a mailto to the profile's own
+   * address. Everything else (other schemes, hosts, credentials, protocol-relative URLs, hidden
+   * characters) is refused with `undefined`.
+   */
+  classifyHref: (href: string) => SafeHref | undefined
+  /** Whether `href` may be rendered as a link; see `classifyHref`. */
+  isSafeHref: (href: string) => boolean
 }
 
-/** Whether `href` may be rendered as a link; see `classifyHref`. */
-export const isSafeHref = (href: string): boolean => classifyHref(href) !== undefined
+/**
+ * Builds the link checks around `projectUrls`, the exact project play and watch pages allowed on
+ * top of the fixed hosts. A project page must still be plain https on a reviewed project host
+ * (`isProjectHost`); others in the set are ignored. See `projectPageUrls` to derive the set from
+ * project content.
+ */
+export const createHrefClassifier = (projectUrls: Iterable<string>): HrefClassifier => {
+  const allowed: ReadonlySet<string> = new Set(
+    [...projectUrls]
+      .map(parseUrl)
+      .filter((url): url is URL => url !== undefined && isProjectHost(url.hostname))
+      .map(normalizeUrl)
+  )
+
+  const isSafeHttps = (href: string): boolean => {
+    const url = parseUrl(href)
+    if (!url) return false
+    return (
+      url.protocol === 'https:' &&
+      url.username === '' &&
+      url.password === '' &&
+      url.port === '' &&
+      (ALLOWED_HOSTS.has(url.hostname) ||
+        (isProjectHost(url.hostname) && allowed.has(normalizeUrl(url))))
+    )
+  }
+
+  const classifyHref = (href: string): SafeHref | undefined => {
+    if (typeof href !== 'string' || href.length === 0 || UNSAFE_CHAR.test(href)) return undefined
+    if (isTopicHref(href)) return { kind: 'topic', href }
+    if (href.startsWith(MAILTO)) return isSafeMailto(href) ? { kind: 'mailto', href } : undefined
+    if (href.startsWith(HTTPS)) return isSafeHttps(href) ? { kind: 'external', href } : undefined
+    return undefined
+  }
+
+  return { classifyHref, isSafeHref: (href) => classifyHref(href) !== undefined }
+}

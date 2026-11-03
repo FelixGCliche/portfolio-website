@@ -43,6 +43,10 @@ export const setLanguageTool = toolDefinition({
   outputSchema: z.object({ language: z.enum(LOCALES), status: statusSchema }),
 })
 
+// The single wording for the outbound-link rule, matching the literal labels in the system prompt.
+const LINK_RULE =
+  "links only for outbound links: the GitHub and LinkedIn URLs, a mailto: link to the profile email, or a project URL copied verbatim from the text after that project's `Play:` or `Watch:` label in the portfolio content;"
+
 /** Shows rich UI blocks (tables, timelines, facts, links…) inline in the agent's reply. */
 export const renderBlocksTool = toolDefinition({
   name: 'render_blocks',
@@ -53,7 +57,7 @@ export const renderBlocksTool = toolDefinition({
     'timeline for roles or education over time;',
     'toolRows for skills grouped by area, or tags for a short list of technologies;',
     'list for a few highlights; heading to title a group of blocks; prose for a short paragraph;',
-    "links only for outbound links, and only the GitHub and LinkedIn URLs, a mailto: link to the profile email, or a project's Play or Watch URL exactly as listed in the portfolio content;",
+    LINK_RULE,
     'next to suggest 1 to 3 site topics to open next.',
     'Only use facts from the portfolio content and never include the phone number. The blocks are shown as soon as the tool is called; do not repeat their content in text.',
   ].join(' '),

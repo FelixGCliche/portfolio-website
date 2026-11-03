@@ -1,10 +1,13 @@
+import { projects } from '@content'
 import { X } from '@lucide/solid'
 import { createMemo, For, Show } from 'solid-js'
 
 import { useI18n } from '@features/i18n'
-import { classifyHref } from '@features/safe-links'
+import { createHrefClassifier, projectPageUrls } from '@features/safe-links'
 
 import { Tag } from './Tag'
+
+const { classifyHref } = createHrefClassifier(projectPageUrls(projects))
 
 export type CaseStudyLink = {
   // Visible text, e.g. 'play'; an arrow is appended

@@ -76,9 +76,9 @@ describe('agentTools', () => {
   })
 
   test('render_blocks allows project play and watch links', () => {
-    expect(renderBlocksTool.description).toContain("a project's Play or Watch URL")
+    expect(renderBlocksTool.description).toContain("after that project's `Play:` or `Watch:` label")
     expect(JSON.stringify(renderBlocksTool.inputSchema.toJSONSchema())).toContain(
-      'a project Play or Watch URL'
+      'the `Play:` or `Watch:` label of that project'
     )
   })
 

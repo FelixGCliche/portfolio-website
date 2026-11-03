@@ -1,19 +1,20 @@
 import { describe, expect, test } from 'bun:test'
 
-import { profile, projects } from '@content'
+import { profile } from '@content'
 import { z } from 'zod'
 
-import { videoWatchUrl } from '@features/safe-links'
+import { createHrefClassifier } from '@features/safe-links'
 import { TOPIC_KEYS } from '@features/topic-keys'
 
-import {
-  type Block,
-  blockSchema,
-  type BlockType,
-  MAX_BLOCKS,
-  parseBlocksLenient,
-  renderBlocksInputSchema,
-} from './blockSchema'
+import { type Block, type BlockType, createBlockSchemas, MAX_BLOCKS } from './blockSchema'
+
+// Fixture project pages, injected instead of read from the live content.
+const PLAY_HREF = 'https://incrediboldstudio.itch.io/stack-the-odds'
+const WATCH_HREF = 'https://www.youtube.com/watch?v=jmhAQYLX4fc'
+
+const { blockSchema, parseBlocksLenient, renderBlocksInputSchema } = createBlockSchemas(
+  createHrefClassifier([PLAY_HREF, WATCH_HREF]).isSafeHref
+)
 
 const email = profile[0]?.email ?? ''
 
@@ -95,25 +96,60 @@ describe('blockSchema', () => {
     expect(ok({ type: 'links', items: [{ label: 'x', value: 'y', href }] })).toBe(false)
   })
 
-  const projectHrefs = projects.flatMap((project) => [
-    project.url,
-    project.video && videoWatchUrl(project.video),
-  ])
-  const playHref = projectHrefs.find((href) => href?.includes('itch.io')) ?? ''
-  const watchHref = projectHrefs.find((href) => href?.includes('youtube.com')) ?? ''
-
-  test('accepts project play and watch links from the content', () => {
-    expect(playHref).not.toBe('')
-    expect(watchHref).not.toBe('')
+  test('accepts the supplied project play and watch links', () => {
     expect(
       ok({
         type: 'links',
         items: [
-          { label: 'Play', value: 'Excess Mana', href: playHref },
-          { label: 'Watch', value: 'Stack the Odds', href: watchHref },
+          { label: 'Play', value: 'Stack the Odds', href: PLAY_HREF },
+          { label: 'Watch', value: 'Stack the Odds', href: WATCH_HREF },
         ],
       })
     ).toBe(true)
+  })
+
+  test.each([
+    'itch.io',
+    'itch.io/stack-the-odds',
+    'incrediboldstudio.itch.io',
+    'incrediboldstudio.itch.io/stack-the-odds',
+    'https://incrediboldstudio.itch.io/stack-the-odds/',
+  ])('accepts play link text %p naming its target', (value) => {
+    expect(ok({ type: 'links', items: [{ label: 'Play', value, href: PLAY_HREF }] })).toBe(true)
+  })
+
+  test.each([
+    'itch.io/excess-mana',
+    'incrediboldstudio.itch.io/excess-mana',
+    'otherstudio.itch.io',
+    'evil.io',
+  ])('rejects play link text %p naming another target', (value) => {
+    expect(ok({ type: 'links', items: [{ label: 'Play', value, href: PLAY_HREF }] })).toBe(false)
+  })
+
+  test.each(['youtube.com/watch?v=jmhAQYLX4fc', 'youtu.be/jmhAQYLX4fc', 'youtube.com'])(
+    'accepts watch link text %p naming its video',
+    (value) => {
+      expect(ok({ type: 'links', items: [{ label: 'Watch', value, href: WATCH_HREF }] })).toBe(true)
+    }
+  )
+
+  test.each(['youtube.com/watch?v=dQw4w9WgXcQ', 'youtu.be/dQw4w9WgXcQ', 'youtube.com/watch'])(
+    'rejects watch link text %p naming another video',
+    (value) => {
+      expect(ok({ type: 'links', items: [{ label: 'Watch', value, href: WATCH_HREF }] })).toBe(
+        false
+      )
+    }
+  )
+
+  test('hints at the expected shown text when it names another target', () => {
+    const result = blockSchema.safeParse({
+      type: 'links',
+      items: [{ label: 'Play', value: 'itch.io/excess-mana', href: PLAY_HREF }],
+    })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]?.message).toContain('"itch.io/stack-the-odds"')
   })
 
   test.each([

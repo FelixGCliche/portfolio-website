@@ -87,8 +87,7 @@ describe('buildSystemPrompt', () => {
 
   test.each([...LOCALES])('includes the %s portfolio content', (locale) => {
     const prompt = buildSystemPrompt(locale)
-    const own = <T extends { locale: string }>(items: T[]) =>
-      items.filter((item) => item.locale === locale)
+    const own = <T extends { locale: string }>(items: T[]) => forLocale(items, locale)
 
     for (const entry of own(profile)) {
       expect(prompt).toContain(entry.name)
@@ -147,11 +146,33 @@ describe('buildSystemPrompt', () => {
   test.each([...LOCALES])('lists only the %s projects', (locale) => {
     const prompt = buildSystemPrompt(locale)
     expect(prompt).toContain('## Projects')
-    expect(forLocale(projects, locale).length).toBeGreaterThan(0)
+    const ownNames = forLocale(projects, locale).map((item) => item.name)
+    expect(ownNames.length).toBeGreaterThan(0)
     for (const project of projects.filter((item) => item.locale !== locale))
-      for (const paragraph of project.built)
-        if (!forLocale(projects, locale).some((item) => item.built.includes(paragraph)))
-          expect(prompt).not.toContain(paragraph)
+      if (!ownNames.includes(project.name)) expect(prompt).not.toContain(`- ${project.name} (`)
+  })
+
+  test('avoids doubled punctuation and puts Play:/Watch: URLs on their own lines', () => {
+    const [project] = forLocale(projects, 'en')
+    const prompt = buildSystemPrompt('en', {
+      ...content,
+      projects: [
+        {
+          ...project,
+          description: 'Ends already!',
+          url: 'https://example.com/play',
+          video: undefined,
+        },
+      ],
+    })
+    expect(prompt).toContain('Ends already! ')
+    expect(prompt).not.toContain('Ends already!.')
+    expect(prompt).toContain('\n  Play: https://example.com/play')
+    const plain = buildSystemPrompt('en', {
+      ...content,
+      projects: [{ ...project, description: 'No period' }],
+    })
+    expect(plain).toContain('No period. ')
   })
 
   test('mentions projects in the intro', () => {
