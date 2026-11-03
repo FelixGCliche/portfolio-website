@@ -1,0 +1,13 @@
+slug: resistance-is-futile
+name: 'Resistance is Futile'
+description: 'Turn-based roguelike made with Unity'
+year: 2021
+order: 3
+stack:
+  - 'C#'
+  - 'Unity'
+url: 'https://incrediboldstudio.itch.io/resistance-is-futile'
+built:
+  - 'Resistance is Futile is a turn-based rogue-like where you control a group of 3 characters fighting endless waves of enemies.'
+  - 'This game was created during a 48h gamejam organized by the University of Quebec at Chicoutimi (UQAC). I was invited by 3 of my friends who were students there at the time.'
+  - 'I worked on the progression system as well as the player inventory.'

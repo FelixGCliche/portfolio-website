@@ -88,6 +88,27 @@ const skills = defineCollection({
     })),
 })
 
+const projects = defineCollection({
+  name: 'Project',
+  pattern: '*/projects/*.yaml',
+  schema: s
+    .object({
+      slug: s.string().regex(/^[a-z0-9-]+$/),
+      name: s.string(),
+      description: s.string(),
+      year: s.number().int(),
+      order: s.number(),
+      stack: s.array(s.string()),
+      url: s.string().url().optional(),
+      video: s.string().url().optional(),
+      built: s.array(s.string()),
+    })
+    .transform((data, { meta }) => ({
+      ...data,
+      locale: localeFromPath(meta.path),
+    })),
+})
+
 const education = defineCollection({
   name: 'Education',
   pattern: '*/education.yaml',
@@ -170,6 +191,7 @@ const parityIds = {
   about: singletonId,
   education: singletonId,
   roles: slugId,
+  projects: slugId,
   skills: slugId,
   topics: slugId,
   commands: slugId,
@@ -251,5 +273,5 @@ export default defineConfig({
     name: '[name]-[hash:8].[ext]',
     clean: true,
   },
-  collections: { profile, about, roles, education, skills, topics, commands, ui },
+  collections: { profile, about, roles, projects, education, skills, topics, commands, ui },
 })

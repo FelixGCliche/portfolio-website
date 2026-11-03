@@ -1,0 +1,13 @@
+slug: resistance-is-futile
+name: 'Resistance is Futile'
+description: 'Roguelike tour par tour fait avec Unity'
+year: 2021
+order: 3
+stack:
+  - 'C#'
+  - 'Unity'
+url: 'https://incrediboldstudio.itch.io/resistance-is-futile'
+built:
+  - "Resistance is Futile est un rogue-like tour par tour où tu contrôles un groupe de 3 héros combattant vagues après vagues d'ennemis."
+  - "Ce jeu a été développé durant un gamejam de 48h organisé par l'Université du Québec à Chicoutimi (UQAC). J'ai été invité par 3 de mes amis qui étudiaient là-bas à ce moment."
+  - "J'ai travaillé sur le système de gestion des ennemis et d'inventaire."

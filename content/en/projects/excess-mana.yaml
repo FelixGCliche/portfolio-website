@@ -1,0 +1,14 @@
+slug: excess-mana
+name: 'Excess Mana'
+description: 'Build your defenses and kill the slimes'
+year: 2020
+order: 4
+stack:
+  - 'C#'
+  - 'Unity'
+url: 'https://incrediboldstudio.itch.io/excess-mana'
+built:
+  - 'Excess Mana is a tower defense game where you play a wizard who must defend his temple from waves of elemental slimes attracted by its mana influx.'
+  - "During the day, you need to gather resources and upgrade your temple's defense while at night you must defend against the waves of slimes."
+  - 'This game was created during a 48h gamejam organized by the University of Quebec at Chicoutimi (UQAC). I was invited by 3 of my friends who were students there at the time.'
+  - "I worked on the resource gathering and the player inventory in addition to the main character's art."
