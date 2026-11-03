@@ -1,6 +1,8 @@
-import { profile } from '@content'
+import { profile, projects } from '@content'
 
 import { TOPIC_KEYS, type TopicKey } from '@features/topic-keys'
+
+import { videoWatchUrl } from './projectLinks'
 
 // Free of Solid and the DOM so the Cloudflare worker can validate model output too.
 
@@ -13,6 +15,27 @@ const ALLOWED_HOSTS: ReadonlySet<string> = new Set([
 
 /** Query parameters a mailto link may carry; recipient-adding ones (cc, bcc, to) are refused. */
 const ALLOWED_MAILTO_PARAMS: ReadonlySet<string> = new Set(['subject', 'body'])
+
+const parseUrl = (href: string): URL | undefined => {
+  try {
+    return new URL(href)
+  } catch {
+    return undefined
+  }
+}
+
+// Origin, path and query identify a page; the fragment and a trailing slash on the path do not
+const normalizeUrl = (url: URL): string =>
+  `${url.origin}${url.pathname.replace(/\/+$/, '')}${url.search}`
+
+/** Project pages (play and watch links) from the content, allowed whatever their host. */
+const PROJECT_URLS: ReadonlySet<string> = new Set(
+  projects
+    .flatMap((project) => [project.url, project.video && videoWatchUrl(project.video)])
+    .map((href) => (typeof href === 'string' ? parseUrl(href) : undefined))
+    .filter((url): url is URL => url !== undefined)
+    .map(normalizeUrl)
+)
 
 const PROFILE_EMAILS: ReadonlySet<string> = new Set(
   profile.map((entry) => entry.email.toLowerCase())
@@ -78,14 +101,14 @@ const isSafeMailto = (href: string): boolean => {
 }
 
 const isSafeHttps = (href: string): boolean => {
-  if (!URL.canParse(href)) return false
-  const url = new URL(href)
+  const url = parseUrl(href)
+  if (!url) return false
   return (
     url.protocol === 'https:' &&
     url.username === '' &&
     url.password === '' &&
     url.port === '' &&
-    ALLOWED_HOSTS.has(url.hostname)
+    (ALLOWED_HOSTS.has(url.hostname) || PROJECT_URLS.has(normalizeUrl(url)))
   )
 }
 
@@ -96,8 +119,9 @@ export type SafeHref =
 
 /**
  * Classifies `href` when it may be rendered as a link: a topic key, an https URL on an allowlisted
- * host (external), or a mailto to the profile's own address. Everything else (other schemes,
- * hosts, credentials, protocol-relative URLs, hidden characters) is refused with `undefined`.
+ * host or a project page from the content (external), or a mailto to the profile's own address.
+ * Everything else (other schemes, hosts, credentials, protocol-relative URLs, hidden characters)
+ * is refused with `undefined`.
  */
 export const classifyHref = (href: string): SafeHref | undefined => {
   if (typeof href !== 'string' || href.length === 0 || UNSAFE_CHAR.test(href)) return undefined

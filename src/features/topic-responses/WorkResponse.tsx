@@ -39,7 +39,7 @@ export const WorkResponse = () => {
           )}
         </For>
       </Timeline>
-      <NextLinks topics={['/skills', '/resume']} />
+      <NextLinks topics={['/projects', '/skills', '/resume']} />
     </div>
   )
 }

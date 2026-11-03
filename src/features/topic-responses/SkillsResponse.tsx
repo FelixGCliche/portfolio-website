@@ -29,7 +29,7 @@ export const SkillsResponse = () => {
           )}
         </For>
       </Card>
-      <NextLinks topics={['/work', '/contact']} />
+      <NextLinks topics={['/work', '/projects', '/contact']} />
     </div>
   )
 }

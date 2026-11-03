@@ -32,6 +32,8 @@ describe('isSafeHref', () => {
     `mailto:${encodeURIComponent(email)}`,
     `mailto:${email}?subject=Hello%20there`,
     `mailto:${email}?subject=Hi&body=Text`,
+    'https://incrediboldstudio.itch.io/stack-the-odds',
+    'https://www.youtube.com/watch?v=jmhAQYLX4fc',
   ])('accepts %s', (href) => {
     expect(isSafeHref(href)).toBe(true)
   })
@@ -73,6 +75,10 @@ describe('isSafeHref', () => {
     'mailto:',
     'mailto:%zz',
     'https://',
+    'https://incrediboldstudio.itch.io/',
+    'https://incrediboldstudio.itch.io/other-game',
+    'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    'https://www.youtube.com/embed/jmhAQYLX4fc',
   ])('rejects %p', (href) => {
     expect(isSafeHref(href)).toBe(false)
   })
