@@ -1,3 +1,4 @@
+import { projects } from '@content'
 import { type AnyTool, toolDefinition } from '@tanstack/ai'
 import { z } from 'zod'
 
@@ -5,18 +6,45 @@ import { MAX_BLOCKS, renderBlocksInputSchema } from '@features/block-schema'
 import { LOCALE_NAMES, LOCALES } from '@features/locales'
 import { THEMES } from '@features/themes'
 import { TOPIC_KEYS } from '@features/topic-keys'
+import type { TopicKey } from '@features/topic-keys'
 
 /** Whether a UI tool call changed the site, or asked for what the site already shows. */
 const statusSchema = z.enum(['applied', 'unchanged'])
 
+/** The topic whose response can open one project's case study. */
+export const PROJECTS_TOPIC = '/projects' satisfies TopicKey
+
+/** Slugs of the portfolio's projects (the same in every locale), in content order. */
+export const PROJECT_SLUGS = [...new Set(projects.map((project) => project.slug))] as [
+  string,
+  ...string[],
+]
+
+const projectSchema = z
+  .enum(PROJECT_SLUGS)
+  .optional()
+  .describe(
+    `Only with ${PROJECTS_TOPIC}: the project whose case study to open, one of: ${PROJECT_SLUGS.join(', ')}.`
+  )
+
 /** Opens one of the site's topics in the conversation, as if the visitor typed its command. */
 export const showTopicTool = toolDefinition({
   name: 'show_topic',
-  description: `Show one of the site topics to the visitor (the same as typing its command, e.g. ${TOPIC_KEYS[0]}). Use it when the visitor asks to see, open or go to a topic, or when a topic page answers their question better than a summary. Add at most a short sentence alongside it.`,
-  inputSchema: z.object({
-    key: z.enum(TOPIC_KEYS).describe(`The topic to show, one of: ${TOPIC_KEYS.join(', ')}.`),
+  description: `Show one of the site topics to the visitor (the same as typing its command, e.g. ${TOPIC_KEYS[0]}). Use it when the visitor asks to see, open or go to a topic, or when a topic page answers their question better than a summary. With ${PROJECTS_TOPIC}, pass a project to also open its case study. Add at most a short sentence alongside it.`,
+  inputSchema: z
+    .object({
+      key: z.enum(TOPIC_KEYS).describe(`The topic to show, one of: ${TOPIC_KEYS.join(', ')}.`),
+      project: projectSchema,
+    })
+    .refine((input) => input.project === undefined || input.key === PROJECTS_TOPIC, {
+      message: `project is only allowed with key ${PROJECTS_TOPIC}`,
+      path: ['project'],
+    }),
+  outputSchema: z.object({
+    key: z.enum(TOPIC_KEYS),
+    project: z.enum(PROJECT_SLUGS).optional(),
+    status: statusSchema,
   }),
-  outputSchema: z.object({ key: z.enum(TOPIC_KEYS), status: statusSchema }),
 })
 
 /** Switches the site's colour theme. */

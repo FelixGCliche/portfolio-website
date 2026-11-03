@@ -9,7 +9,10 @@ import { ResumeResponse } from './ResumeResponse'
 import { SkillsResponse } from './SkillsResponse'
 import { WorkResponse } from './WorkResponse'
 
-export const responses: Record<TopicKey, Component> = {
+/** Props every topic response receives; only `/projects` reads `project` (the case study to open). */
+export type TopicResponseProps = { project?: string }
+
+export const responses: Record<TopicKey, Component<TopicResponseProps>> = {
   '/about': AboutResponse,
   '/work': WorkResponse,
   '/projects': ProjectsResponse,

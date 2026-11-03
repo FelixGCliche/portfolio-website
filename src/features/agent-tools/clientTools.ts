@@ -10,8 +10,11 @@ import { setLanguageTool, setThemeTool, showTopicTool } from './tools'
 
 /** The app state and actions the agent's UI tools drive, injected so this module stays provider-free. */
 export type ClientToolActions = {
-  /** Shows a topic in the conversation (ConversationProvider's `run`). */
-  run: (key: TopicKey) => void
+  /**
+   * Shows a topic in the conversation (ConversationProvider's `run`); `project` opens that
+   * project's case study with the `/projects` topic.
+   */
+  run: (key: TopicKey, options?: { project?: string }) => void
   theme: Accessor<Theme>
   setTheme: (theme: Theme) => void
   locale: Accessor<Locale>
@@ -80,9 +83,12 @@ export const createClientTools = ({
 
   return [
     showTopicTool.client((args) =>
-      handle(showTopicTool.name, showTopicTool.inputSchema, args, ({ key }) => ({
+      handle(showTopicTool.name, showTopicTool.inputSchema, args, ({ key, project }) => ({
         key,
-        status: once(`${showTopicTool.name}:${key}`, () => run(key)),
+        ...(project === undefined ? {} : { project }),
+        status: once(`${showTopicTool.name}:${key}:${project ?? ''}`, () =>
+          project === undefined ? run(key) : run(key, { project })
+        ),
       }))
     ),
     setThemeTool.client((args) =>

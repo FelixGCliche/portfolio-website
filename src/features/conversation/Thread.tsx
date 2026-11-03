@@ -48,7 +48,7 @@ const AGENT_ROW_CLASS = `${ROW_CLASS} flex-col gap-4 pt-3 pl-[26px]`
 
 const TopicRow = (props: { message: AgentTopicMessage }) => (
   <div class={AGENT_ROW_CLASS} data-message-id={props.message.id}>
-    <Dynamic component={responses[props.message.topic]} />
+    <Dynamic component={responses[props.message.topic]} project={props.message.project} />
   </div>
 )
 

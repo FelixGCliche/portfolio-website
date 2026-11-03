@@ -1,7 +1,16 @@
 import type { Project } from '@content'
 // eslint-disable-next-line solid/imports -- Portal lives in the renderer package in solid-js 2.x
 import { Portal } from '@solidjs/web'
-import { createMemo, createSignal, createUniqueId, For, onCleanup, Show } from 'solid-js'
+import {
+  createMemo,
+  createSignal,
+  createUniqueId,
+  For,
+  onCleanup,
+  onSettled,
+  Show,
+  untrack,
+} from 'solid-js'
 
 import { Drawer, DrawerContent, useResponsePane } from '@components'
 import { useI18n } from '@features/i18n'
@@ -10,6 +19,7 @@ import type { CaseStudyLink } from '@features/response-blocks'
 import { videoWatchUrl } from '@features/safe-links'
 import { useIsMobile } from '@hooks'
 
+import type { TopicResponseProps } from './responses'
 import { useProjects } from './useContent'
 
 // One case study is open at a time across every mounted ProjectsResponse; each instance owns its slug
@@ -46,7 +56,7 @@ const ProjectCaseStudy = (props: { project: Project; onClose?: () => void }) => 
   )
 }
 
-export const ProjectsResponse = () => {
+export const ProjectsResponse = (props: TopicResponseProps) => {
   const { t } = useI18n()
   const projects = useProjects()
   const isMobile = useIsMobile()
@@ -87,6 +97,14 @@ export const ProjectsResponse = () => {
   const close = () => {
     if (selection()?.owner === instanceId) setSelection(null)
   }
+
+  // Opened for one project (e.g. by the agent): show its case study as soon as the list mounts.
+  // Read once, so closing the case study later doesn't reopen it.
+  onSettled(() => {
+    const slug = untrack(() => props.project)
+    if (slug && untrack(projects).some((project) => project.slug === slug))
+      setSelection({ owner: instanceId, slug })
+  })
 
   return (
     <div class="flex flex-col gap-5">
