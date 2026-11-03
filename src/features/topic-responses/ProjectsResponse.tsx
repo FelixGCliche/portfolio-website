@@ -1,16 +1,7 @@
 import type { Project } from '@content'
 // eslint-disable-next-line solid/imports -- Portal lives in the renderer package in solid-js 2.x
 import { Portal } from '@solidjs/web'
-import {
-  createMemo,
-  createSignal,
-  createUniqueId,
-  For,
-  onCleanup,
-  onSettled,
-  Show,
-  untrack,
-} from 'solid-js'
+import { createMemo, createSignal, createUniqueId, For, onCleanup, Show } from 'solid-js'
 
 import { Drawer, DrawerContent, useResponsePane } from '@components'
 import { useI18n } from '@features/i18n'
@@ -19,6 +10,7 @@ import type { CaseStudyLink } from '@features/response-blocks'
 import { videoWatchUrl } from '@features/safe-links'
 import { useIsMobile } from '@hooks'
 
+import { filterProjects } from './filterProjects'
 import type { TopicResponseProps } from './responses'
 import { useProjects } from './useContent'
 
@@ -58,7 +50,12 @@ const ProjectCaseStudy = (props: { project: Project; onClose?: () => void }) => 
 
 export const ProjectsResponse = (props: TopicResponseProps) => {
   const { t } = useI18n()
-  const projects = useProjects()
+  const allProjects = useProjects()
+  // Only the projects asked for (e.g. by the agent), or every project when none are
+  const projects = createMemo(() => filterProjects(allProjects(), props.projects), {
+    name: 'shownProjects',
+  })
+  const filtered = () => projects().length < allProjects().length
   const isMobile = useIsMobile()
   const panelId = createUniqueId()
   const sheetId = createUniqueId()
@@ -97,14 +94,6 @@ export const ProjectsResponse = (props: TopicResponseProps) => {
   const close = () => {
     if (selection()?.owner === instanceId) setSelection(null)
   }
-
-  // Opened for one project (e.g. by the agent): show its case study as soon as the list mounts.
-  // Read once, so closing the case study later doesn't reopen it.
-  onSettled(() => {
-    const slug = untrack(() => props.project)
-    if (slug && untrack(projects).some((project) => project.slug === slug))
-      setSelection({ owner: instanceId, slug })
-  })
 
   return (
     <div class="flex flex-col gap-5">
@@ -189,7 +178,8 @@ export const ProjectsResponse = (props: TopicResponseProps) => {
           </Portal>
         )}
       </Show>
-      <NextLinks topics={['/work', '/contact']} />
+      {/* A filtered list links to the full one */}
+      <NextLinks topics={filtered() ? ['/projects', '/work', '/contact'] : ['/work', '/contact']} />
     </div>
   )
 }

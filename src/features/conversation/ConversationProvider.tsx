@@ -15,8 +15,8 @@ type ConversationState = {
 export type RunOptions = {
   // Echo the topic as user input first (default). Off when the agent, not the visitor, opens it.
   echo?: boolean
-  // The project whose case study the /projects response opens on mount; ignored for other topics.
-  project?: string
+  // The project slugs the /projects response lists (all when omitted); ignored for other topics.
+  projects?: string[]
 }
 
 export type ConversationContextValue = {
@@ -70,7 +70,7 @@ export const ConversationProvider = (props: ParentProps) => {
 
   const run = (key: TopicKey, options?: RunOptions) => {
     const echo = options?.echo ?? true
-    const project = key === '/projects' ? options?.project : undefined
+    const projects = key === '/projects' ? options?.projects : undefined
     setState((draft) => {
       if (echo) draft.messages.push({ id: createId(), role: 'user', text: key })
       draft.messages.push({
@@ -78,7 +78,7 @@ export const ConversationProvider = (props: ParentProps) => {
         role: 'agent',
         kind: 'topic',
         topic: key,
-        ...(project === undefined ? {} : { project }),
+        ...(projects === undefined ? {} : { projects: [...projects] }),
       })
     })
     if (key !== head) answered.add(key)

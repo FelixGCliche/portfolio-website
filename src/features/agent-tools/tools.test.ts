@@ -104,11 +104,20 @@ describe('tool schemas', () => {
 
   test('lists every content project slug once', () => {
     expect<string[]>(PROJECT_SLUGS).toEqual([...new Set(projects.map((project) => project.slug))])
-    expect(PROJECT_SLUGS.length).toBeGreaterThan(0)
+    expect(PROJECT_SLUGS.length).toBeGreaterThan(1)
   })
 
-  test.each([...PROJECT_SLUGS])('show_topic accepts /projects with project %s', (project) => {
-    expect(showTopicTool.inputSchema.safeParse({ key: '/projects', project }).success).toBe(true)
+  test.each([...PROJECT_SLUGS])('show_topic accepts /projects with projects [%s]', (slug) => {
+    expect(
+      showTopicTool.inputSchema.safeParse({ key: '/projects', projects: [slug] }).success
+    ).toBe(true)
+  })
+
+  test('show_topic accepts every project slug at once', () => {
+    expect(
+      showTopicTool.inputSchema.safeParse({ key: '/projects', projects: [...PROJECT_SLUGS] })
+        .success
+    ).toBe(true)
   })
 
   test('show_topic describes the project slugs', () => {
@@ -116,15 +125,23 @@ describe('tool schemas', () => {
     for (const slug of PROJECT_SLUGS) expect(schema).toContain(slug)
   })
 
-  test('show_topic rejects an unknown project', () => {
-    expect(showTopicTool.inputSchema.safeParse({ key: '/projects', project: 'nope' }).success).toBe(
-      false
-    )
+  test('show_topic no longer takes a single project', () => {
+    const schema = JSON.stringify(showTopicTool.inputSchema.toJSONSchema())
+    expect(schema).not.toContain('"project"')
   })
 
-  test('show_topic rejects a project with another topic', () => {
+  test.each([[['nope']], [[]], ['single'], [[42]]])(
+    'show_topic rejects projects %p',
+    (projects) => {
+      expect(showTopicTool.inputSchema.safeParse({ key: '/projects', projects }).success).toBe(
+        false
+      )
+    }
+  )
+
+  test('show_topic rejects projects with another topic', () => {
     expect(
-      showTopicTool.inputSchema.safeParse({ key: '/work', project: PROJECT_SLUGS[0] }).success
+      showTopicTool.inputSchema.safeParse({ key: '/work', projects: [PROJECT_SLUGS[0]] }).success
     ).toBe(false)
   })
 
@@ -187,29 +204,41 @@ describe('createClientTools', () => {
     expect(actions.run).toHaveBeenCalledTimes(3)
   })
 
-  test('show_topic opens a project case study', async () => {
+  test('show_topic lists the given projects', async () => {
     const { actions, showTopic } = setup()
-    const project = PROJECT_SLUGS[0]
-    expect(await showTopic.execute?.({ key: '/projects', project })).toEqual({
+    const projects = [PROJECT_SLUGS[0]]
+    expect(await showTopic.execute?.({ key: '/projects', projects })).toEqual({
       key: '/projects',
-      project,
+      projects,
       status: 'applied',
     })
-    expect(actions.run).toHaveBeenCalledWith('/projects', { project })
+    expect(actions.run).toHaveBeenCalledWith('/projects', { projects })
   })
 
-  test('show_topic dedupes by topic and project', async () => {
-    const [first, second] = PROJECT_SLUGS
+  test('show_topic drops duplicate projects', async () => {
+    const [first] = PROJECT_SLUGS
     const { actions, showTopic } = setup()
-    await showTopic.execute?.({ key: '/projects', project: first })
-    expect(await showTopic.execute?.({ key: '/projects', project: first })).toEqual({
+    expect(await showTopic.execute?.({ key: '/projects', projects: [first, first] })).toEqual({
       key: '/projects',
-      project: first,
+      projects: [first],
+      status: 'applied',
+    })
+    expect(actions.run).toHaveBeenCalledWith('/projects', { projects: [first] })
+  })
+
+  test('show_topic dedupes by topic and set of projects', async () => {
+    // The content has several projects
+    const [first, second] = PROJECT_SLUGS as unknown as [string, string]
+    const { actions, showTopic } = setup()
+    await showTopic.execute?.({ key: '/projects', projects: [first, second] })
+    expect(await showTopic.execute?.({ key: '/projects', projects: [second, first] })).toEqual({
+      key: '/projects',
+      projects: [second, first],
       status: 'unchanged',
     })
-    expect(await showTopic.execute?.({ key: '/projects', project: second })).toEqual({
+    expect(await showTopic.execute?.({ key: '/projects', projects: [first] })).toEqual({
       key: '/projects',
-      project: second,
+      projects: [first],
       status: 'applied',
     })
     expect(await showTopic.execute?.({ key: '/projects' })).toEqual({
@@ -217,17 +246,17 @@ describe('createClientTools', () => {
       status: 'applied',
     })
     expect(actions.run.mock.calls).toEqual([
-      ['/projects', { project: first }],
-      ['/projects', { project: second }],
+      ['/projects', { projects: [first, second] }],
+      ['/projects', { projects: [first] }],
       ['/projects'],
     ])
   })
 
-  test('show_topic rejects a project with another topic without running it', async () => {
+  test('show_topic rejects projects with another topic without running it', async () => {
     const { actions, showTopic } = setup()
     await expect(
-      callUntyped(showTopic, { key: '/work', project: PROJECT_SLUGS[0] })
-    ).rejects.toThrow(/^Invalid show_topic arguments: .*project/s)
+      callUntyped(showTopic, { key: '/work', projects: [PROJECT_SLUGS[0]] })
+    ).rejects.toThrow(/^Invalid show_topic arguments: .*projects/s)
     expect(actions.run).not.toHaveBeenCalled()
   })
 

@@ -73,8 +73,12 @@ describe('buildSystemPrompt', () => {
   test('routes project questions to show_topic, never render_blocks', () => {
     const prompt = buildSystemPrompt('en')
     expect(prompt).toContain(
-      'For any question about projects or about one named project, call show_topic with key "/projects" (and project set to that project\'s slug when one is named) plus at most one short sentence.'
+      'For any question about projects, call show_topic with key "/projects" plus at most one short sentence.'
     )
+    expect(prompt).toContain(
+      'Set projects to the slugs of just the projects that answer the question'
+    )
+    expect(prompt).toContain('omit projects only when the visitor asks for all projects.')
     expect(prompt).toContain('Never use render_blocks for projects.')
   })
 

@@ -11,7 +11,7 @@ import type { TopicKey } from '@features/topic-keys'
 /** Whether a UI tool call changed the site, or asked for what the site already shows. */
 const statusSchema = z.enum(['applied', 'unchanged'])
 
-/** The topic whose response can open one project's case study. */
+/** The topic whose response lists the projects, optionally filtered to some of them. */
 export const PROJECTS_TOPIC = '/projects' satisfies TopicKey
 
 /** Slugs of the portfolio's projects (the same in every locale), in content order. */
@@ -20,29 +20,30 @@ export const PROJECT_SLUGS = [...new Set(projects.map((project) => project.slug)
   ...string[],
 ]
 
-const projectSchema = z
-  .enum(PROJECT_SLUGS)
+const projectsSchema = z
+  .array(z.enum(PROJECT_SLUGS))
+  .min(1)
   .optional()
   .describe(
-    `Only with ${PROJECTS_TOPIC}: the project whose case study to open, one of: ${PROJECT_SLUGS.join(', ')}.`
+    `Only with ${PROJECTS_TOPIC}: the slugs of just the projects that answer the visitor's question, to list only those; omit it to list every project. Each one of: ${PROJECT_SLUGS.join(', ')}.`
   )
 
 /** Opens one of the site's topics in the conversation, as if the visitor typed its command. */
 export const showTopicTool = toolDefinition({
   name: 'show_topic',
-  description: `Show one of the site topics to the visitor (the same as typing its command, e.g. ${TOPIC_KEYS[0]}). Use it when the visitor asks to see, open or go to a topic, or when a topic page answers their question better than a summary. With ${PROJECTS_TOPIC}, pass a project to also open its case study. Add at most a short sentence alongside it.`,
+  description: `Show one of the site topics to the visitor (the same as typing its command, e.g. ${TOPIC_KEYS[0]}). Use it when the visitor asks to see, open or go to a topic, or when a topic page answers their question better than a summary. With ${PROJECTS_TOPIC}, pass projects to list only the relevant projects (the visitor can click one to open its case study); omit it only to list them all. Add at most a short sentence alongside it.`,
   inputSchema: z
     .object({
       key: z.enum(TOPIC_KEYS).describe(`The topic to show, one of: ${TOPIC_KEYS.join(', ')}.`),
-      project: projectSchema,
+      projects: projectsSchema,
     })
-    .refine((input) => input.project === undefined || input.key === PROJECTS_TOPIC, {
-      message: `project is only allowed with key ${PROJECTS_TOPIC}`,
-      path: ['project'],
+    .refine((input) => input.projects === undefined || input.key === PROJECTS_TOPIC, {
+      message: `projects is only allowed with key ${PROJECTS_TOPIC}`,
+      path: ['projects'],
     }),
   outputSchema: z.object({
     key: z.enum(TOPIC_KEYS),
-    project: z.enum(PROJECT_SLUGS).optional(),
+    projects: z.array(z.enum(PROJECT_SLUGS)).optional(),
     status: statusSchema,
   }),
 })
