@@ -1,7 +1,7 @@
-import { commands as commandContent, topics as topicContent } from '@content'
+import { commands as commandContent, projects, topics as topicContent } from '@content'
 import type { Accessor } from 'solid-js'
 
-import { LOCALES, pickSorted, useI18n } from '@features/i18n'
+import { LOCALES, pickSorted, stringsFor, translate, useI18n } from '@features/i18n'
 import type { Locale } from '@features/i18n'
 import type { TopicKey } from '@features/topic-keys'
 
@@ -15,9 +15,14 @@ type LocaleTopics = { list: Topic[]; byKey: Record<TopicKey, Topic>; entries: To
 // velite.config.ts fails the build unless each locale's topic keys match TOPIC_KEYS exactly.
 const TOPICS = Object.fromEntries(
   LOCALES.map((locale) => {
+    const projectCount = pickSorted(projects, locale).length
     const list = pickSorted(topicContent, locale).map(({ key, meta, desc }): Topic => ({
       key: key as TopicKey,
-      meta,
+      // The projects meta is derived so it can't drift from the project list
+      meta:
+        key === '/projects'
+          ? translate(stringsFor(locale), 'projects.count', { count: projectCount })
+          : meta,
       desc,
     }))
     const byKey = Object.fromEntries(list.map((topic) => [topic.key, topic])) as Record<
