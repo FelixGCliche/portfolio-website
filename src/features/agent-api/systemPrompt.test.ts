@@ -60,25 +60,34 @@ describe('buildSystemPrompt', () => {
     expect(prompt).toContain('Second degree, ')
   })
 
-  test('asks for plain-text replies without markdown', () => {
+  test('asks for plain-text replies without markdown, preferring tools', () => {
     const prompt = buildSystemPrompt('en')
-    expect(prompt).toContain('a few sentences in plain text only')
-    expect(prompt).toContain('no bold, italics, lists, links, headings, tables, images or HTML')
+    expect(prompt).toContain('Any text you write is plain text only')
+    expect(prompt).toContain(
+      'no markdown, bold, italics, lists, links, headings, tables, images or HTML'
+    )
+    expect(prompt).toContain('Prefer a tool over text')
+    expect(prompt).not.toContain('plain text only. Never')
   })
 
-  test('asks for render_blocks on structured answers without repeating them', () => {
+  test('routes project questions to show_topic, never render_blocks', () => {
+    const prompt = buildSystemPrompt('en')
+    expect(prompt).toContain(
+      'For any question about projects or about one named project, call show_topic with key "/projects" (and project set to that project\'s slug when one is named) plus at most one short sentence.'
+    )
+    expect(prompt).toContain('Never use render_blocks for projects.')
+  })
+
+  test('asks for render_blocks on other structured answers without repeating them', () => {
     const prompt = buildSystemPrompt('en')
     expect(prompt).toContain('call render_blocks instead of writing them out')
     expect(prompt).toContain(
-      'write any accompanying text (at most one short sentence) before the call, and never repeat the block content'
+      'write any accompanying text (at most one short sentence) before the tool call, and never repeat what the tool shows'
     )
-    expect(prompt).toContain('- render_blocks: ')
   })
 
   test('limits render_blocks to a single call per reply', () => {
-    const prompt = buildSystemPrompt('en')
-    expect(prompt).toContain('Call it exactly once per reply')
-    expect(prompt).toContain('Call this tool at most once per reply')
+    expect(buildSystemPrompt('en')).toContain('Call it exactly once per reply')
   })
 
   test('memoizes the prompt per locale', () => {
@@ -99,7 +108,9 @@ describe('buildSystemPrompt', () => {
       for (const bullet of role.bullets) expect(prompt).toContain(`  - ${bullet}`)
     }
     for (const project of own(projects)) {
-      expect(prompt).toContain(`- ${project.name} (${project.year}; ${project.stack.join(', ')})`)
+      expect(prompt).toContain(
+        `- ${project.name} (${project.year}; ${project.stack.join(', ')}) [slug: ${project.slug}]: `
+      )
       expect(prompt).toContain(project.description)
       for (const paragraph of project.built) expect(prompt).toContain(paragraph)
       if (project.url) expect(prompt).toContain(`Play: ${project.url}`)
@@ -190,9 +201,9 @@ describe('buildSystemPrompt', () => {
 })
 
 describe('agent tools', () => {
-  test.each([...LOCALES])('are listed from their definitions in the %s prompt', (locale) => {
+  test.each([...LOCALES])('leaves tool descriptions to the schemas in the %s prompt', (locale) => {
     const prompt = buildSystemPrompt(locale)
-    for (const tool of agentTools) expect(prompt).toContain(`- ${tool.name}: ${tool.description}`)
+    for (const tool of agentTools) expect(prompt).not.toContain(tool.description)
   })
 
   test('lists every supported locale with its name', () => {
@@ -200,9 +211,9 @@ describe('agent tools', () => {
     for (const locale of LOCALES) expect(prompt).toContain(`${LOCALE_NAMES[locale]} (${locale})`)
   })
 
-  test('takes topic keys from the shared constants', () => {
-    const prompt = buildSystemPrompt('en')
-    expect(prompt).toContain(`e.g. ${TOPIC_KEYS[0]}`)
+  test('names the projects topic key from the shared constants', () => {
+    expect(TOPIC_KEYS).toContain('/projects')
+    expect(buildSystemPrompt('en')).toContain('key "/projects"')
   })
 })
 
